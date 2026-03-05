@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
 
 @immutable
-class WebDavAccount {
-  final String name;
-  final Uri server;
+class WebDavServerConfig {
+  final String alias;
+  final Uri url;
   final String username;
   final String rootPath;
 
-  const WebDavAccount({
-    required this.name,
-    required this.server,
+  const WebDavServerConfig({
+    required this.alias,
+    required this.url,
     required this.username,
     required this.rootPath,
   });

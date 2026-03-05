@@ -2,18 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/utils/not_implemented.dart';
 import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
-import '../../player/presentation/player_page.dart';
-import '../domain/webdav_account.dart';
-
-enum WebDavEntryType { directory, video, other }
-
-@immutable
-class WebDavEntry {
-  final String name;
-  final WebDavEntryType type;
-
-  const WebDavEntry({required this.name, required this.type});
-}
+import '../../player_core/presentation/player_page.dart';
+import '../domain/entities/webdav_entry.dart';
+import '../domain/webdav_server_config.dart';
 
 const List<WebDavEntry> kDemoRootEntries = <WebDavEntry>[
   WebDavEntry(name: 'Movies', type: WebDavEntryType.directory),
@@ -24,7 +15,7 @@ const List<WebDavEntry> kDemoRootEntries = <WebDavEntry>[
 ];
 
 class WebDavBrowserPage extends StatelessWidget {
-  final WebDavAccount account;
+  final WebDavServerConfig account;
   final List<String> pathSegments;
 
   const WebDavBrowserPage({
@@ -42,7 +33,7 @@ class WebDavBrowserPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(account.name),
+        title: Text(account.alias),
         actions: <Widget>[
           IconButton(
             tooltip: '搜索',
@@ -81,7 +72,7 @@ class WebDavBrowserPage extends StatelessWidget {
 }
 
 class _WebDavBrowserBody extends StatelessWidget {
-  final WebDavAccount account;
+  final WebDavServerConfig account;
   final String pathLabel;
   final List<WebDavEntry> entries;
   final ValueChanged<String> onOpenDirectory;
@@ -103,7 +94,7 @@ class _WebDavBrowserBody extends StatelessWidget {
           message: 'UI 骨架阶段：真实 WebDAV 请求、面包屑联动与媒体过滤/播放列表尚未接入。',
         ),
         const SizedBox(height: 12),
-        _PathBar(server: account.server.toString(), pathLabel: pathLabel),
+        _PathBar(server: account.url.toString(), pathLabel: pathLabel),
         const Divider(height: 1),
         Expanded(
           child: ListView.builder(

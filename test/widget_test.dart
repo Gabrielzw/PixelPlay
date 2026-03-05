@@ -1,17 +1,16 @@
+import 'package:get/get.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:pixelplay/app/pixelplay_app.dart';
-import 'package:pixelplay/app/settings/app_settings_controller.dart';
-import 'package:pixelplay/app/settings/app_settings_scope.dart';
-import 'package:pixelplay/app/settings/app_settings_state.dart';
 
 void main() {
-  testWidgets('shows bottom navigation tabs', (WidgetTester tester) async {
-    final controller = AppSettingsController(const AppSettingsState());
+  setUp(() {
+    Get.testMode = true;
+    Get.reset();
+  });
 
-    await tester.pumpWidget(
-      AppSettingsScope(controller: controller, child: const PixelPlayApp()),
-    );
+  testWidgets('shows bottom navigation tabs', (WidgetTester tester) async {
+    await tester.pumpWidget(const PixelPlayApp());
 
     expect(find.text('首页'), findsOneWidget);
     expect(find.text('网络共享'), findsOneWidget);
@@ -22,11 +21,7 @@ void main() {
   testWidgets('android back pops album to library', (
     WidgetTester tester,
   ) async {
-    final controller = AppSettingsController(const AppSettingsState());
-
-    await tester.pumpWidget(
-      AppSettingsScope(controller: controller, child: const PixelPlayApp()),
-    );
+    await tester.pumpWidget(const PixelPlayApp());
 
     await tester.tap(find.text('相册 1'));
     await tester.pumpAndSettle();

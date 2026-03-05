@@ -1,11 +1,34 @@
 import 'package:flutter/material.dart';
 
 import '../../favorites/presentation/favorites_page.dart';
-import '../../library/presentation/local_library_page.dart';
+import '../../media_library/presentation/local_library_page.dart';
 import '../../settings/presentation/settings_page.dart';
-import '../../webdav/presentation/webdav_accounts_page.dart';
+import '../../webdav_client/presentation/webdav_accounts_page.dart';
 
 enum _ShellTab { library, webdav, favorites, settings }
+
+const List<NavigationDestination> _shellDestinations = <NavigationDestination>[
+  NavigationDestination(
+    icon: Icon(Icons.video_library_outlined),
+    selectedIcon: Icon(Icons.video_library),
+    label: '首页',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.cloud_outlined),
+    selectedIcon: Icon(Icons.cloud),
+    label: '网络共享',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.favorite_border),
+    selectedIcon: Icon(Icons.favorite),
+    label: '收藏',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.settings_outlined),
+    selectedIcon: Icon(Icons.settings),
+    label: '设置',
+  ),
+];
 
 class PixelPlayShell extends StatefulWidget {
   const PixelPlayShell({super.key});
@@ -94,58 +117,76 @@ class _PixelPlayShellState extends State<PixelPlayShell> {
       canPop: _canPopApp,
       onPopInvokedWithResult: _handlePop,
       child: Scaffold(
-        body: IndexedStack(
-          index: currentIndex,
-          children: <Widget>[
-            _TabNavigator(
-              navigatorKey: _navigatorKeys[_ShellTab.library]!,
-              observer: _observers[_ShellTab.library]!,
-              rootPage: const LocalLibraryPage(),
-            ),
-            _TabNavigator(
-              navigatorKey: _navigatorKeys[_ShellTab.webdav]!,
-              observer: _observers[_ShellTab.webdav]!,
-              rootPage: const WebDavAccountsPage(),
-            ),
-            _TabNavigator(
-              navigatorKey: _navigatorKeys[_ShellTab.favorites]!,
-              observer: _observers[_ShellTab.favorites]!,
-              rootPage: const FavoritesPage(),
-            ),
-            _TabNavigator(
-              navigatorKey: _navigatorKeys[_ShellTab.settings]!,
-              observer: _observers[_ShellTab.settings]!,
-              rootPage: const SettingsPage(),
-            ),
-          ],
+        body: _ShellIndexedStack(
+          currentIndex: currentIndex,
+          navigatorKeys: _navigatorKeys,
+          observers: _observers,
         ),
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar: _ShellBottomNavigationBar(
           selectedIndex: currentIndex,
           onDestinationSelected: _onDestinationSelected,
-          destinations: const <NavigationDestination>[
-            NavigationDestination(
-              icon: Icon(Icons.video_library_outlined),
-              selectedIcon: Icon(Icons.video_library),
-              label: '首页',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.cloud_outlined),
-              selectedIcon: Icon(Icons.cloud),
-              label: '网络共享',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.favorite_border),
-              selectedIcon: Icon(Icons.favorite),
-              label: '收藏',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: '设置',
-            ),
-          ],
         ),
       ),
+    );
+  }
+}
+
+class _ShellIndexedStack extends StatelessWidget {
+  final int currentIndex;
+  final Map<_ShellTab, GlobalKey<NavigatorState>> navigatorKeys;
+  final Map<_ShellTab, NavigatorObserver> observers;
+
+  const _ShellIndexedStack({
+    required this.currentIndex,
+    required this.navigatorKeys,
+    required this.observers,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IndexedStack(
+      index: currentIndex,
+      children: <Widget>[
+        _TabNavigator(
+          navigatorKey: navigatorKeys[_ShellTab.library]!,
+          observer: observers[_ShellTab.library]!,
+          rootPage: const LocalLibraryPage(),
+        ),
+        _TabNavigator(
+          navigatorKey: navigatorKeys[_ShellTab.webdav]!,
+          observer: observers[_ShellTab.webdav]!,
+          rootPage: const WebDavAccountsPage(),
+        ),
+        _TabNavigator(
+          navigatorKey: navigatorKeys[_ShellTab.favorites]!,
+          observer: observers[_ShellTab.favorites]!,
+          rootPage: const FavoritesPage(),
+        ),
+        _TabNavigator(
+          navigatorKey: navigatorKeys[_ShellTab.settings]!,
+          observer: observers[_ShellTab.settings]!,
+          rootPage: const SettingsPage(),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShellBottomNavigationBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+
+  const _ShellBottomNavigationBar({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onDestinationSelected,
+      destinations: _shellDestinations,
     );
   }
 }

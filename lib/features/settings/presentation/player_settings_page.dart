@@ -1,61 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../../../app/settings/app_settings_scope.dart';
-import '../../../app/settings/app_settings_state.dart';
 import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
+import '../domain/app_settings.dart';
+import '../domain/settings_controller.dart';
 
-class PlayerSettingsPage extends StatelessWidget {
+class PlayerSettingsPage extends GetView<SettingsController> {
   const PlayerSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = AppSettingsScope.of(context);
-    final state = controller.value;
+    return Obx(() {
+      final state = controller.settings.value;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('播放器默认设置')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          const UiSkeletonNotice(message: 'UI 骨架阶段：设置未持久化，未与播放器联动。'),
-          const SizedBox(height: 12),
-          _PlaybackSpeedTile(
-            value: state.defaultPlaybackSpeed,
-            onChanged: controller.setDefaultPlaybackSpeed,
-          ),
-          const SizedBox(height: 12),
-          _AspectRatioTile(
-            value: state.defaultAspectRatio,
-            onChanged: controller.setDefaultAspectRatio,
-          ),
-          const SizedBox(height: 12),
-          _GestureSeekTile(
-            valueSeconds: state.gestureSeekSecondsPerSwipe,
-            onChanged: controller.setGestureSeekSecondsPerSwipe,
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Column(
-              children: <Widget>[
-                SwitchListTile(
-                  value: state.rememberPlaybackPosition,
-                  onChanged: controller.setRememberPlaybackPosition,
-                  title: const Text('记忆播放进度'),
-                  subtitle: const Text('下次打开无缝续播'),
-                ),
-                const Divider(height: 1),
-                SwitchListTile(
-                  value: state.autoPlayNext,
-                  onChanged: controller.setAutoPlayNext,
-                  title: const Text('自动播放下一个'),
-                  subtitle: const Text('当前视频结束后自动连播'),
-                ),
-              ],
+      return Scaffold(
+        appBar: AppBar(title: const Text('播放器默认设置')),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: <Widget>[
+            const UiSkeletonNotice(message: 'UI 骨架阶段：设置未持久化，未与播放器联动。'),
+            const SizedBox(height: 12),
+            _PlaybackSpeedTile(
+              value: state.defaultPlaybackSpeed,
+              onChanged: controller.setDefaultPlaybackSpeed,
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(height: 12),
+            _AspectRatioTile(
+              value: state.defaultAspectRatio,
+              onChanged: controller.setDefaultAspectRatio,
+            ),
+            const SizedBox(height: 12),
+            _GestureSeekTile(
+              valueSeconds: state.gestureSeekSecondsPerSwipe,
+              onChanged: controller.setGestureSeekSecondsPerSwipe,
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Column(
+                children: <Widget>[
+                  SwitchListTile(
+                    value: state.rememberPlaybackPosition,
+                    onChanged: controller.setRememberPlaybackPosition,
+                    title: const Text('记忆播放进度'),
+                    subtitle: const Text('下次打开无缝续播'),
+                  ),
+                  const Divider(height: 1),
+                  SwitchListTile(
+                    value: state.autoPlayNext,
+                    onChanged: controller.setAutoPlayNext,
+                    title: const Text('自动播放下一个'),
+                    subtitle: const Text('当前视频结束后自动连播'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 

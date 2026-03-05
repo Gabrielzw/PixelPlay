@@ -35,7 +35,7 @@ extension PlayerAspectRatioLabel on PlayerAspectRatio {
 }
 
 @immutable
-class AppSettingsState {
+class AppSettings {
   final ThemeMode themeMode;
   final double defaultPlaybackSpeed;
   final PlayerAspectRatio defaultAspectRatio;
@@ -43,7 +43,7 @@ class AppSettingsState {
   final bool rememberPlaybackPosition;
   final bool autoPlayNext;
 
-  const AppSettingsState({
+  const AppSettings({
     this.themeMode = ThemeMode.system,
     this.defaultPlaybackSpeed = kDefaultPlaybackSpeed,
     this.defaultAspectRatio = kDefaultAspectRatio,
@@ -52,7 +52,7 @@ class AppSettingsState {
     this.autoPlayNext = kDefaultAutoPlayNext,
   });
 
-  AppSettingsState copyWith({
+  AppSettings copyWith({
     ThemeMode? themeMode,
     double? defaultPlaybackSpeed,
     PlayerAspectRatio? defaultAspectRatio,
@@ -60,7 +60,7 @@ class AppSettingsState {
     bool? rememberPlaybackPosition,
     bool? autoPlayNext,
   }) {
-    return AppSettingsState(
+    return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       defaultPlaybackSpeed: defaultPlaybackSpeed ?? this.defaultPlaybackSpeed,
       defaultAspectRatio: defaultAspectRatio ?? this.defaultAspectRatio,
@@ -72,3 +72,4 @@ class AppSettingsState {
     );
   }
 }
+

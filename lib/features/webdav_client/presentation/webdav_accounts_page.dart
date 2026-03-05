@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/utils/not_implemented.dart';
 import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
-import '../domain/webdav_account.dart';
+import '../domain/webdav_server_config.dart';
 import 'webdav_account_form_page.dart';
 import 'webdav_browser_page.dart';
 
@@ -10,16 +10,16 @@ final Uri kDemoNasUri = Uri.parse('https://nas.example.com/dav');
 
 final Uri kDemoCloudUri = Uri.parse('https://cloud.example.com/webdav');
 
-final List<WebDavAccount> kDemoAccounts = <WebDavAccount>[
-  WebDavAccount(
-    name: '示例 NAS',
-    server: kDemoNasUri,
+final List<WebDavServerConfig> kDemoAccounts = <WebDavServerConfig>[
+  WebDavServerConfig(
+    alias: '示例 NAS',
+    url: kDemoNasUri,
     username: 'demo',
     rootPath: '/',
   ),
-  WebDavAccount(
-    name: '示例 云盘',
-    server: kDemoCloudUri,
+  WebDavServerConfig(
+    alias: '示例 云盘',
+    url: kDemoCloudUri,
     username: 'demo',
     rootPath: '/videos',
   ),
@@ -88,7 +88,7 @@ class _WebDavAccountsBody extends StatelessWidget {
 }
 
 class _AccountTile extends StatelessWidget {
-  final WebDavAccount account;
+  final WebDavServerConfig account;
 
   const _AccountTile({required this.account});
 
@@ -105,8 +105,8 @@ class _AccountTile extends StatelessWidget {
     return Card(
       child: ListTile(
         onTap: () => _openBrowser(context),
-        title: Text(account.name),
-        subtitle: Text(account.server.toString()),
+        title: Text(account.alias),
+        subtitle: Text(account.url.toString()),
         trailing: IconButton(
           tooltip: '编辑',
           onPressed: () => showNotImplementedSnackBar(context, '编辑账户（未接入）'),

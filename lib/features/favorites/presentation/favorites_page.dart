@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
-import '../../player/presentation/player_page.dart';
+import '../../player_core/presentation/player_page.dart';
 
 @immutable
 class FavoriteItem {

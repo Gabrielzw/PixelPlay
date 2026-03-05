@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/utils/not_implemented.dart';
 import '../../../shared/widgets/skeleton/skeleton_box.dart';
 import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
-import '../../player/presentation/player_page.dart';
+import '../../player_core/presentation/player_page.dart';
 
 const int kVideoSkeletonCount = 24;
 const int kVideoGridCrossAxisCount = 3;
