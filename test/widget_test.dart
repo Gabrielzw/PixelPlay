@@ -18,4 +18,24 @@ void main() {
     expect(find.text('收藏'), findsOneWidget);
     expect(find.text('设置'), findsOneWidget);
   });
+
+  testWidgets('android back pops album to library', (
+    WidgetTester tester,
+  ) async {
+    final controller = AppSettingsController(const AppSettingsState());
+
+    await tester.pumpWidget(
+      AppSettingsScope(controller: controller, child: const PixelPlayApp()),
+    );
+
+    await tester.tap(find.text('相册 1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('本地媒体'), findsNothing);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(find.text('本地媒体'), findsOneWidget);
+  });
 }

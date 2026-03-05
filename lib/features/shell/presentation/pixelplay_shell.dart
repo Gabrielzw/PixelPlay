@@ -22,6 +22,14 @@ class _PixelPlayShellState extends State<PixelPlayShell> {
     _ShellTab.settings,
   ];
 
+  late final Map<_ShellTab, NavigatorObserver> _observers =
+      <_ShellTab, NavigatorObserver>{
+        _ShellTab.library: _TabNavigatorObserver(_refreshShell),
+        _ShellTab.webdav: _TabNavigatorObserver(_refreshShell),
+        _ShellTab.favorites: _TabNavigatorObserver(_refreshShell),
+        _ShellTab.settings: _TabNavigatorObserver(_refreshShell),
+      };
+
   final Map<_ShellTab, GlobalKey<NavigatorState>> _navigatorKeys =
       <_ShellTab, GlobalKey<NavigatorState>>{
         _ShellTab.library: GlobalKey<NavigatorState>(),
@@ -31,6 +39,20 @@ class _PixelPlayShellState extends State<PixelPlayShell> {
       };
 
   _ShellTab _currentTab = _ShellTab.library;
+
+  bool _refreshScheduled = false;
+
+  void _refreshShell() {
+    if (!mounted) return;
+    if (_refreshScheduled) return;
+
+    _refreshScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshScheduled = false;
+      if (!mounted) return;
+      setState(() {});
+    });
+  }
 
   NavigatorState? _currentNavigator() {
     return _navigatorKeys[_currentTab]?.currentState;
@@ -77,18 +99,22 @@ class _PixelPlayShellState extends State<PixelPlayShell> {
           children: <Widget>[
             _TabNavigator(
               navigatorKey: _navigatorKeys[_ShellTab.library]!,
+              observer: _observers[_ShellTab.library]!,
               rootPage: const LocalLibraryPage(),
             ),
             _TabNavigator(
               navigatorKey: _navigatorKeys[_ShellTab.webdav]!,
+              observer: _observers[_ShellTab.webdav]!,
               rootPage: const WebDavAccountsPage(),
             ),
             _TabNavigator(
               navigatorKey: _navigatorKeys[_ShellTab.favorites]!,
+              observer: _observers[_ShellTab.favorites]!,
               rootPage: const FavoritesPage(),
             ),
             _TabNavigator(
               navigatorKey: _navigatorKeys[_ShellTab.settings]!,
+              observer: _observers[_ShellTab.settings]!,
               rootPage: const SettingsPage(),
             ),
           ],
@@ -126,14 +152,20 @@ class _PixelPlayShellState extends State<PixelPlayShell> {
 
 class _TabNavigator extends StatelessWidget {
   final GlobalKey<NavigatorState> navigatorKey;
+  final NavigatorObserver observer;
   final Widget rootPage;
 
-  const _TabNavigator({required this.navigatorKey, required this.rootPage});
+  const _TabNavigator({
+    required this.navigatorKey,
+    required this.observer,
+    required this.rootPage,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
+      observers: <NavigatorObserver>[observer],
       onGenerateRoute: (settings) {
         return MaterialPageRoute<void>(
           settings: settings,
@@ -142,4 +174,27 @@ class _TabNavigator extends StatelessWidget {
       },
     );
   }
+}
+
+class _TabNavigatorObserver extends NavigatorObserver {
+  final VoidCallback onStackChanged;
+
+  _TabNavigatorObserver(this.onStackChanged);
+
+  void _notify() => onStackChanged();
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _notify();
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) => _notify();
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _notify();
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
+      _notify();
 }
