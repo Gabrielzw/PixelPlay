@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../features/media_library/domain/contracts/media_library_repository.dart';
 import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
 import '../features/shell/presentation/pixelplay_shell.dart';
@@ -9,8 +10,13 @@ import 'theme/app_theme.dart';
 
 class PixelPlayApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
+  final MediaLibraryRepository mediaLibraryRepository;
 
-  const PixelPlayApp({super.key, required this.settingsRepository});
+  const PixelPlayApp({
+    super.key,
+    required this.settingsRepository,
+    required this.mediaLibraryRepository,
+  });
 
   @override
   State<PixelPlayApp> createState() => _PixelPlayAppState();
@@ -22,7 +28,10 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
   @override
   void initState() {
     super.initState();
-    AppBindings(settingsRepository: widget.settingsRepository).dependencies();
+    AppBindings(
+      settingsRepository: widget.settingsRepository,
+      mediaLibraryRepository: widget.mediaLibraryRepository,
+    ).dependencies();
     _settingsController = Get.find<SettingsController>();
   }
 
