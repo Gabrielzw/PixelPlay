@@ -1,200 +1,278 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../../../shared/utils/not_implemented.dart';
-import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
-import '../../player_core/presentation/player_page.dart';
+import '../domain/contracts/webdav_browser_repository.dart';
 import '../domain/entities/webdav_entry.dart';
+import '../domain/webdav_paths.dart';
 import '../domain/webdav_server_config.dart';
+import 'controllers/webdav_accounts_controller.dart';
+import 'widgets/webdav_browser_entry_widgets.dart';
+import 'widgets/webdav_browser_header.dart';
 
-const List<WebDavEntry> kDemoRootEntries = <WebDavEntry>[
-  WebDavEntry(name: 'Movies', type: WebDavEntryType.directory),
-  WebDavEntry(name: 'Anime', type: WebDavEntryType.directory),
-  WebDavEntry(name: 'A.mp4', type: WebDavEntryType.video),
-  WebDavEntry(name: 'B.mp4', type: WebDavEntryType.video),
-  WebDavEntry(name: 'C.txt', type: WebDavEntryType.other),
-];
-
-class WebDavBrowserPage extends StatelessWidget {
+class WebDavBrowserPage extends StatefulWidget {
   final WebDavServerConfig account;
-  final List<String> pathSegments;
+  final String? path;
 
-  const WebDavBrowserPage({
-    super.key,
-    required this.account,
-    this.pathSegments = const <String>[],
-  });
+  const WebDavBrowserPage({super.key, required this.account, this.path});
 
-  String get _pathLabel {
-    if (pathSegments.isEmpty) return '/';
-    return '/${pathSegments.join('/')}';
+  @override
+  State<WebDavBrowserPage> createState() => _WebDavBrowserPageState();
+}
+
+class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
+  late final WebDavBrowserRepository _browserRepository;
+  late final WebDavAccountsController _accountsController;
+  late final TextEditingController _searchController;
+  late final String _rootPath;
+
+  List<WebDavEntry> _entries = const <WebDavEntry>[];
+  Object? _error;
+  bool _isLoading = true;
+  String _searchQuery = '';
+  late String _currentPath;
+
+  bool get _isAtRootPath => _currentPath == _rootPath;
+
+  List<WebDavEntry> get _visibleEntries {
+    final query = _searchQuery.toLowerCase();
+    if (query.isEmpty) {
+      return _entries;
+    }
+    return _entries
+        .where((WebDavEntry entry) => entry.name.toLowerCase().contains(query))
+        .toList(growable: false);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _browserRepository = Get.find<WebDavBrowserRepository>();
+    _accountsController = Get.find<WebDavAccountsController>();
+    _rootPath = _resolveRootPath(widget.account);
+    _currentPath = _resolveCurrentPath(widget.account, widget.path);
+    _searchController = TextEditingController()
+      ..addListener(_handleSearchChanged);
+    _loadEntries();
+  }
+
+  @override
+  void dispose() {
+    _searchController
+      ..removeListener(_handleSearchChanged)
+      ..dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(account.alias),
-        actions: <Widget>[
-          IconButton(
-            tooltip: '搜索',
-            onPressed: () => showNotImplementedSnackBar(context, '搜索（未接入）'),
-            icon: const Icon(Icons.search),
+    return PopScope(
+      canPop: _isAtRootPath,
+      onPopInvokedWithResult: _handlePop,
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: '返回',
+            onPressed: _handleBackPressed,
+            icon: const Icon(Icons.arrow_back),
           ),
-          IconButton(
-            tooltip: '排序',
-            onPressed: () => showNotImplementedSnackBar(context, '排序（未接入）'),
-            icon: const Icon(Icons.sort),
+          titleSpacing: 0,
+          title: WebDavBreadcrumbBar(
+            rootPath: _rootPath,
+            currentPath: _currentPath,
+            onTapPath: _openPath,
           ),
-        ],
-      ),
-      body: _WebDavBrowserBody(
-        account: account,
-        pathLabel: _pathLabel,
-        entries: kDemoRootEntries,
-        onOpenDirectory: (name) {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => WebDavBrowserPage(
-                account: account,
-                pathSegments: <String>[...pathSegments, name],
-              ),
+          actions: <Widget>[
+            IconButton(
+              tooltip: '刷新',
+              onPressed: _loadEntries,
+              icon: const Icon(Icons.refresh),
             ),
-          );
+          ],
+        ),
+        body: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: WebDavSearchField(controller: _searchController),
+            ),
+            Expanded(child: _buildBody()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return WebDavBrowserFailureView(
+        message: _formatError(_error!),
+        onRetry: _loadEntries,
+      );
+    }
+    if (_visibleEntries.isEmpty) {
+      return WebDavBrowserEmptyView(
+        message: _searchQuery.isEmpty
+            ? '当前目录下没有可显示的视频或子目录。'
+            : '没有匹配“$_searchQuery”的文件或文件夹。',
+        onRefresh: _loadEntries,
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadEntries,
+      child: ListView.separated(
+        key: PageStorageKey<String>('webdav_browser_$_currentPath'),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        itemCount: _visibleEntries.length,
+        separatorBuilder: (BuildContext context, int index) {
+          return const SizedBox(height: 12);
         },
-        onOpenVideo: (name) {
-          Navigator.of(context, rootNavigator: true).push(
-            MaterialPageRoute<void>(builder: (_) => PlayerPage(title: name)),
+        itemBuilder: (BuildContext context, int index) {
+          final entry = _visibleEntries[index];
+          return WebDavEntryCard(
+            entry: entry,
+            onTap: () => _handleEntryTap(context, entry),
           );
         },
       ),
     );
   }
-}
 
-class _WebDavBrowserBody extends StatelessWidget {
-  final WebDavServerConfig account;
-  final String pathLabel;
-  final List<WebDavEntry> entries;
-  final ValueChanged<String> onOpenDirectory;
-  final ValueChanged<String> onOpenVideo;
+  void _handlePop(bool didPop, Object? result) {
+    if (didPop || _isAtRootPath) {
+      return;
+    }
+    _navigateToParentPath();
+  }
 
-  const _WebDavBrowserBody({
-    required this.account,
-    required this.pathLabel,
-    required this.entries,
-    required this.onOpenDirectory,
-    required this.onOpenVideo,
-  });
+  void _handleBackPressed() {
+    if (_isAtRootPath) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    _navigateToParentPath();
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        const UiSkeletonNotice(
-          message: 'UI 骨架阶段：真实 WebDAV 请求、面包屑联动与媒体过滤/播放列表尚未接入。',
-        ),
-        const SizedBox(height: 12),
-        _PathBar(server: account.url.toString(), pathLabel: pathLabel),
-        const Divider(height: 1),
-        Expanded(
-          child: ListView.builder(
-            key: PageStorageKey<String>('webdav_list_$pathLabel'),
-            padding: const EdgeInsets.all(8),
-            itemCount: entries.length,
-            itemBuilder: (context, index) {
-              final entry = entries[index];
-              return _EntryTile(
-                entry: entry,
-                onOpenDirectory: onOpenDirectory,
-                onOpenVideo: onOpenVideo,
-              );
-            },
-          ),
-        ),
-      ],
+  void _handleSearchChanged() {
+    final nextQuery = _searchController.text.trim();
+    if (nextQuery == _searchQuery) {
+      return;
+    }
+    setState(() => _searchQuery = nextQuery);
+  }
+
+  Future<void> _loadEntries() async {
+    final targetPath = _currentPath;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final password = await _accountsController.requirePassword(
+        widget.account.id,
+      );
+      final entries = await _browserRepository.readDirectory(
+        widget.account,
+        password: password,
+        path: targetPath,
+      );
+      if (!mounted || targetPath != _currentPath) {
+        return;
+      }
+      setState(() {
+        _entries = entries;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted || targetPath != _currentPath) {
+        return;
+      }
+      setState(() {
+        _error = error;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _openPath(String path) async {
+    final normalizedPath = normalizeWebDavPath(path);
+    if (normalizedPath == _currentPath) {
+      return;
+    }
+
+    _searchController.clear();
+    setState(() => _currentPath = normalizedPath);
+    await _loadEntries();
+  }
+
+  void _navigateToParentPath() {
+    final parentPath = _findParentPath();
+    if (parentPath == null) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    _openPath(parentPath);
+  }
+
+  String? _findParentPath() {
+    if (_isAtRootPath) {
+      return null;
+    }
+
+    final currentSegments = _pathSegments(_currentPath);
+    final rootSegments = _pathSegments(_rootPath);
+    final parentLength = currentSegments.length - 1;
+    if (parentLength <= rootSegments.length) {
+      return _rootPath;
+    }
+
+    final parentSegments = currentSegments.take(parentLength).join('/');
+    return normalizeWebDavPath('/$parentSegments');
+  }
+
+  List<String> _pathSegments(String path) {
+    return normalizeWebDavPath(path)
+        .split('/')
+        .where((String segment) => segment.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String _resolveRootPath(WebDavServerConfig account) {
+    return resolveRelativeWebDavPath(
+      baseUrl: account.url,
+      path: account.rootPath,
     );
+  }
+
+  String _resolveCurrentPath(WebDavServerConfig account, String? path) {
+    final sourcePath = path ?? account.rootPath;
+    return resolveRelativeWebDavPath(baseUrl: account.url, path: sourcePath);
+  }
+
+  void _handleEntryTap(BuildContext context, WebDavEntry entry) {
+    switch (entry.type) {
+      case WebDavEntryType.directory:
+        _openPath(entry.path);
+        break;
+      case WebDavEntryType.video:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('已识别视频文件：${entry.name}，播放功能暂未接入。')),
+        );
+        break;
+      case WebDavEntryType.other:
+        break;
+    }
   }
 }
 
-class _PathBar extends StatelessWidget {
-  final String server;
-  final String pathLabel;
-
-  const _PathBar({required this.server, required this.pathLabel});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            server,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: <Widget>[
-              const Icon(Icons.folder_open, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  pathLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EntryTile extends StatelessWidget {
-  final WebDavEntry entry;
-  final ValueChanged<String> onOpenDirectory;
-  final ValueChanged<String> onOpenVideo;
-
-  const _EntryTile({
-    required this.entry,
-    required this.onOpenDirectory,
-    required this.onOpenVideo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = switch (entry.type) {
-      WebDavEntryType.directory => Icons.folder_outlined,
-      WebDavEntryType.video => Icons.movie_outlined,
-      WebDavEntryType.other => Icons.insert_drive_file_outlined,
-    };
-
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(entry.name),
-      subtitle: Text(switch (entry.type) {
-        WebDavEntryType.directory => '目录',
-        WebDavEntryType.video => '视频文件',
-        WebDavEntryType.other => '非视频文件',
-      }),
-      onTap: () {
-        switch (entry.type) {
-          case WebDavEntryType.directory:
-            onOpenDirectory(entry.name);
-            break;
-          case WebDavEntryType.video:
-            onOpenVideo(entry.name);
-            break;
-          case WebDavEntryType.other:
-            showNotImplementedSnackBar(context, '已过滤非视频文件（未接入）');
-            break;
-        }
-      },
-    );
-  }
+String _formatError(Object error) {
+  final text = error.toString();
+  return text
+      .replaceFirst('Exception: ', '')
+      .replaceFirst('Bad state: ', '')
+      .trim();
 }

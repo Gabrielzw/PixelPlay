@@ -6,6 +6,8 @@ import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
 import '../features/shell/presentation/pixelplay_shell.dart';
 import '../features/thumbnail_engine/domain/thumbnail_queue.dart';
+import '../features/webdav_client/domain/contracts/webdav_account_repository.dart';
+import '../features/webdav_client/domain/contracts/webdav_browser_repository.dart';
 import 'bindings/app_bindings.dart';
 import 'theme/app_theme.dart';
 
@@ -13,12 +15,16 @@ class PixelPlayApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
+  final WebDavAccountRepository webDavAccountRepository;
+  final WebDavBrowserRepository webDavBrowserRepository;
 
   const PixelPlayApp({
     super.key,
     required this.settingsRepository,
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
+    required this.webDavAccountRepository,
+    required this.webDavBrowserRepository,
   });
 
   @override
@@ -35,6 +41,8 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       settingsRepository: widget.settingsRepository,
       mediaLibraryRepository: widget.mediaLibraryRepository,
       thumbnailQueue: widget.thumbnailQueue,
+      webDavAccountRepository: widget.webDavAccountRepository,
+      webDavBrowserRepository: widget.webDavBrowserRepository,
     ).dependencies();
     _settingsController = Get.find<SettingsController>();
   }

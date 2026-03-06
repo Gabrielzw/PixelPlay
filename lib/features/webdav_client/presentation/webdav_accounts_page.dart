@@ -1,47 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../../../shared/utils/not_implemented.dart';
-import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
 import '../domain/webdav_server_config.dart';
+import 'controllers/webdav_accounts_controller.dart';
 import 'webdav_account_form_page.dart';
 import 'webdav_browser_page.dart';
 
-final Uri kDemoNasUri = Uri.parse('https://nas.example.com/dav');
-
-final Uri kDemoCloudUri = Uri.parse('https://cloud.example.com/webdav');
-
-final List<WebDavServerConfig> kDemoAccounts = <WebDavServerConfig>[
-  WebDavServerConfig(
-    alias: '示例 NAS',
-    url: kDemoNasUri,
-    username: 'demo',
-    rootPath: '/',
-  ),
-  WebDavServerConfig(
-    alias: '示例 云盘',
-    url: kDemoCloudUri,
-    username: 'demo',
-    rootPath: '/videos',
-  ),
-];
-
-class WebDavAccountsPage extends StatelessWidget {
+class WebDavAccountsPage extends GetView<WebDavAccountsController> {
   const WebDavAccountsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const _WebDavAccountsScaffold();
-  }
-}
-
-class _WebDavAccountsScaffold extends StatelessWidget {
-  const _WebDavAccountsScaffold();
-
-  void _openAccountForm(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const WebDavAccountFormPage()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,49 +16,63 @@ class _WebDavAccountsScaffold extends StatelessWidget {
         title: const Text('网络共享'),
         actions: <Widget>[
           IconButton(
+            tooltip: '刷新',
+            onPressed: controller.refreshAccounts,
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
             tooltip: '添加账户',
             onPressed: () => _openAccountForm(context),
             icon: const Icon(Icons.add),
           ),
         ],
       ),
-      body: const _WebDavAccountsBody(),
+      body: Obx(() => _buildBody(context)),
     );
   }
-}
 
-class _WebDavAccountsBody extends StatelessWidget {
-  const _WebDavAccountsBody();
+  Widget _buildBody(BuildContext context) {
+    final state = controller.state.value;
+    return switch (state) {
+      WebDavAccountsLoadingState() => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      WebDavAccountsFailureState() => _AccountsFailureView(
+        message: _formatError(state.error),
+        onRetry: controller.refreshAccounts,
+      ),
+      WebDavAccountsReadyState() => _AccountsListView(
+        accounts: state.accounts,
+        onCreate: () => _openAccountForm(context),
+        onEdit: (WebDavServerConfig account) =>
+            _openAccountForm(context, account: account),
+        onOpen: (WebDavServerConfig account) => _openBrowser(context, account),
+        onDelete: (WebDavServerConfig account) =>
+            _deleteAccount(context, account),
+      ),
+    };
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        const UiSkeletonNotice(message: 'UI 骨架阶段：账户增删改查、安全存储与真实目录请求尚未接入。'),
-        const SizedBox(height: 12),
-        Expanded(
-          child: ListView.separated(
-            key: const PageStorageKey<String>('webdav_accounts_list'),
-            padding: const EdgeInsets.all(16),
-            itemCount: kDemoAccounts.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final account = kDemoAccounts[index];
-              return _AccountTile(account: account);
-            },
-          ),
-        ),
-      ],
+  Future<void> _openAccountForm(
+    BuildContext context, {
+    WebDavServerConfig? account,
+  }) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => WebDavAccountFormPage(initialAccount: account),
+      ),
+    );
+    if (saved != true || !context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(account == null ? '已添加 WebDAV 账户。' : '已更新 WebDAV 账户。'),
+      ),
     );
   }
-}
 
-class _AccountTile extends StatelessWidget {
-  final WebDavServerConfig account;
-
-  const _AccountTile({required this.account});
-
-  void _openBrowser(BuildContext context) {
+  void _openBrowser(BuildContext context, WebDavServerConfig account) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => WebDavBrowserPage(account: account),
@@ -100,19 +80,179 @@ class _AccountTile extends StatelessWidget {
     );
   }
 
+  Future<void> _deleteAccount(
+    BuildContext context,
+    WebDavServerConfig account,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('删除账户'),
+          content: Text('确定删除“${account.alias}”吗？该操作会同时清除保存的密码。'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('删除'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      await controller.deleteAccount(account.id);
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('已删除 WebDAV 账户。')));
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_formatError(error))));
+    }
+  }
+}
+
+class _AccountsListView extends StatelessWidget {
+  final List<WebDavServerConfig> accounts;
+  final VoidCallback onCreate;
+  final ValueChanged<WebDavServerConfig> onEdit;
+  final ValueChanged<WebDavServerConfig> onOpen;
+  final ValueChanged<WebDavServerConfig> onDelete;
+
+  const _AccountsListView({
+    required this.accounts,
+    required this.onCreate,
+    required this.onEdit,
+    required this.onOpen,
+    required this.onDelete,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        onTap: () => _openBrowser(context),
-        title: Text(account.alias),
-        subtitle: Text(account.url.toString()),
-        trailing: IconButton(
-          tooltip: '编辑',
-          onPressed: () => showNotImplementedSnackBar(context, '编辑账户（未接入）'),
-          icon: const Icon(Icons.edit_outlined),
+    if (accounts.isEmpty) {
+      return _AccountsEmptyView(onCreate: onCreate);
+    }
+
+    return ListView.separated(
+      key: const PageStorageKey<String>('webdav_accounts_list'),
+      padding: const EdgeInsets.all(16),
+      itemCount: accounts.length,
+      separatorBuilder: (BuildContext context, int index) {
+        return const SizedBox(height: 8);
+      },
+      itemBuilder: (BuildContext context, int index) {
+        final account = accounts[index];
+        return Card(
+          child: ListTile(
+            onTap: () => onOpen(account),
+            leading: const CircleAvatar(child: Icon(Icons.cloud_outlined)),
+            title: Text(account.alias),
+            subtitle: Text('${account.username} · ${account.url}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                IconButton(
+                  tooltip: '编辑账户',
+                  onPressed: () => onEdit(account),
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+                IconButton(
+                  tooltip: '删除账户',
+                  onPressed: () => onDelete(account),
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AccountsEmptyView extends StatelessWidget {
+  final VoidCallback onCreate;
+
+  const _AccountsEmptyView({required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.cloud_off_outlined,
+              size: 56,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 16),
+            const Text('还没有 WebDAV 账户'),
+            const SizedBox(height: 8),
+            Text(
+              '添加服务器后即可浏览远程目录中的视频文件。',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onCreate,
+              icon: const Icon(Icons.add),
+              label: const Text('添加账户'),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _AccountsFailureView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _AccountsFailureView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(Icons.error_outline, size: 48),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton(onPressed: onRetry, child: const Text('重试')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatError(Object error) {
+  final text = error.toString();
+  return text
+      .replaceFirst('Exception: ', '')
+      .replaceFirst('Bad state: ', '')
+      .trim();
 }
