@@ -7,6 +7,7 @@ import 'package:pixelplay/features/media_library/data/in_memory_media_library_re
 import 'package:pixelplay/features/media_library/presentation/widgets/album_video_preview.dart';
 import 'package:pixelplay/features/media_library/presentation/widgets/album_video_tile.dart';
 import 'package:pixelplay/features/media_library/presentation/widgets/library_album_card.dart';
+import 'package:pixelplay/shared/utils/media_formatters.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 
 PixelPlayApp buildTestApp() {
@@ -65,7 +66,7 @@ void main() {
     );
   });
 
-  testWidgets('shows album videos without thumbnails', (
+  testWidgets('shows album videos with preview layout and metadata', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildTestApp());
@@ -75,8 +76,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AlbumVideoTile), findsWidgets);
-    expect(find.byType(AlbumVideoPreview), findsNothing);
+    expect(find.byType(AlbumVideoPreview), findsWidgets);
     expect(find.text('Beach Walk.mp4'), findsOneWidget);
-    expect(find.text('03:35 · 151 MB'), findsOneWidget);
+    expect(find.text('1920×1080 · 151 MB'), findsOneWidget);
+    expect(
+      find.text(
+        formatChineseDateTime(
+          DateTime.fromMillisecondsSinceEpoch(1_699_999_820 * 1000),
+        ),
+      ),
+      findsOneWidget,
+    );
   });
 }

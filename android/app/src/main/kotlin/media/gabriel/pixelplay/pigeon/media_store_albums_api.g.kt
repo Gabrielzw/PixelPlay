@@ -152,7 +152,10 @@ data class NativeVideoRecord (
   val bucketName: String,
   val durationMs: Long,
   val size: Long,
-  val dateAdded: Long
+  val dateAdded: Long,
+  val width: Long,
+  val height: Long,
+  val dateModified: Long
 )
  {
   companion object {
@@ -165,7 +168,10 @@ data class NativeVideoRecord (
       val durationMs = pigeonVar_list[5] as Long
       val size = pigeonVar_list[6] as Long
       val dateAdded = pigeonVar_list[7] as Long
-      return NativeVideoRecord(id, path, name, bucketId, bucketName, durationMs, size, dateAdded)
+      val width = pigeonVar_list[8] as Long
+      val height = pigeonVar_list[9] as Long
+      val dateModified = pigeonVar_list[10] as Long
+      return NativeVideoRecord(id, path, name, bucketId, bucketName, durationMs, size, dateAdded, width, height, dateModified)
     }
   }
   fun toList(): List<Any?> {
@@ -178,6 +184,9 @@ data class NativeVideoRecord (
       durationMs,
       size,
       dateAdded,
+      width,
+      height,
+      dateModified,
     )
   }
   override fun equals(other: Any?): Boolean {

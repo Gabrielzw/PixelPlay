@@ -10,8 +10,9 @@ import 'widgets/album_video_tile.dart';
 const EdgeInsets kAlbumPagePadding = EdgeInsets.fromLTRB(16, 12, 16, 20);
 const double kAlbumVideoSpacing = 12;
 const String kAlbumFallbackTitle = '未命名相册';
-const String kUnknownAddedTimeLabel = '添加时间未知';
 const String kUnknownVideoTitle = '未命名视频';
+const String kUnknownResolutionLabel = '分辨率未知';
+const String kUnknownModifiedTimeLabel = '修改时间未知';
 
 class AlbumPage extends StatefulWidget {
   final LocalAlbum album;
@@ -96,13 +97,15 @@ class _AlbumPageState extends State<AlbumPage> {
     final duration = formatVideoDuration(
       Duration(milliseconds: video.durationMs),
     );
-    final size = formatFileSize(video.size);
 
     return AlbumVideoTileData(
       id: video.id.toString(),
       title: title,
-      metaText: '$duration · $size',
-      addedTimeText: _formatAddedTime(video.dateAdded),
+      durationText: duration,
+      resolutionText: _formatVideoResolution(video),
+      sizeText: formatFileSize(video.size),
+      modifiedTimeText: _formatModifiedTime(video.dateModified),
+      previewSeed: video.id,
     );
   }
 }
@@ -214,13 +217,21 @@ String _resolveAlbumTitle(String bucketName) {
   return bucketName;
 }
 
-String _formatAddedTime(int addedSeconds) {
-  if (addedSeconds <= 0) {
-    return kUnknownAddedTimeLabel;
+String _formatVideoResolution(LocalVideo video) {
+  if (video.width <= 0 || video.height <= 0) {
+    return kUnknownResolutionLabel;
   }
 
-  final addedTime = DateTime.fromMillisecondsSinceEpoch(
-    addedSeconds * Duration.millisecondsPerSecond,
+  return formatResolution(width: video.width, height: video.height);
+}
+
+String _formatModifiedTime(int modifiedSeconds) {
+  if (modifiedSeconds <= 0) {
+    return kUnknownModifiedTimeLabel;
+  }
+
+  final modifiedTime = DateTime.fromMillisecondsSinceEpoch(
+    modifiedSeconds * Duration.millisecondsPerSecond,
   );
-  return formatChineseDateTime(addedTime);
+  return formatChineseDateTime(modifiedTime);
 }

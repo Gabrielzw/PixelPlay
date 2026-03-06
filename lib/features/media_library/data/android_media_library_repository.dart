@@ -58,6 +58,9 @@ class AndroidMediaLibraryRepository implements MediaLibraryRepository {
       durationMs: record.durationMs,
       size: record.size,
       dateAdded: record.dateAdded,
+      width: record.width,
+      height: record.height,
+      dateModified: record.dateModified,
     );
   }
 }

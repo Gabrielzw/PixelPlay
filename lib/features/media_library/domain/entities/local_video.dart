@@ -10,6 +10,9 @@ class LocalVideo {
   final int durationMs;
   final int size;
   final int dateAdded;
+  final int width;
+  final int height;
+  final int dateModified;
   final bool isFavorite;
   final int? lastPlayPositionMs;
 
@@ -22,14 +25,14 @@ class LocalVideo {
     required this.durationMs,
     required this.size,
     required this.dateAdded,
+    required this.width,
+    required this.height,
+    required this.dateModified,
     this.isFavorite = false,
     this.lastPlayPositionMs,
   });
 
-  LocalVideo copyWith({
-    bool? isFavorite,
-    int? lastPlayPositionMs,
-  }) {
+  LocalVideo copyWith({bool? isFavorite, int? lastPlayPositionMs}) {
     return LocalVideo(
       id: id,
       path: path,
@@ -39,9 +42,11 @@ class LocalVideo {
       durationMs: durationMs,
       size: size,
       dateAdded: dateAdded,
+      width: width,
+      height: height,
+      dateModified: dateModified,
       isFavorite: isFavorite ?? this.isFavorite,
       lastPlayPositionMs: lastPlayPositionMs ?? this.lastPlayPositionMs,
     );
   }
 }
-

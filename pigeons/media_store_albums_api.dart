@@ -31,6 +31,9 @@ class NativeVideoRecord {
   late int durationMs;
   late int size;
   late int dateAdded;
+  late int width;
+  late int height;
+  late int dateModified;
 }
 
 @HostApi()

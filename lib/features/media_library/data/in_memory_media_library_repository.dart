@@ -40,6 +40,9 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       durationMs: 215000,
       size: 158334976,
       dateAdded: kDemoAlbumDateAddedSeconds,
+      width: 1920,
+      height: 1080,
+      dateModified: kDemoAlbumDateAddedSeconds - 180,
     ),
     LocalVideo(
       id: 2,
@@ -50,6 +53,9 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       durationMs: 98000,
       size: 82313216,
       dateAdded: kDemoAlbumDateAddedSeconds - 600,
+      width: 1280,
+      height: 720,
+      dateModified: kDemoAlbumDateAddedSeconds - 780,
     ),
     LocalVideo(
       id: 3,
@@ -60,6 +66,9 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       durationMs: 47000,
       size: 21823488,
       dateAdded: kDemoAlbumDateAddedSeconds - 1200,
+      width: 1080,
+      height: 1920,
+      dateModified: kDemoAlbumDateAddedSeconds - 1320,
     ),
     LocalVideo(
       id: 4,
@@ -70,6 +79,9 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       durationMs: 62000,
       size: 24788992,
       dateAdded: kDemoAlbumDateAddedSeconds - 1800,
+      width: 1080,
+      height: 1920,
+      dateModified: kDemoAlbumDateAddedSeconds - 2010,
     ),
   ],
   'demo_camera': <LocalVideo>[
@@ -82,6 +94,10 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       durationMs: 612000,
       size: 644874240,
       dateAdded: kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds,
+      width: 3840,
+      height: 2160,
+      dateModified:
+          kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds - 120,
     ),
     LocalVideo(
       id: 6,
@@ -93,6 +109,10 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       size: 203423744,
       dateAdded:
           kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds - 600,
+      width: 1920,
+      height: 1080,
+      dateModified:
+          kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds - 750,
     ),
     LocalVideo(
       id: 7,
@@ -104,6 +124,10 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       size: 48365568,
       dateAdded:
           kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds - 1200,
+      width: 1280,
+      height: 720,
+      dateModified:
+          kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds - 1410,
     ),
   ],
   'demo_download': <LocalVideo>[
@@ -117,6 +141,10 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       size: 327155712,
       dateAdded:
           kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds * 2,
+      width: 3840,
+      height: 2160,
+      dateModified:
+          kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds * 2 - 90,
     ),
     LocalVideo(
       id: 9,
@@ -128,6 +156,10 @@ kDemoAlbumVideos = <String, List<LocalVideo>>{
       size: 519634944,
       dateAdded:
           kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds * 2 - 600,
+      width: 2560,
+      height: 1440,
+      dateModified:
+          kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds * 2 - 960,
     ),
   ],
 };

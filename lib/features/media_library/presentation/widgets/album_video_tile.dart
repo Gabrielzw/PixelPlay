@@ -1,26 +1,33 @@
 import 'package:flutter/material.dart';
 
-const double kAlbumVideoTileHeight = 92;
+import 'album_video_preview.dart';
+
+const double kAlbumVideoTileHeight = 118;
 const double kAlbumVideoTileRadius = 20;
 const double kAlbumVideoTilePadding = 14;
 const double kAlbumVideoTileGap = 14;
-const double kAlbumVideoIconSize = 48;
-const double kAlbumVideoMetaGap = 2;
+const double kAlbumVideoMetaSpacing = 6;
 const double kAlbumVideoTitleHeight = 1.1;
-const double kAlbumVideoMetaHeight = 1.15;
+const double kAlbumVideoInfoHeight = 1.15;
 
 @immutable
 class AlbumVideoTileData {
   final String id;
   final String title;
-  final String metaText;
-  final String addedTimeText;
+  final String durationText;
+  final String resolutionText;
+  final String sizeText;
+  final String modifiedTimeText;
+  final int previewSeed;
 
   const AlbumVideoTileData({
     required this.id,
     required this.title,
-    required this.metaText,
-    required this.addedTimeText,
+    required this.durationText,
+    required this.resolutionText,
+    required this.sizeText,
+    required this.modifiedTimeText,
+    required this.previewSeed,
   });
 }
 
@@ -47,37 +54,16 @@ class AlbumVideoTile extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(kAlbumVideoTilePadding),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              _AlbumVideoIcon(colorScheme: colorScheme),
+              AlbumVideoPreview(
+                durationText: data.durationText,
+                previewSeed: data.previewSeed,
+              ),
               const SizedBox(width: kAlbumVideoTileGap),
               Expanded(child: _AlbumVideoInfo(data: data)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AlbumVideoIcon extends StatelessWidget {
-  final ColorScheme colorScheme;
-
-  const _AlbumVideoIcon({required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
-      child: SizedBox(
-        width: kAlbumVideoIconSize,
-        height: kAlbumVideoIconSize,
-        child: Icon(
-          Icons.play_arrow_rounded,
-          color: colorScheme.onPrimaryContainer,
-          size: 28,
         ),
       ),
     );
@@ -94,43 +80,48 @@ class _AlbumVideoInfo extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final secondaryColor = Theme.of(context).colorScheme.onSurfaceVariant;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        SizedBox(
-          height: 32,
-          child: Text(
-            data.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              height: kAlbumVideoTitleHeight,
+    return SizedBox(
+      height: kVideoTilePreviewWidth / kVideoTilePreviewAspectRatio,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          SizedBox(
+            height: 32,
+            child: Text(
+              data.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                height: kAlbumVideoTitleHeight,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: kAlbumVideoMetaGap),
-        Text(
-          data.metaText,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodySmall?.copyWith(
-            color: secondaryColor,
-            height: kAlbumVideoMetaHeight,
+          const SizedBox(height: 2),
+          Text(
+            '${data.resolutionText} · ${data.sizeText}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodySmall?.copyWith(
+              color: secondaryColor,
+              height: kAlbumVideoInfoHeight,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          data.addedTimeText,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodySmall?.copyWith(
-            color: secondaryColor,
-            height: kAlbumVideoMetaHeight,
+          Padding(
+            padding: const EdgeInsets.only(top: kAlbumVideoMetaSpacing),
+            child: Text(
+              data.modifiedTimeText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodySmall?.copyWith(
+                color: secondaryColor,
+                height: kAlbumVideoInfoHeight,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

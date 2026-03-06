@@ -155,6 +155,9 @@ class NativeVideoRecord {
     required this.durationMs,
     required this.size,
     required this.dateAdded,
+    required this.width,
+    required this.height,
+    required this.dateModified,
   });
 
   String id;
@@ -173,6 +176,12 @@ class NativeVideoRecord {
 
   int dateAdded;
 
+  int width;
+
+  int height;
+
+  int dateModified;
+
   List<Object?> _toList() {
     return <Object?>[
       id,
@@ -183,6 +192,9 @@ class NativeVideoRecord {
       durationMs,
       size,
       dateAdded,
+      width,
+      height,
+      dateModified,
     ];
   }
 
@@ -200,6 +212,9 @@ class NativeVideoRecord {
       durationMs: result[5]! as int,
       size: result[6]! as int,
       dateAdded: result[7]! as int,
+      width: result[8]! as int,
+      height: result[9]! as int,
+      dateModified: result[10]! as int,
     );
   }
 
