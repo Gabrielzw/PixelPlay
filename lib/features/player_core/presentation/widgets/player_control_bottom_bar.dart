@@ -112,7 +112,13 @@ class _ProgressBar extends StatelessWidget {
             value: controller.progress.value,
             min: kPlayerMinProgress,
             max: kPlayerMaxProgress,
-            onChanged: hasDuration ? controller.seekToRatio : null,
+            onChangeStart: hasDuration
+                ? (_) => controller.beginSeekPreview()
+                : null,
+            onChanged: hasDuration ? controller.previewSeekToRatio : null,
+            onChangeEnd: hasDuration
+                ? (_) => controller.commitSeekPreview()
+                : null,
           ),
           Row(
             children: <Widget>[

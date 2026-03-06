@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/pixelplay_app.dart';
@@ -12,6 +13,7 @@ import 'features/webdav_client/data/webdav_client_browser_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   final preferences = await SharedPreferences.getInstance();
   final settingsRepository = SharedPreferencesSettingsRepository(
     preferences: preferences,

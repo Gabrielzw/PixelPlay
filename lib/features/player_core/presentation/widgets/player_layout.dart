@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../domain/player_controller.dart';
+import '../../domain/player_playback_port.dart';
 import 'player_controls.dart';
 import 'player_feedback.dart';
 import 'player_gesture_layer.dart';
@@ -9,12 +10,14 @@ import 'player_surface.dart';
 
 class PlayerLayout extends StatelessWidget {
   final PlayerController controller;
+  final PlayerPlaybackPort playbackPort;
   final VoidCallback onBack;
   final VoidCallback onOpenSettings;
 
   const PlayerLayout({
     super.key,
     required this.controller,
+    required this.playbackPort,
     required this.onBack,
     required this.onOpenSettings,
   });
@@ -26,6 +29,7 @@ class PlayerLayout extends StatelessWidget {
         Positioned.fill(
           child: Obx(
             () => PlayerSurface(
+              playbackPort: playbackPort,
               item: controller.currentItem.value,
               aspectRatioMode: controller.aspectRatio.value,
               controlsVisible: controller.controlsVisible.value,

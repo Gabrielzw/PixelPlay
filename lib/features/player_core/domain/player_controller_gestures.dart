@@ -21,7 +21,7 @@ extension _PlayerGestureLogic on PlayerController {
 
   void handleSurfaceGestureUpdate({required Offset localPosition}) {
     final session = _gestureSession;
-    if (session == null || controlsLocked.value) {
+    if (session == null) {
       return;
     }
 
@@ -45,7 +45,7 @@ extension _PlayerGestureLogic on PlayerController {
 
   void handleSurfaceGestureEnd() {
     if (_gestureSession?.mode == _PlayerGestureMode.seek) {
-      scheduleProgressSave();
+      unawaited(commitSeekPreview());
     }
     _gestureSession = null;
     scheduleHudHide();
@@ -89,7 +89,7 @@ extension _PlayerGestureLogic on PlayerController {
         session.basePosition +
         Duration(milliseconds: (secondsOffset * 1000).round());
 
-    applyPosition(nextPosition);
+    previewSeekPosition(nextPosition);
     showHud(
       PlayerHudState(
         kind: PlayerHudKind.seek,
@@ -115,6 +115,7 @@ extension _PlayerGestureLogic on PlayerController {
   void applyVolumeGesture(_PlayerGestureSession session, double deltaY) {
     final nextValue = session.baseVolume - deltaY / session.viewportSize.height;
     volumeLevel.value = nextValue.clamp(0.0, 1.0);
+    unawaited(playbackPort.setVolume(volumeLevel.value));
     showHud(
       PlayerHudState(
         kind: PlayerHudKind.volume,

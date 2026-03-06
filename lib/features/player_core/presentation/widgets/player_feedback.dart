@@ -29,7 +29,7 @@ class PlayerFeedbackLayer extends StatelessWidget {
             _ErrorOverlay(
               message: controller.errorMessage.value!,
               canRetry: controller.isNetworkError,
-              onRetry: controller.clearError,
+              onRetry: controller.retryCurrentItem,
               onBack: onBack,
             ),
         ],

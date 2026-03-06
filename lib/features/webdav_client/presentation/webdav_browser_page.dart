@@ -1,3 +1,5 @@
+﻿import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -73,7 +75,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            tooltip: '返回',
+            tooltip: '杩斿洖',
             onPressed: _handleBackPressed,
             icon: const Icon(Icons.arrow_back),
           ),
@@ -85,7 +87,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
           ),
           actions: <Widget>[
             IconButton(
-              tooltip: '刷新',
+              tooltip: '鍒锋柊',
               onPressed: _loadEntries,
               icon: const Icon(Icons.refresh),
             ),
@@ -255,15 +257,26 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     return resolveRelativeWebDavPath(baseUrl: account.url, path: sourcePath);
   }
 
-  void _handleEntryTap(BuildContext context, WebDavEntry entry) {
+  Future<void> _handleEntryTap(BuildContext context, WebDavEntry entry) async {
     switch (entry.type) {
       case WebDavEntryType.directory:
-        _openPath(entry.path);
+        await _openPath(entry.path);
         break;
       case WebDavEntryType.video:
+        final password = await _accountsController.requirePassword(
+          widget.account.id,
+        );
+        if (!context.mounted) {
+          return;
+        }
         final playlist = _entries
             .where((WebDavEntry item) => item.type == WebDavEntryType.video)
-            .map(_mapPlayerItem)
+            .map(
+              (WebDavEntry item) => _mapPlayerItem(
+                entry: item,
+                password: password,
+              ),
+            )
             .toList(growable: false);
         final initialIndex = playlist.indexWhere(
           (PlayerQueueItem item) => item.id == entry.path,
@@ -282,13 +295,27 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     }
   }
 
-  PlayerQueueItem _mapPlayerItem(WebDavEntry entry) {
+  PlayerQueueItem _mapPlayerItem({
+    required WebDavEntry entry,
+    required String password,
+  }) {
+    final authorization = base64Encode(
+      utf8.encode('${widget.account.username}:$password'),
+    );
+
     return PlayerQueueItem(
       id: entry.path,
       title: entry.name,
-      sourceLabel: '${widget.account.alias} · $_currentPath',
+      sourceLabel: '${widget.account.alias} 路 $_currentPath',
       path: entry.path,
+      sourceUri: buildWebDavResourceUrl(
+        baseUrl: widget.account.url,
+        path: entry.path,
+      ).toString(),
       isRemote: true,
+      httpHeaders: <String, String>{
+        'Authorization': 'Basic $authorization',
+      },
     );
   }
 }
@@ -300,3 +327,5 @@ String _formatError(Object error) {
       .replaceFirst('Bad state: ', '')
       .trim();
 }
+
+

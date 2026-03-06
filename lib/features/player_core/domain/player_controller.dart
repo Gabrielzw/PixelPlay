@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../settings/domain/app_settings.dart';
 import '../../settings/domain/settings_controller.dart';
 import 'playback_position_repository.dart';
+import 'player_playback_port.dart';
 import 'player_queue_item.dart';
 
 part 'player_controller_state.dart';
@@ -15,6 +16,7 @@ part 'player_controller_playback.dart';
 class PlayerController extends GetxController {
   final SettingsController settingsController;
   final PlaybackPositionRepository playbackPositionRepository;
+  final PlayerPlaybackPort playbackPort;
   final List<PlayerQueueItem> queue;
 
   final RxBool isPlaying = true.obs;
@@ -34,14 +36,21 @@ class PlayerController extends GetxController {
   late final Rx<Duration> duration;
   late final Rx<PlayerAspectRatio> aspectRatio;
 
+  final List<StreamSubscription<Object?>> _playbackSubscriptions =
+      <StreamSubscription<Object?>>[];
+
   Timer? _controlsTimer;
   Timer? _hudTimer;
   Timer? _progressSaveTimer;
   _PlayerGestureSession? _gestureSession;
+  Duration? _pendingSeekPosition;
+  DateTime? _lastPositionSyncAt;
+  Duration _lastSyncedPosition = Duration.zero;
 
   PlayerController({
     required this.settingsController,
     required this.playbackPositionRepository,
+    required this.playbackPort,
     required List<PlayerQueueItem> queue,
     int initialIndex = 0,
   }) : queue = List<PlayerQueueItem>.unmodifiable(queue) {
@@ -71,12 +80,14 @@ class PlayerController extends GetxController {
 
   bool get hasKnownDuration => duration.value > Duration.zero;
 
-  bool get isNetworkError => errorMessage.value == kPlayerNetworkErrorMessage;
+  bool get isNetworkError => currentItem.value.isRemote;
 
   @override
   Future<void> onReady() async {
     super.onReady();
-    await restoreCurrentProgress(showMessage: true);
+    _bindPlaybackStreams();
+    await _syncPlaybackPreferences();
+    await openCurrentItem(restoreProgress: true, showRestoreMessage: true);
     armControlsAutoHide();
   }
 
@@ -86,6 +97,9 @@ class PlayerController extends GetxController {
     _controlsTimer?.cancel();
     _hudTimer?.cancel();
     _progressSaveTimer?.cancel();
+    for (final subscription in _playbackSubscriptions) {
+      subscription.cancel();
+    }
     super.onClose();
   }
 
@@ -100,14 +114,17 @@ class PlayerController extends GetxController {
     showControls();
   }
 
-  void togglePlay() {
-    isPlaying.value = !isPlaying.value;
+  Future<void> togglePlay() async {
     if (isPlaying.value) {
-      armControlsAutoHide();
+      await playbackPort.pause();
+      showControls();
+      cancelControlsAutoHide();
       return;
     }
-    showControls();
-    cancelControlsAutoHide();
+
+    clearError();
+    await playbackPort.play();
+    armControlsAutoHide();
   }
 
   void toggleLock() {
@@ -143,7 +160,6 @@ class PlayerController extends GetxController {
     await playbackPositionRepository.clear(currentItem.value.id);
     if (!settingsController.settings.value.autoPlayNext || !hasNext) {
       applyPosition(duration.value);
-      isPlaying.value = false;
       showControls();
       return;
     }
@@ -152,6 +168,7 @@ class PlayerController extends GetxController {
 
   Future<void> setPlaybackSpeed(double speed) async {
     playbackSpeed.value = speed;
+    await playbackPort.setPlaybackSpeed(speed);
     await settingsController.setDefaultPlaybackSpeed(speed);
     showInfoHud('播放速度 ${speed}x');
     armControlsAutoHide();
@@ -172,7 +189,11 @@ class PlayerController extends GetxController {
     armControlsAutoHide();
   }
 
-  void seekToRatio(double value) {
+  void beginSeekPreview() {
+    cancelControlsAutoHide();
+  }
+
+  void previewSeekToRatio(double value) {
     if (!hasKnownDuration) {
       return;
     }
@@ -181,37 +202,59 @@ class PlayerController extends GetxController {
     final nextPosition = Duration(
       milliseconds: (duration.value.inMilliseconds * safeValue).round(),
     );
-    applyPosition(nextPosition);
+    previewSeekPosition(nextPosition);
+  }
+
+  Future<void> commitSeekPreview() async {
+    final pendingPosition = _pendingSeekPosition;
+    if (pendingPosition == null) {
+      armControlsAutoHide();
+      return;
+    }
+
+    await playbackPort.seek(pendingPosition);
+    _pendingSeekPosition = null;
     scheduleProgressSave();
     armControlsAutoHide();
   }
 
   Future<void> resetCurrentProgress() async {
     await playbackPositionRepository.clear(currentItem.value.id);
-    applyPosition(Duration.zero);
+    previewSeekPosition(Duration.zero);
+    await commitSeekPreview();
     showInfoHud('已清除当前播放进度');
   }
 
   void showScreenshotUnavailable() {
-    showInfoHud('截图保存待接入媒体帧导出');
+    showInfoHud('截图导出能力暂未接入');
   }
 
   void setBuffering(bool value) {
     isBuffering.value = value;
   }
 
-  void showDecodeError() {
-    showError(kPlayerDecodeErrorMessage);
-  }
-
-  void showNetworkError() {
-    showError(kPlayerNetworkErrorMessage);
+  void handlePlaybackError(String message) {
+    final cleanMessage = message.trim();
+    if (cleanMessage.isEmpty) {
+      showError(
+        currentItem.value.isRemote
+            ? kPlayerNetworkErrorMessage
+            : kPlayerDecodeErrorMessage,
+      );
+      return;
+    }
+    showError('$kPlayerPlaybackErrorPrefix$cleanMessage');
   }
 
   void clearError() {
     errorMessage.value = null;
     isBuffering.value = false;
     showControls();
+  }
+
+  Future<void> retryCurrentItem() async {
+    clearError();
+    await openCurrentItem(restoreProgress: true, showRestoreMessage: false);
   }
 
   void beginSurfaceGesture({

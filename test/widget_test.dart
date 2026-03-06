@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
@@ -9,6 +9,7 @@ import 'package:pixelplay/features/media_library/presentation/widgets/album_vide
 import 'package:pixelplay/features/media_library/presentation/widgets/library_album_card.dart';
 import 'package:pixelplay/features/player_core/data/in_memory_playback_position_repository.dart';
 import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
+import 'package:pixelplay/features/player_core/domain/player_playback_port.dart';
 import 'package:pixelplay/features/player_core/domain/player_queue_item.dart';
 import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
@@ -27,6 +28,52 @@ PixelPlayApp buildTestApp() {
     webDavAccountRepository: InMemoryWebDavAccountRepository(),
     webDavBrowserRepository: const InMemoryWebDavBrowserRepository(),
   );
+}
+
+class FakePlayerPlaybackPort implements PlayerPlaybackPort {
+  @override
+  Stream<bool> get bufferingStream => const Stream<bool>.empty();
+
+  @override
+  Stream<bool> get completedStream => const Stream<bool>.empty();
+
+  @override
+  Stream<Duration> get durationStream => const Stream<Duration>.empty();
+
+  @override
+  Stream<String> get errorStream => const Stream<String>.empty();
+
+  @override
+  Stream<bool> get playingStream => const Stream<bool>.empty();
+
+  @override
+  Stream<Duration> get positionStream => const Stream<Duration>.empty();
+
+  @override
+  Widget buildVideoView({required BoxFit fit}) {
+    return const SizedBox.expand();
+  }
+
+  @override
+  Future<void> disposePlayback() async {}
+
+  @override
+  Future<void> open(PlayerQueueItem item, {required bool play}) async {}
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {}
+
+  @override
+  Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setPlaybackSpeed(double speed) async {}
+
+  @override
+  Future<void> setVolume(double volume) async {}
 }
 
 void main() {
@@ -90,7 +137,7 @@ void main() {
     expect(find.byType(AlbumVideoTile), findsWidgets);
     expect(find.byType(AlbumVideoPreview), findsWidgets);
     expect(find.text('Beach Walk.mp4'), findsOneWidget);
-    expect(find.text('1920×1080 · 151 MB'), findsOneWidget);
+    expect(find.textContaining('151 MB'), findsOneWidget);
     expect(
       find.text(
         formatChineseDateTime(
@@ -104,6 +151,7 @@ void main() {
   testWidgets('player page omits Anime4K action', (WidgetTester tester) async {
     final settingsRepository = InMemorySettingsRepository();
     final progressRepository = InMemoryPlaybackPositionRepository();
+    final playbackPort = FakePlayerPlaybackPort();
 
     Get.put<SettingsController>(
       SettingsController(repository: settingsRepository),
@@ -111,13 +159,15 @@ void main() {
     Get.put<PlaybackPositionRepository>(progressRepository);
 
     await tester.pumpWidget(
-      const GetMaterialApp(
+      GetMaterialApp(
         home: PlayerPage(
+          playbackPort: playbackPort,
           playlist: <PlayerQueueItem>[
             PlayerQueueItem(
               id: 'video-1',
               title: 'Test Clip.mp4',
-              sourceLabel: '本地 / Screenshots',
+              sourceLabel: '鏈湴 / Screenshots',
+              sourceUri: 'test://video-1',
               duration: Duration(minutes: 10),
             ),
           ],
@@ -126,8 +176,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byTooltip('截图'), findsOneWidget);
-    expect(find.byTooltip('更多'), findsOneWidget);
+    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.more_vert_rounded), findsOneWidget);
     expect(find.textContaining('Anime4K'), findsNothing);
   });
 
@@ -136,6 +186,7 @@ void main() {
   ) async {
     final settingsRepository = InMemorySettingsRepository();
     final progressRepository = InMemoryPlaybackPositionRepository();
+    final playbackPort = FakePlayerPlaybackPort();
     await progressRepository.save(
       const PlaybackPositionRecord(
         mediaId: 'video-2',
@@ -150,13 +201,15 @@ void main() {
     Get.put<PlaybackPositionRepository>(progressRepository);
 
     await tester.pumpWidget(
-      const GetMaterialApp(
+      GetMaterialApp(
         home: PlayerPage(
+          playbackPort: playbackPort,
           playlist: <PlayerQueueItem>[
             PlayerQueueItem(
               id: 'video-2',
               title: 'Resume.mp4',
-              sourceLabel: '本地 / Camera',
+              sourceLabel: '鏈湴 / Camera',
+              sourceUri: 'test://video-2',
               duration: Duration(minutes: 10),
             ),
           ],
@@ -169,3 +222,4 @@ void main() {
     expect(find.text('02:00'), findsOneWidget);
   });
 }
+

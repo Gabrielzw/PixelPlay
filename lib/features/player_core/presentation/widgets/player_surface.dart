@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../../settings/domain/app_settings.dart';
+import '../../domain/player_playback_port.dart';
 import '../../domain/player_queue_item.dart';
 import 'player_ui_constants.dart';
 
-const double _kPreviewWidth = 1280;
+const double _kControlsMaskOpacity = 0.08;
 
 class PlayerSurface extends StatelessWidget {
+  final PlayerPlaybackPort playbackPort;
   final PlayerQueueItem item;
   final PlayerAspectRatio aspectRatioMode;
   final bool controlsVisible;
 
   const PlayerSurface({
     super.key,
+    required this.playbackPort,
     required this.item,
     required this.aspectRatioMode,
     required this.controlsVisible,
@@ -22,17 +25,45 @@ class PlayerSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     return ColoredBox(
       color: kPlayerBackground,
-      child: ClipRect(
-        child: SizedBox.expand(
-          child: FittedBox(
-            fit: _resolveBoxFit(aspectRatioMode),
-            child: SizedBox(
-              width: _kPreviewWidth,
-              height: _kPreviewWidth / item.previewAspectRatio,
-              child: _SurfacePreviewCard(item: item, dimmed: controlsVisible),
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          playbackPort.buildVideoView(fit: _resolveBoxFit(aspectRatioMode)),
+          IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: controlsVisible ? _kControlsMaskOpacity : 0,
+              duration: kPlayerOverlayAnimationDuration,
+              child: const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Colors.black12,
+                      Colors.transparent,
+                      Colors.black26,
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+          if (controlsVisible)
+            Positioned(
+              left: 28,
+              bottom: 28,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: <Widget>[
+                  _InfoChip(label: item.isRemote ? 'WebDAV' : '本地'),
+                  _InfoChip(label: item.sourceLabel),
+                  if (item.resolutionText != null)
+                    _InfoChip(label: item.resolutionText!),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -44,95 +75,6 @@ class PlayerSurface extends StatelessWidget {
       PlayerAspectRatio.original => BoxFit.none,
       PlayerAspectRatio.crop => BoxFit.cover,
     };
-  }
-}
-
-class _SurfacePreviewCard extends StatelessWidget {
-  final PlayerQueueItem item;
-  final bool dimmed;
-
-  const _SurfacePreviewCard({required this.item, required this.dimmed});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final dimOpacity = dimmed ? 0.24 : 0.12;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            applyOpacity(colorScheme.primary, 0.28),
-            applyOpacity(colorScheme.secondary, 0.12),
-            Colors.black,
-          ],
-        ),
-      ),
-      child: Stack(
-        children: <Widget>[
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 0.92,
-                  colors: <Color>[
-                    Colors.transparent,
-                    applyOpacity(Colors.black, dimOpacity),
-                    applyOpacity(Colors.black, 0.58),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Icon(
-                  item.isRemote
-                      ? Icons.cloud_circle_rounded
-                      : Icons.movie_rounded,
-                  size: 104,
-                  color: applyOpacity(Colors.white, 0.92),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  '媒体渲染层待接入 media_kit',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '当前已实现播放器页面布局、手势层、控制面板与状态反馈。',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 28,
-            bottom: 28,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                _InfoChip(label: item.isRemote ? 'WebDAV' : '本地'),
-                _InfoChip(label: item.sourceLabel),
-                if (item.resolutionText != null)
-                  _InfoChip(label: item.resolutionText!),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
