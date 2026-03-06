@@ -18,7 +18,7 @@ class PlayerSettingsPage extends GetView<SettingsController> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
-            const UiSkeletonNotice(message: 'UI 骨架阶段：设置未持久化，未与播放器联动。'),
+            const UiSkeletonNotice(message: '此处配置会作为播放器页的默认倍速、画面比例与手势快进参数。'),
             const SizedBox(height: 12),
             _PlaybackSpeedTile(
               value: state.defaultPlaybackSpeed,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../features/media_library/domain/contracts/media_library_repository.dart';
+import '../features/player_core/domain/playback_position_repository.dart';
 import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
 import '../features/shell/presentation/pixelplay_shell.dart';
@@ -15,6 +16,7 @@ class PixelPlayApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
+  final PlaybackPositionRepository playbackPositionRepository;
   final WebDavAccountRepository webDavAccountRepository;
   final WebDavBrowserRepository webDavBrowserRepository;
 
@@ -23,6 +25,7 @@ class PixelPlayApp extends StatefulWidget {
     required this.settingsRepository,
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
+    required this.playbackPositionRepository,
     required this.webDavAccountRepository,
     required this.webDavBrowserRepository,
   });
@@ -41,6 +44,7 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       settingsRepository: widget.settingsRepository,
       mediaLibraryRepository: widget.mediaLibraryRepository,
       thumbnailQueue: widget.thumbnailQueue,
+      playbackPositionRepository: widget.playbackPositionRepository,
       webDavAccountRepository: widget.webDavAccountRepository,
       webDavBrowserRepository: widget.webDavBrowserRepository,
     ).dependencies();

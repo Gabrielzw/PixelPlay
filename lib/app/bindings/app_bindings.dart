@@ -4,7 +4,7 @@ import '../../features/media_library/data/pigeon/media_store_albums_api.g.dart'
     as pigeon;
 import '../../features/media_library/domain/contracts/media_library_repository.dart';
 import '../../features/media_library/presentation/controllers/media_library_controller.dart';
-import '../../features/player_core/domain/player_controller.dart';
+import '../../features/player_core/domain/playback_position_repository.dart';
 import '../../features/settings/domain/settings_controller.dart';
 import '../../features/settings/domain/settings_repository.dart';
 import '../../features/thumbnail_engine/data/native_thumbnail_store.dart';
@@ -18,6 +18,7 @@ class AppBindings extends Bindings {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
+  final PlaybackPositionRepository playbackPositionRepository;
   final WebDavAccountRepository webDavAccountRepository;
   final WebDavBrowserRepository webDavBrowserRepository;
 
@@ -25,6 +26,7 @@ class AppBindings extends Bindings {
     required this.settingsRepository,
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
+    required this.playbackPositionRepository,
     required this.webDavAccountRepository,
     required this.webDavBrowserRepository,
   });
@@ -33,6 +35,10 @@ class AppBindings extends Bindings {
   void dependencies() {
     Get.put<SettingsRepository>(settingsRepository, permanent: true);
     Get.put<MediaLibraryRepository>(mediaLibraryRepository, permanent: true);
+    Get.put<PlaybackPositionRepository>(
+      playbackPositionRepository,
+      permanent: true,
+    );
     Get.put<WebDavAccountRepository>(webDavAccountRepository, permanent: true);
     Get.put<WebDavBrowserRepository>(webDavBrowserRepository, permanent: true);
     Get.put<ThumbnailQueue>(
@@ -51,7 +57,6 @@ class AppBindings extends Bindings {
       WebDavAccountsController(repository: webDavAccountRepository),
       permanent: true,
     );
-    Get.put<PlayerController>(PlayerController(), permanent: true);
   }
 }
 

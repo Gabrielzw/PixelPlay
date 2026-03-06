@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../player_core/domain/player_queue_item.dart';
+import '../../player_core/presentation/player_page.dart';
 import '../domain/contracts/webdav_browser_repository.dart';
 import '../domain/entities/webdav_entry.dart';
 import '../domain/webdav_paths.dart';
@@ -259,13 +261,35 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
         _openPath(entry.path);
         break;
       case WebDavEntryType.video:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已识别视频文件：${entry.name}，播放功能暂未接入。')),
+        final playlist = _entries
+            .where((WebDavEntry item) => item.type == WebDavEntryType.video)
+            .map(_mapPlayerItem)
+            .toList(growable: false);
+        final initialIndex = playlist.indexWhere(
+          (PlayerQueueItem item) => item.id == entry.path,
+        );
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => PlayerPage(
+              playlist: playlist,
+              initialIndex: initialIndex < 0 ? 0 : initialIndex,
+            ),
+          ),
         );
         break;
       case WebDavEntryType.other:
         break;
     }
+  }
+
+  PlayerQueueItem _mapPlayerItem(WebDavEntry entry) {
+    return PlayerQueueItem(
+      id: entry.path,
+      title: entry.name,
+      sourceLabel: '${widget.account.alias} · $_currentPath',
+      path: entry.path,
+      isRemote: true,
+    );
   }
 }
 

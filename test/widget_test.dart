@@ -7,6 +7,11 @@ import 'package:pixelplay/features/media_library/data/in_memory_media_library_re
 import 'package:pixelplay/features/media_library/presentation/widgets/album_video_preview.dart';
 import 'package:pixelplay/features/media_library/presentation/widgets/album_video_tile.dart';
 import 'package:pixelplay/features/media_library/presentation/widgets/library_album_card.dart';
+import 'package:pixelplay/features/player_core/data/in_memory_playback_position_repository.dart';
+import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
+import 'package:pixelplay/features/player_core/domain/player_queue_item.dart';
+import 'package:pixelplay/features/player_core/presentation/player_page.dart';
+import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/thumbnail_engine/data/in_memory_thumbnail_queue.dart';
 import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_account_repository.dart';
@@ -18,6 +23,7 @@ PixelPlayApp buildTestApp() {
     settingsRepository: InMemorySettingsRepository(),
     mediaLibraryRepository: const InMemoryMediaLibraryRepository(),
     thumbnailQueue: InMemoryThumbnailQueue(),
+    playbackPositionRepository: InMemoryPlaybackPositionRepository(),
     webDavAccountRepository: InMemoryWebDavAccountRepository(),
     webDavBrowserRepository: const InMemoryWebDavBrowserRepository(),
   );
@@ -93,5 +99,73 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('player page omits Anime4K action', (WidgetTester tester) async {
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = InMemoryPlaybackPositionRepository();
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+
+    await tester.pumpWidget(
+      const GetMaterialApp(
+        home: PlayerPage(
+          playlist: <PlayerQueueItem>[
+            PlayerQueueItem(
+              id: 'video-1',
+              title: 'Test Clip.mp4',
+              sourceLabel: '本地 / Screenshots',
+              duration: Duration(minutes: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byTooltip('截图'), findsOneWidget);
+    expect(find.byTooltip('更多'), findsOneWidget);
+    expect(find.textContaining('Anime4K'), findsNothing);
+  });
+
+  testWidgets('player page restores saved playback progress', (
+    WidgetTester tester,
+  ) async {
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = InMemoryPlaybackPositionRepository();
+    await progressRepository.save(
+      const PlaybackPositionRecord(
+        mediaId: 'video-2',
+        positionMs: 120000,
+        durationMs: 600000,
+      ),
+    );
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+
+    await tester.pumpWidget(
+      const GetMaterialApp(
+        home: PlayerPage(
+          playlist: <PlayerQueueItem>[
+            PlayerQueueItem(
+              id: 'video-2',
+              title: 'Resume.mp4',
+              sourceLabel: '本地 / Camera',
+              duration: Duration(minutes: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('已恢复播放进度'), findsOneWidget);
+    expect(find.text('02:00'), findsOneWidget);
   });
 }

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/pixelplay_app.dart';
 import 'features/media_library/data/android_media_library_repository.dart';
+import 'features/player_core/data/shared_preferences_playback_position_repository.dart';
 import 'features/settings/data/shared_preferences_settings_repository.dart';
 import 'features/webdav_client/data/secure_storage_webdav_password_store.dart';
 import 'features/webdav_client/data/shared_preferences_webdav_account_repository.dart';
@@ -15,6 +16,8 @@ Future<void> main() async {
   final settingsRepository = SharedPreferencesSettingsRepository(
     preferences: preferences,
   );
+  final playbackPositionRepository =
+      SharedPreferencesPlaybackPositionRepository(preferences: preferences);
   final mediaLibraryRepository = AndroidMediaLibraryRepository();
   const secureStorage = FlutterSecureStorage();
   final webDavAccountRepository = SharedPreferencesWebDavAccountRepository(
@@ -29,6 +32,7 @@ Future<void> main() async {
     PixelPlayApp(
       settingsRepository: settingsRepository,
       mediaLibraryRepository: mediaLibraryRepository,
+      playbackPositionRepository: playbackPositionRepository,
       webDavAccountRepository: webDavAccountRepository,
       webDavBrowserRepository: webDavBrowserRepository,
     ),

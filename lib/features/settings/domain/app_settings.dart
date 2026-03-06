@@ -14,6 +14,7 @@ const List<double> kPlaybackSpeedOptions = <double>[
   1.25,
   1.5,
   2.0,
+  3.0,
 ];
 
 const int kGestureSeekMinSeconds = 10;
@@ -23,7 +24,7 @@ const int kGestureSeekDivisions =
     (kGestureSeekMaxSeconds - kGestureSeekMinSeconds) ~/
     kGestureSeekStepSeconds;
 
-enum PlayerAspectRatio { fit, fill, original }
+enum PlayerAspectRatio { fit, fill, original, crop }
 
 extension PlayerAspectRatioLabel on PlayerAspectRatio {
   String get label {
@@ -31,6 +32,7 @@ extension PlayerAspectRatioLabel on PlayerAspectRatio {
       PlayerAspectRatio.fit => '适应屏幕',
       PlayerAspectRatio.fill => '拉伸填充',
       PlayerAspectRatio.original => '原始比例',
+      PlayerAspectRatio.crop => '裁剪铺满',
     };
   }
 }

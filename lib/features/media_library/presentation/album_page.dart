@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/utils/media_formatters.dart';
 import '../../../shared/utils/not_implemented.dart';
+import '../../player_core/domain/player_queue_item.dart';
+import '../../player_core/presentation/player_page.dart';
 import '../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../domain/contracts/media_library_repository.dart';
 import '../domain/entities/local_album.dart';
@@ -26,7 +28,7 @@ class AlbumPage extends StatefulWidget {
 }
 
 class _AlbumPageState extends State<AlbumPage> {
-  late Future<List<AlbumVideoTileData>> _videosFuture;
+  late Future<List<_AlbumVideoEntry>> _videosFuture;
 
   @override
   void initState() {
@@ -54,12 +56,12 @@ class _AlbumPageState extends State<AlbumPage> {
           ),
         ],
       ),
-      body: FutureBuilder<List<AlbumVideoTileData>>(
+      body: FutureBuilder<List<_AlbumVideoEntry>>(
         future: _videosFuture,
         builder:
             (
               BuildContext context,
-              AsyncSnapshot<List<AlbumVideoTileData>> snapshot,
+              AsyncSnapshot<List<_AlbumVideoEntry>> snapshot,
             ) {
               if (snapshot.hasError) {
                 return _AlbumErrorView(
@@ -86,31 +88,44 @@ class _AlbumPageState extends State<AlbumPage> {
     });
   }
 
-  Future<List<AlbumVideoTileData>> _loadVideos() async {
+  Future<List<_AlbumVideoEntry>> _loadVideos() async {
     final videos = await widget.repository.loadAlbumVideos(
       widget.album.bucketId,
     );
-    return List<AlbumVideoTileData>.unmodifiable(videos.map(_mapVideoTileData));
+    return List<_AlbumVideoEntry>.unmodifiable(videos.map(_mapVideoEntry));
   }
 
-  AlbumVideoTileData _mapVideoTileData(LocalVideo video) {
+  _AlbumVideoEntry _mapVideoEntry(LocalVideo video) {
     final title = video.title.trim().isEmpty ? kUnknownVideoTitle : video.title;
-    final duration = formatVideoDuration(
-      Duration(milliseconds: video.durationMs),
-    );
+    final duration = Duration(milliseconds: video.durationMs);
+    final resolutionText = _formatVideoResolution(video);
 
-    return AlbumVideoTileData(
-      id: video.id.toString(),
-      title: title,
-      durationText: duration,
-      resolutionText: _formatVideoResolution(video),
-      sizeText: formatFileSize(video.size),
-      modifiedTimeText: _formatModifiedTime(video.dateModified),
-      previewSeed: video.id,
-      thumbnailRequest: VideoThumbnailRequest.tile(
-        videoId: video.id,
-        videoPath: video.path,
-        dateModified: video.dateModified,
+    return _AlbumVideoEntry(
+      tileData: AlbumVideoTileData(
+        id: video.id.toString(),
+        title: title,
+        durationText: formatVideoDuration(duration),
+        resolutionText: resolutionText,
+        sizeText: formatFileSize(video.size),
+        modifiedTimeText: _formatModifiedTime(video.dateModified),
+        previewSeed: video.id,
+        thumbnailRequest: VideoThumbnailRequest.tile(
+          videoId: video.id,
+          videoPath: video.path,
+          dateModified: video.dateModified,
+        ),
+      ),
+      playerItem: PlayerQueueItem(
+        id: video.id.toString(),
+        title: title,
+        sourceLabel: _resolveAlbumTitle(video.bucketName),
+        path: video.path,
+        duration: duration,
+        resolutionText: resolutionText == kUnknownResolutionLabel
+            ? null
+            : resolutionText,
+        previewAspectRatio: _resolvePreviewAspectRatio(video),
+        lastKnownPositionMs: video.lastPlayPositionMs,
       ),
     );
   }
@@ -118,7 +133,7 @@ class _AlbumPageState extends State<AlbumPage> {
 
 class _AlbumVideoListView extends StatelessWidget {
   final LocalAlbum album;
-  final List<AlbumVideoTileData> videos;
+  final List<_AlbumVideoEntry> videos;
 
   const _AlbumVideoListView({required this.album, required this.videos});
 
@@ -145,16 +160,28 @@ class _AlbumVideoListView extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: kAlbumVideoSpacing),
                   child: AlbumVideoTile(
-                    key: ValueKey<String>(video.id),
-                    data: video,
-                    onTap: () =>
-                        showNotImplementedSnackBar(context, '播放器入口尚未接入'),
+                    key: ValueKey<String>(video.tileData.id),
+                    data: video.tileData,
+                    onTap: () => _openPlayer(context, index),
                   ),
                 );
               }, childCount: videos.length),
             ),
           ),
       ],
+    );
+  }
+
+  void _openPlayer(BuildContext context, int initialIndex) {
+    final playlist = videos
+        .map((_AlbumVideoEntry entry) => entry.playerItem)
+        .toList(growable: false);
+
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            PlayerPage(playlist: playlist, initialIndex: initialIndex),
+      ),
     );
   }
 }
@@ -216,6 +243,14 @@ class _AlbumEmptyView extends StatelessWidget {
   }
 }
 
+@immutable
+class _AlbumVideoEntry {
+  final AlbumVideoTileData tileData;
+  final PlayerQueueItem playerItem;
+
+  const _AlbumVideoEntry({required this.tileData, required this.playerItem});
+}
+
 String _resolveAlbumTitle(String bucketName) {
   if (bucketName.trim().isEmpty) {
     return kAlbumFallbackTitle;
@@ -240,4 +275,11 @@ String _formatModifiedTime(int modifiedSeconds) {
     modifiedSeconds * Duration.millisecondsPerSecond,
   );
   return formatChineseDateTime(modifiedTime);
+}
+
+double _resolvePreviewAspectRatio(LocalVideo video) {
+  if (video.width <= 0 || video.height <= 0) {
+    return kDefaultPreviewAspectRatio;
+  }
+  return video.width / video.height;
 }
