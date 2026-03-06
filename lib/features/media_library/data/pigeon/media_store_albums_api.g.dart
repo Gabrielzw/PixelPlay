@@ -145,6 +145,82 @@ class NativeAlbumRecord {
 ;
 }
 
+class NativeVideoRecord {
+  NativeVideoRecord({
+    required this.id,
+    required this.path,
+    required this.name,
+    required this.bucketId,
+    required this.bucketName,
+    required this.durationMs,
+    required this.size,
+    required this.dateAdded,
+  });
+
+  String id;
+
+  String path;
+
+  String name;
+
+  String bucketId;
+
+  String bucketName;
+
+  int durationMs;
+
+  int size;
+
+  int dateAdded;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      path,
+      name,
+      bucketId,
+      bucketName,
+      durationMs,
+      size,
+      dateAdded,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static NativeVideoRecord decode(Object result) {
+    result as List<Object?>;
+    return NativeVideoRecord(
+      id: result[0]! as String,
+      path: result[1]! as String,
+      name: result[2]! as String,
+      bucketId: result[3]! as String,
+      bucketName: result[4]! as String,
+      durationMs: result[5]! as int,
+      size: result[6]! as int,
+      dateAdded: result[7]! as int,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! NativeVideoRecord || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList())
+;
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -159,6 +235,9 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is NativeAlbumRecord) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
+    }    else if (value is NativeVideoRecord) {
+      buffer.putUint8(131);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -171,6 +250,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return _PigeonConfig.decode(readValue(buffer)!);
       case 130:
         return NativeAlbumRecord.decode(readValue(buffer)!);
+      case 131:
+        return NativeVideoRecord.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -245,5 +326,24 @@ class MediaStoreAlbumsApi {
     )
     !;
     return (pigeonVar_replyValue as List<Object?>).cast<NativeAlbumRecord>();
+  }
+
+  Future<List<NativeVideoRecord>> scanAlbumVideos(String bucketId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.scanAlbumVideos$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[bucketId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    !;
+    return (pigeonVar_replyValue as List<Object?>).cast<NativeVideoRecord>();
   }
 }

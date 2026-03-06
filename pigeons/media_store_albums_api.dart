@@ -7,9 +7,7 @@ import 'package:pigeon/pigeon.dart';
         'lib/features/media_library/data/pigeon/media_store_albums_api.g.dart',
     kotlinOut:
         'android/app/src/main/kotlin/media/gabriel/pixelplay/pigeon/media_store_albums_api.g.kt',
-    kotlinOptions: KotlinOptions(
-      package: 'media.gabriel.pixelplay.pigeon',
-    ),
+    kotlinOptions: KotlinOptions(package: 'media.gabriel.pixelplay.pigeon'),
   ),
 )
 // ignore: unused_element
@@ -24,6 +22,17 @@ class NativeAlbumRecord {
   late int latestDateAddedSeconds;
 }
 
+class NativeVideoRecord {
+  late String id;
+  late String path;
+  late String name;
+  late String bucketId;
+  late String bucketName;
+  late int durationMs;
+  late int size;
+  late int dateAdded;
+}
+
 @HostApi()
 abstract class MediaStoreAlbumsApi {
   @async
@@ -34,4 +43,7 @@ abstract class MediaStoreAlbumsApi {
 
   @async
   List<NativeAlbumRecord> scanLocalVideoAlbums();
+
+  @async
+  List<NativeVideoRecord> scanAlbumVideos(String bucketId);
 }

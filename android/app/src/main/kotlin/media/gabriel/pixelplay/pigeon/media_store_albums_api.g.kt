@@ -142,6 +142,55 @@ data class NativeAlbumRecord (
 
   override fun hashCode(): Int = toList().hashCode()
 }
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class NativeVideoRecord (
+  val id: String,
+  val path: String,
+  val name: String,
+  val bucketId: String,
+  val bucketName: String,
+  val durationMs: Long,
+  val size: Long,
+  val dateAdded: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): NativeVideoRecord {
+      val id = pigeonVar_list[0] as String
+      val path = pigeonVar_list[1] as String
+      val name = pigeonVar_list[2] as String
+      val bucketId = pigeonVar_list[3] as String
+      val bucketName = pigeonVar_list[4] as String
+      val durationMs = pigeonVar_list[5] as Long
+      val size = pigeonVar_list[6] as Long
+      val dateAdded = pigeonVar_list[7] as Long
+      return NativeVideoRecord(id, path, name, bucketId, bucketName, durationMs, size, dateAdded)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      path,
+      name,
+      bucketId,
+      bucketName,
+      durationMs,
+      size,
+      dateAdded,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is NativeVideoRecord) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MediaStoreAlbumsApiPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
 private open class media_store_albums_apiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -153,6 +202,11 @@ private open class media_store_albums_apiPigeonCodec : StandardMessageCodec() {
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           NativeAlbumRecord.fromList(it)
+        }
+      }
+      131.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          NativeVideoRecord.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -168,6 +222,10 @@ private open class media_store_albums_apiPigeonCodec : StandardMessageCodec() {
         stream.write(130)
         writeValue(stream, value.toList())
       }
+      is NativeVideoRecord -> {
+        stream.write(131)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -179,6 +237,7 @@ interface MediaStoreAlbumsApi {
   fun hasVideoPermission(callback: (Result<Boolean>) -> Unit)
   fun requestVideoPermission(callback: (Result<Boolean>) -> Unit)
   fun scanLocalVideoAlbums(callback: (Result<List<NativeAlbumRecord>>) -> Unit)
+  fun scanAlbumVideos(bucketId: String, callback: (Result<List<NativeVideoRecord>>) -> Unit)
 
   companion object {
     /** The codec used by MediaStoreAlbumsApi. */
@@ -230,6 +289,26 @@ interface MediaStoreAlbumsApi {
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             api.scanLocalVideoAlbums{ result: Result<List<NativeAlbumRecord>> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.scanAlbumVideos$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val bucketIdArg = args[0] as String
+            api.scanAlbumVideos(bucketIdArg) { result: Result<List<NativeVideoRecord>> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapError(error))

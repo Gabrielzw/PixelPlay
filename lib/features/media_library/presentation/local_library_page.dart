@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../shared/utils/not_implemented.dart';
+import '../domain/contracts/media_library_repository.dart';
 import '../domain/entities/local_album.dart';
 import 'album_page.dart';
 import 'controllers/media_library_controller.dart';
@@ -46,6 +47,7 @@ class LocalLibraryPage extends StatelessWidget {
       context,
     ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700);
     final controller = Get.find<MediaLibraryController>();
+    final repository = Get.find<MediaLibraryRepository>();
 
     return Scaffold(
       appBar: AppBar(
@@ -85,8 +87,10 @@ class LocalLibraryPage extends StatelessWidget {
                   message: error.toString(),
                   onRetry: () => controller.refreshAlbums(),
                 ),
-                MediaLibraryReadyState(:final albums) =>
-                  _LibraryAlbumGrid(albums: albums),
+                MediaLibraryReadyState(:final albums) => _LibraryAlbumGrid(
+                  albums: albums,
+                  repository: repository,
+                ),
               },
             ),
           ],
@@ -98,8 +102,9 @@ class LocalLibraryPage extends StatelessWidget {
 
 class _LibraryAlbumGrid extends StatelessWidget {
   final List<LocalAlbum> albums;
+  final MediaLibraryRepository repository;
 
-  const _LibraryAlbumGrid({required this.albums});
+  const _LibraryAlbumGrid({required this.albums, required this.repository});
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +124,7 @@ class _LibraryAlbumGrid extends StatelessWidget {
           ),
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => AlbumPage(album: album),
+              builder: (_) => AlbumPage(album: album, repository: repository),
             ),
           ),
         );
