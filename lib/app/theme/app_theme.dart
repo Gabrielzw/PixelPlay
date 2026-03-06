@@ -50,6 +50,31 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.14),
+        iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((
+          Set<WidgetState> states,
+        ) {
+          final isSelected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+          );
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>((
+          Set<WidgetState> states,
+        ) {
+          final isSelected = states.contains(WidgetState.selected);
+          return baseTheme.textTheme.labelMedium?.copyWith(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          );
+        }),
+      ),
       bottomSheetTheme: const BottomSheetThemeData(
         showDragHandle: true,
         backgroundColor: Colors.transparent,

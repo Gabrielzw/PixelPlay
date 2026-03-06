@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 const double kLibraryAlbumCardRadius = 24;
-const double kLibraryAlbumCoverAspectRatio = 1.36;
+const double kLibraryAlbumCoverAspectRatio = 1.56;
 const double kLibraryAlbumShadowBlur = 18;
 const double kLibraryAlbumShadowOffsetY = 10;
 const double kLibraryAlbumShadowOpacity = 0.08;
@@ -56,11 +56,9 @@ class LibraryAlbumCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               _LibraryAlbumCover(album: album),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                  child: _LibraryAlbumMeta(album: album),
-                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                child: _LibraryAlbumMeta(album: album),
               ),
             ],
           ),
@@ -79,8 +77,8 @@ class _LibraryAlbumMeta extends StatelessWidget {
   Widget build(BuildContext context) {
     final titleStyle = Theme.of(
       context,
-    ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, height: 1.08);
-    final subtitleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+    ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.05);
+    final subtitleStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
       fontWeight: FontWeight.w500,
     );
@@ -95,7 +93,7 @@ class _LibraryAlbumMeta extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: titleStyle,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           album.subtitle,
           maxLines: 1,

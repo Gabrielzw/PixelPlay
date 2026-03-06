@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
@@ -18,11 +17,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.home_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.cloud_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.favorite_border_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
     expect(find.text('首页'), findsOneWidget);
+    expect(find.text('云盘'), findsOneWidget);
+    expect(find.text('收藏'), findsOneWidget);
+    expect(find.text('设置'), findsOneWidget);
   });
 
   testWidgets('android back pops album to library', (
@@ -36,12 +34,12 @@ void main() {
     await tester.tap(find.byType(LibraryAlbumCard).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Pixel Play'), findsNothing);
+    expect(find.text('本地媒体'), findsNothing);
     expect(find.text('Screenshots'), findsWidgets);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    expect(find.text('Pixel Play'), findsOneWidget);
+    expect(find.text('本地媒体'), findsOneWidget);
   });
 }

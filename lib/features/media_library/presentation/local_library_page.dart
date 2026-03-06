@@ -6,7 +6,7 @@ import 'widgets/library_album_card.dart';
 
 const double kLibraryPageHorizontalPadding = 22;
 const double kLibraryGridSpacing = 18;
-const double kLibraryGridChildAspectRatio = 0.77;
+const double kLibraryGridChildAspectRatio = 0.92;
 
 const List<LibraryAlbumPreview> kPreviewAlbums = <LibraryAlbumPreview>[
   LibraryAlbumPreview(
@@ -72,86 +72,38 @@ class LocalLibraryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700);
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          key: const PageStorageKey<String>('local_album_grid'),
-          slivers: const <Widget>[
-            SliverToBoxAdapter(child: _LibraryHeader()),
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                kLibraryPageHorizontalPadding,
-                12,
-                kLibraryPageHorizontalPadding,
-                132,
-              ),
-              sliver: _LibraryAlbumGrid(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LibraryHeader extends StatelessWidget {
-  const _LibraryHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 18, 24, 6),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              'Pixel Play',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -1.2,
-              ),
-            ),
-          ),
-          _HeaderAction(
-            icon: Icons.search_rounded,
+      appBar: AppBar(
+        title: Text('Pixel Play', style: titleStyle),
+        actions: <Widget>[
+          IconButton(
             tooltip: '搜索',
             onPressed: () => showNotImplementedSnackBar(context, '搜索功能尚未接入'),
+            icon: const Icon(Icons.search),
           ),
-          const SizedBox(width: 10),
-          _HeaderAction(
-            icon: Icons.tune_rounded,
-            tooltip: '筛选',
-            onPressed: () => showNotImplementedSnackBar(context, '筛选功能尚未接入'),
+          IconButton(
+            tooltip: '排序',
+            onPressed: () => showNotImplementedSnackBar(context, '排序功能尚未接入'),
+            icon: const Icon(Icons.sort),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _HeaderAction extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  const _HeaderAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final backgroundColor = Theme.of(context).colorScheme.surface;
-
-    return Material(
-      color: backgroundColor,
-      shape: const CircleBorder(),
-      child: IconButton(
-        tooltip: tooltip,
-        onPressed: onPressed,
-        icon: Icon(icon, size: 28),
+      body: const CustomScrollView(
+        key: PageStorageKey<String>('local_album_grid'),
+        slivers: <Widget>[
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              kLibraryPageHorizontalPadding,
+              12,
+              kLibraryPageHorizontalPadding,
+              24,
+            ),
+            sliver: _LibraryAlbumGrid(),
+          ),
+        ],
       ),
     );
   }
