@@ -6,6 +6,9 @@ import 'package:get/get.dart';
 import '../../domain/thumbnail_queue.dart';
 import '../../domain/video_thumbnail_request.dart';
 
+const Duration kThumbnailFadeDuration = Duration(milliseconds: 220);
+const Curve kThumbnailFadeCurve = Curves.easeOutCubic;
+
 class VideoThumbnailImage extends StatefulWidget {
   final VideoThumbnailRequest request;
   final Widget placeholder;
@@ -77,11 +80,32 @@ class _VideoThumbnailImageState extends State<VideoThumbnailImage> {
   }
 
   Widget _buildThumbnail(String path) {
-    return Image.file(
-      File(path),
-      fit: widget.fit,
-      filterQuality: FilterQuality.low,
-      errorBuilder: (_, _, _) => _buildErrorPlaceholder(),
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        widget.placeholder,
+        Image.file(
+          File(path),
+          fit: widget.fit,
+          filterQuality: FilterQuality.low,
+          gaplessPlayback: true,
+          frameBuilder: (
+            BuildContext context,
+            Widget child,
+            int? frame,
+            bool wasSynchronouslyLoaded,
+          ) {
+            final isVisible = wasSynchronouslyLoaded || frame != null;
+            return AnimatedOpacity(
+              opacity: isVisible ? 1 : 0,
+              duration: kThumbnailFadeDuration,
+              curve: kThumbnailFadeCurve,
+              child: child,
+            );
+          },
+          errorBuilder: (_, _, _) => _buildErrorPlaceholder(),
+        ),
+      ],
     );
   }
 
