@@ -36,7 +36,7 @@ String formatResolution({required int width, required int height}) {
   if (height <= 0) {
     throw RangeError('height must be > 0: $height');
   }
-  return '${width}×$height';
+  return '$width×$height';
 }
 
 String formatFileSize(int bytes) {
