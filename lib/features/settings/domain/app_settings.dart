@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+const int kDefaultSeedColorValue = 0xFFE7A2BA;
 const double kDefaultPlaybackSpeed = 1.0;
 const PlayerAspectRatio kDefaultAspectRatio = PlayerAspectRatio.fit;
 const int kDefaultGestureSeekSecondsPerSwipe = 60;
@@ -37,6 +38,7 @@ extension PlayerAspectRatioLabel on PlayerAspectRatio {
 @immutable
 class AppSettings {
   final ThemeMode themeMode;
+  final int seedColorValue;
   final double defaultPlaybackSpeed;
   final PlayerAspectRatio defaultAspectRatio;
   final int gestureSeekSecondsPerSwipe;
@@ -45,6 +47,7 @@ class AppSettings {
 
   const AppSettings({
     this.themeMode = ThemeMode.system,
+    this.seedColorValue = kDefaultSeedColorValue,
     this.defaultPlaybackSpeed = kDefaultPlaybackSpeed,
     this.defaultAspectRatio = kDefaultAspectRatio,
     this.gestureSeekSecondsPerSwipe = kDefaultGestureSeekSecondsPerSwipe,
@@ -52,8 +55,11 @@ class AppSettings {
     this.autoPlayNext = kDefaultAutoPlayNext,
   });
 
+  Color get seedColor => Color(seedColorValue);
+
   AppSettings copyWith({
     ThemeMode? themeMode,
+    int? seedColorValue,
     double? defaultPlaybackSpeed,
     PlayerAspectRatio? defaultAspectRatio,
     int? gestureSeekSecondsPerSwipe,
@@ -62,6 +68,7 @@ class AppSettings {
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
+      seedColorValue: seedColorValue ?? this.seedColorValue,
       defaultPlaybackSpeed: defaultPlaybackSpeed ?? this.defaultPlaybackSpeed,
       defaultAspectRatio: defaultAspectRatio ?? this.defaultAspectRatio,
       gestureSeekSecondsPerSwipe:
@@ -72,4 +79,3 @@ class AppSettings {
     );
   }
 }
-

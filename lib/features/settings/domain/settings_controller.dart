@@ -11,41 +11,44 @@ class SettingsController extends GetxController {
   SettingsController({required this.repository})
     : settings = repository.load().obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    Get.changeThemeMode(settings.value.themeMode);
+  Future<void> setThemeMode(ThemeMode themeMode) async {
+    await _saveSettings(settings.value.copyWith(themeMode: themeMode));
   }
 
-  void setThemeMode(ThemeMode themeMode) {
-    settings.value = settings.value.copyWith(themeMode: themeMode);
-    repository.save(settings.value);
-    Get.changeThemeMode(themeMode);
+  Future<void> setSeedColor(Color color) async {
+    await _saveSettings(
+      settings.value.copyWith(seedColorValue: color.toARGB32()),
+    );
   }
 
-  void setDefaultPlaybackSpeed(double speed) {
-    settings.value = settings.value.copyWith(defaultPlaybackSpeed: speed);
-    repository.save(settings.value);
+  Future<void> setDefaultPlaybackSpeed(double speed) async {
+    await _saveSettings(settings.value.copyWith(defaultPlaybackSpeed: speed));
   }
 
-  void setDefaultAspectRatio(PlayerAspectRatio aspectRatio) {
-    settings.value = settings.value.copyWith(defaultAspectRatio: aspectRatio);
-    repository.save(settings.value);
+  Future<void> setDefaultAspectRatio(PlayerAspectRatio aspectRatio) async {
+    await _saveSettings(
+      settings.value.copyWith(defaultAspectRatio: aspectRatio),
+    );
   }
 
-  void setGestureSeekSecondsPerSwipe(int seconds) {
-    settings.value = settings.value.copyWith(gestureSeekSecondsPerSwipe: seconds);
-    repository.save(settings.value);
+  Future<void> setGestureSeekSecondsPerSwipe(int seconds) async {
+    await _saveSettings(
+      settings.value.copyWith(gestureSeekSecondsPerSwipe: seconds),
+    );
   }
 
-  void setRememberPlaybackPosition(bool enabled) {
-    settings.value = settings.value.copyWith(rememberPlaybackPosition: enabled);
-    repository.save(settings.value);
+  Future<void> setRememberPlaybackPosition(bool enabled) async {
+    await _saveSettings(
+      settings.value.copyWith(rememberPlaybackPosition: enabled),
+    );
   }
 
-  void setAutoPlayNext(bool enabled) {
-    settings.value = settings.value.copyWith(autoPlayNext: enabled);
-    repository.save(settings.value);
+  Future<void> setAutoPlayNext(bool enabled) async {
+    await _saveSettings(settings.value.copyWith(autoPlayNext: enabled));
+  }
+
+  Future<void> _saveSettings(AppSettings nextSettings) async {
+    settings.value = nextSettings;
+    await repository.save(nextSettings);
   }
 }
-

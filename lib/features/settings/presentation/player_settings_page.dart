@@ -22,17 +22,23 @@ class PlayerSettingsPage extends GetView<SettingsController> {
             const SizedBox(height: 12),
             _PlaybackSpeedTile(
               value: state.defaultPlaybackSpeed,
-              onChanged: controller.setDefaultPlaybackSpeed,
+              onChanged: (double speed) {
+                controller.setDefaultPlaybackSpeed(speed);
+              },
             ),
             const SizedBox(height: 12),
             _AspectRatioTile(
               value: state.defaultAspectRatio,
-              onChanged: controller.setDefaultAspectRatio,
+              onChanged: (PlayerAspectRatio aspectRatio) {
+                controller.setDefaultAspectRatio(aspectRatio);
+              },
             ),
             const SizedBox(height: 12),
             _GestureSeekTile(
               valueSeconds: state.gestureSeekSecondsPerSwipe,
-              onChanged: controller.setGestureSeekSecondsPerSwipe,
+              onChanged: (int seconds) {
+                controller.setGestureSeekSecondsPerSwipe(seconds);
+              },
             ),
             const SizedBox(height: 12),
             Card(
@@ -40,14 +46,18 @@ class PlayerSettingsPage extends GetView<SettingsController> {
                 children: <Widget>[
                   SwitchListTile(
                     value: state.rememberPlaybackPosition,
-                    onChanged: controller.setRememberPlaybackPosition,
+                    onChanged: (bool enabled) {
+                      controller.setRememberPlaybackPosition(enabled);
+                    },
                     title: const Text('记忆播放进度'),
                     subtitle: const Text('下次打开无缝续播'),
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
                     value: state.autoPlayNext,
-                    onChanged: controller.setAutoPlayNext,
+                    onChanged: (bool enabled) {
+                      controller.setAutoPlayNext(enabled);
+                    },
                     title: const Text('自动播放下一个'),
                     subtitle: const Text('当前视频结束后自动连播'),
                   ),

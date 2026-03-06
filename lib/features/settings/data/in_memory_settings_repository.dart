@@ -8,8 +8,7 @@ class InMemorySettingsRepository implements SettingsRepository {
   AppSettings load() => _settings;
 
   @override
-  void save(AppSettings settings) {
+  Future<void> save(AppSettings settings) async {
     _settings = settings;
   }
 }
-

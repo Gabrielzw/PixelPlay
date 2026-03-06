@@ -7,26 +7,30 @@ import '../../webdav_client/presentation/webdav_accounts_page.dart';
 
 enum _ShellTab { library, webdav, favorites, settings }
 
-const List<NavigationDestination> _shellDestinations = <NavigationDestination>[
-  NavigationDestination(
-    icon: Icon(Icons.video_library_outlined),
-    selectedIcon: Icon(Icons.video_library),
+const double kShellBarHeight = 92;
+const double kShellBarRadius = 28;
+const double kShellBarShadowOpacity = 0.08;
+
+const List<_ShellDestinationData> _shellDestinations = <_ShellDestinationData>[
+  _ShellDestinationData(
     label: '首页',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home_rounded,
   ),
-  NavigationDestination(
-    icon: Icon(Icons.cloud_outlined),
-    selectedIcon: Icon(Icons.cloud),
-    label: '网络共享',
+  _ShellDestinationData(
+    label: '云盘',
+    icon: Icons.cloud_outlined,
+    selectedIcon: Icons.cloud_rounded,
   ),
-  NavigationDestination(
-    icon: Icon(Icons.favorite_border),
-    selectedIcon: Icon(Icons.favorite),
+  _ShellDestinationData(
     label: '收藏',
+    icon: Icons.favorite_border_rounded,
+    selectedIcon: Icons.favorite_rounded,
   ),
-  NavigationDestination(
-    icon: Icon(Icons.settings_outlined),
-    selectedIcon: Icon(Icons.settings),
+  _ShellDestinationData(
     label: '设置',
+    icon: Icons.settings_outlined,
+    selectedIcon: Icons.settings_rounded,
   ),
 ];
 
@@ -62,12 +66,10 @@ class _PixelPlayShellState extends State<PixelPlayShell> {
       };
 
   _ShellTab _currentTab = _ShellTab.library;
-
   bool _refreshScheduled = false;
 
   void _refreshShell() {
-    if (!mounted) return;
-    if (_refreshScheduled) return;
+    if (!mounted || _refreshScheduled) return;
 
     _refreshScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -183,10 +185,99 @@ class _ShellBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: selectedIndex,
-      onDestinationSelected: onDestinationSelected,
-      destinations: _shellDestinations,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(kShellBarRadius),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: kShellBarShadowOpacity),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: kShellBarHeight,
+            child: Row(
+              children: List<Widget>.generate(_shellDestinations.length, (
+                int index,
+              ) {
+                return Expanded(
+                  child: _ShellBottomBarItem(
+                    data: _shellDestinations[index],
+                    isSelected: selectedIndex == index,
+                    onTap: () => onDestinationSelected(index),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShellBottomBarItem extends StatelessWidget {
+  final _ShellDestinationData data;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ShellBottomBarItem({
+    required this.data,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final iconColor = isSelected
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant;
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: data.label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(
+                isSelected ? data.selectedIcon : data.icon,
+                color: iconColor,
+                size: 30,
+              ),
+              const SizedBox(height: 6),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: isSelected ? 1 : 0,
+                child: Text(
+                  data.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: iconColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -207,7 +298,7 @@ class _TabNavigator extends StatelessWidget {
     return Navigator(
       key: navigatorKey,
       observers: <NavigatorObserver>[observer],
-      onGenerateRoute: (settings) {
+      onGenerateRoute: (RouteSettings settings) {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => rootPage,
@@ -238,4 +329,16 @@ class _TabNavigatorObserver extends NavigatorObserver {
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
       _notify();
+}
+
+class _ShellDestinationData {
+  final String label;
+  final IconData icon;
+  final IconData selectedIcon;
+
+  const _ShellDestinationData({
+    required this.label,
+    required this.icon,
+    required this.selectedIcon,
+  });
 }

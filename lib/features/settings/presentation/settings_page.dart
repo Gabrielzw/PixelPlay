@@ -35,7 +35,7 @@ class _SettingsBody extends StatelessWidget {
       key: const PageStorageKey<String>('settings_list'),
       padding: const EdgeInsets.only(bottom: 16),
       children: <Widget>[
-        const UiSkeletonNotice(message: 'UI 骨架阶段：主题/播放器配置暂为内存态（未持久化）。'),
+        const UiSkeletonNotice(message: '主题和播放偏好会自动保存，缓存与播放器联动仍在完善中。'),
         const SizedBox(height: 12),
         _SettingsSection(
           title: '外观',
@@ -43,7 +43,7 @@ class _SettingsBody extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.palette_outlined),
               title: const Text('主题'),
-              subtitle: const Text('跟随系统 / 亮色 / 暗色'),
+              subtitle: const Text('跟随系统 / 浅色 / 深色 / 主色'),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
