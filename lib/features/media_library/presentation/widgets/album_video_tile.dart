@@ -5,8 +5,8 @@ const double kAlbumVideoTileRadius = 20;
 const double kAlbumVideoTilePadding = 14;
 const double kAlbumVideoTileGap = 14;
 const double kAlbumVideoIconSize = 48;
-const double kAlbumVideoMetaGap = 6;
-const double kAlbumVideoTitleHeight = 1.2;
+const double kAlbumVideoMetaGap = 2;
+const double kAlbumVideoTitleHeight = 1.1;
 const double kAlbumVideoMetaHeight = 1.15;
 
 @immutable
@@ -98,13 +98,16 @@ class _AlbumVideoInfo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Text(
-          data.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            height: kAlbumVideoTitleHeight,
+        SizedBox(
+          height: 32,
+          child: Text(
+            data.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              height: kAlbumVideoTitleHeight,
+            ),
           ),
         ),
         const SizedBox(height: kAlbumVideoMetaGap),
