@@ -9,9 +9,9 @@ import 'package:flutter/foundation.dart' show ReadBuffer, WriteBuffer;
 import 'package:flutter/services.dart';
 
 Object? _extractReplyValueOrThrow(
-    List<Object?>? replyList,
-    String channelName, {
-    required bool isNullValid,
+  List<Object?>? replyList,
+  String channelName, {
+  required bool isNullValid,
 }) {
   if (replyList == null) {
     throw PlatformException(
@@ -36,39 +36,37 @@ Object? _extractReplyValueOrThrow(
 bool _deepEquals(Object? a, Object? b) {
   if (a is List && b is List) {
     return a.length == b.length &&
-        a.indexed
-        .every(((int, dynamic) item) => _deepEquals(item.$2, b[item.$1]));
+        a.indexed.every(
+          ((int, dynamic) item) => _deepEquals(item.$2, b[item.$1]),
+        );
   }
   if (a is Map && b is Map) {
-    return a.length == b.length && a.entries.every((MapEntry<Object?, Object?> entry) =>
-        (b as Map<Object?, Object?>).containsKey(entry.key) &&
-        _deepEquals(entry.value, b[entry.key]));
+    return a.length == b.length &&
+        a.entries.every(
+          (MapEntry<Object?, Object?> entry) =>
+              (b as Map<Object?, Object?>).containsKey(entry.key) &&
+              _deepEquals(entry.value, b[entry.key]),
+        );
   }
   return a == b;
 }
 
-
 class _PigeonConfig {
-  _PigeonConfig({
-    this.sentinel,
-  });
+  _PigeonConfig({this.sentinel});
 
   String? sentinel;
 
   List<Object?> _toList() {
-    return <Object?>[
-      sentinel,
-    ];
+    return <Object?>[sentinel];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static _PigeonConfig decode(Object result) {
     result as List<Object?>;
-    return _PigeonConfig(
-      sentinel: result[0] as String?,
-    );
+    return _PigeonConfig(sentinel: result[0] as String?);
   }
 
   @override
@@ -85,8 +83,7 @@ class _PigeonConfig {
 
   @override
   // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => Object.hashAll(_toList())
-;
+  int get hashCode => Object.hashAll(_toList());
 }
 
 class NativeAlbumRecord {
@@ -95,6 +92,9 @@ class NativeAlbumRecord {
     required this.bucketName,
     required this.videoCount,
     required this.latestDateAddedSeconds,
+    required this.latestVideoId,
+    required this.latestVideoPath,
+    required this.latestVideoDateModified,
   });
 
   String bucketId;
@@ -105,17 +105,27 @@ class NativeAlbumRecord {
 
   int latestDateAddedSeconds;
 
+  int latestVideoId;
+
+  String latestVideoPath;
+
+  int latestVideoDateModified;
+
   List<Object?> _toList() {
     return <Object?>[
       bucketId,
       bucketName,
       videoCount,
       latestDateAddedSeconds,
+      latestVideoId,
+      latestVideoPath,
+      latestVideoDateModified,
     ];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static NativeAlbumRecord decode(Object result) {
     result as List<Object?>;
@@ -124,6 +134,9 @@ class NativeAlbumRecord {
       bucketName: result[1]! as String,
       videoCount: result[2]! as int,
       latestDateAddedSeconds: result[3]! as int,
+      latestVideoId: result[4]! as int,
+      latestVideoPath: result[5]! as String,
+      latestVideoDateModified: result[6]! as int,
     );
   }
 
@@ -141,8 +154,7 @@ class NativeAlbumRecord {
 
   @override
   // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => Object.hashAll(_toList())
-;
+  int get hashCode => Object.hashAll(_toList());
 }
 
 class NativeVideoRecord {
@@ -199,7 +211,8 @@ class NativeVideoRecord {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static NativeVideoRecord decode(Object result) {
     result as List<Object?>;
@@ -232,10 +245,69 @@ class NativeVideoRecord {
 
   @override
   // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => Object.hashAll(_toList())
-;
+  int get hashCode => Object.hashAll(_toList());
 }
 
+class NativeThumbnailRequest {
+  NativeThumbnailRequest({
+    required this.videoId,
+    required this.videoPath,
+    required this.targetWidth,
+    required this.targetHeight,
+    required this.dateModified,
+  });
+
+  int videoId;
+
+  String videoPath;
+
+  int targetWidth;
+
+  int targetHeight;
+
+  int dateModified;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      videoId,
+      videoPath,
+      targetWidth,
+      targetHeight,
+      dateModified,
+    ];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static NativeThumbnailRequest decode(Object result) {
+    result as List<Object?>;
+    return NativeThumbnailRequest(
+      videoId: result[0]! as int,
+      videoPath: result[1]! as String,
+      targetWidth: result[2]! as int,
+      targetHeight: result[3]! as int,
+      dateModified: result[4]! as int,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! NativeThumbnailRequest || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(encode(), other.encode());
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => Object.hashAll(_toList());
+}
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -244,14 +316,17 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is _PigeonConfig) {
+    } else if (value is _PigeonConfig) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    }    else if (value is NativeAlbumRecord) {
+    } else if (value is NativeAlbumRecord) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
-    }    else if (value is NativeVideoRecord) {
+    } else if (value is NativeVideoRecord) {
       buffer.putUint8(131);
+      writeValue(buffer, value.encode());
+    } else if (value is NativeThumbnailRequest) {
+      buffer.putUint8(132);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -267,6 +342,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return NativeAlbumRecord.decode(readValue(buffer)!);
       case 131:
         return NativeVideoRecord.decode(readValue(buffer)!);
+      case 132:
+        return NativeThumbnailRequest.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -277,9 +354,13 @@ class MediaStoreAlbumsApi {
   /// Constructor for [MediaStoreAlbumsApi].  The [binaryMessenger] named argument is
   /// available for dependency injection.  If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
-  MediaStoreAlbumsApi({BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
-      : pigeonVar_binaryMessenger = binaryMessenger,
-        pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+  MediaStoreAlbumsApi({
+    BinaryMessenger? binaryMessenger,
+    String messageChannelSuffix = '',
+  }) : pigeonVar_binaryMessenger = binaryMessenger,
+       pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty
+           ? '.$messageChannelSuffix'
+           : '';
   final BinaryMessenger? pigeonVar_binaryMessenger;
 
   static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
@@ -287,7 +368,8 @@ class MediaStoreAlbumsApi {
   final String pigeonVar_messageChannelSuffix;
 
   Future<bool> hasVideoPermission() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.hasVideoPermission$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.hasVideoPermission$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -297,16 +379,16 @@ class MediaStoreAlbumsApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    !;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    )!;
     return pigeonVar_replyValue as bool;
   }
 
   Future<bool> requestVideoPermission() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.requestVideoPermission$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.requestVideoPermission$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -316,16 +398,16 @@ class MediaStoreAlbumsApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    !;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    )!;
     return pigeonVar_replyValue as bool;
   }
 
   Future<List<NativeAlbumRecord>> scanLocalVideoAlbums() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.scanLocalVideoAlbums$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.scanLocalVideoAlbums$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -335,30 +417,70 @@ class MediaStoreAlbumsApi {
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    !;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    )!;
     return (pigeonVar_replyValue as List<Object?>).cast<NativeAlbumRecord>();
   }
 
   Future<List<NativeVideoRecord>> scanAlbumVideos(String bucketId) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.scanAlbumVideos$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.scanAlbumVideos$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[bucketId]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(
+      <Object?>[bucketId],
+    );
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     final Object pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    !;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    )!;
     return (pigeonVar_replyValue as List<Object?>).cast<NativeVideoRecord>();
+  }
+
+  Future<String> resolveVideoThumbnail(NativeThumbnailRequest request) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.resolveVideoThumbnail$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(
+      <Object?>[request],
+    );
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    )!;
+    return pigeonVar_replyValue as String;
+  }
+
+  Future<void> clearThumbnailCache() async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.clearThumbnailCache$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
   }
 }

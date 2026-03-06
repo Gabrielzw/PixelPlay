@@ -20,6 +20,9 @@ class NativeAlbumRecord {
   late String bucketName;
   late int videoCount;
   late int latestDateAddedSeconds;
+  late int latestVideoId;
+  late String latestVideoPath;
+  late int latestVideoDateModified;
 }
 
 class NativeVideoRecord {
@@ -36,6 +39,14 @@ class NativeVideoRecord {
   late int dateModified;
 }
 
+class NativeThumbnailRequest {
+  late int videoId;
+  late String videoPath;
+  late int targetWidth;
+  late int targetHeight;
+  late int dateModified;
+}
+
 @HostApi()
 abstract class MediaStoreAlbumsApi {
   @async
@@ -49,4 +60,10 @@ abstract class MediaStoreAlbumsApi {
 
   @async
   List<NativeVideoRecord> scanAlbumVideos(String bucketId);
+
+  @async
+  String resolveVideoThumbnail(NativeThumbnailRequest request);
+
+  @async
+  void clearThumbnailCache();
 }

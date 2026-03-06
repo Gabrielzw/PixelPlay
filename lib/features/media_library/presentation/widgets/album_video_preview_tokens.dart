@@ -1,0 +1,37 @@
+import 'package:flutter/material.dart';
+
+const double kVideoTilePreviewWidth = 120,
+    kVideoTilePreviewAspectRatio = 1.42,
+    kVideoTilePreviewInnerPadding = 8,
+    kVideoTilePreviewGap = 6,
+    kDurationBadgeOpacity = 0.72,
+    kDurationBadgeRadius = 10,
+    kDurationBadgeHorizontalPadding = 10,
+    kDurationBadgeVerticalPadding = 4,
+    kPreviewPaneRadius = 12,
+    kPreviewTextBarRadius = 99,
+    kPreviewTextBarHeightLarge = 8,
+    kPreviewTextBarHeightSmall = 6,
+    kPreviewTextBarWidthLarge = 40,
+    kPreviewTextBarWidthMedium = 28,
+    kPreviewTextBarWidthSmall = 18,
+    kVideoPreviewRadius = 18,
+    kPreviewHighlightOpacity = 0.35,
+    kPreviewTextOpacity = 0.78,
+    kGradientPrimaryOpacity = 0.95,
+    kPreviewPaneMinContentWidth = 44,
+    kPreviewPaneMinContentHeight = 30,
+    kPosterPreviewMinHeight = 72;
+const double kDurationBadgeFontSize = 12;
+const double kDurationBadgeLineHeight = 1;
+
+const Color kLightPreviewLavender = Color(0xFFDCD4FF),
+    kLightPreviewRose = Color(0xFFFFD8E5),
+    kLightPreviewSky = Color(0xFFD3EBFF),
+    kLightPreviewWarm = Color(0xFFFFE7CC),
+    kLightPreviewMint = Color(0xFFD7F5E8),
+    kDarkPreviewLavender = Color(0xFF41365E),
+    kDarkPreviewRose = Color(0xFF5A3946),
+    kDarkPreviewSky = Color(0xFF28445B),
+    kDarkPreviewWarm = Color(0xFF5B472D),
+    kDarkPreviewMint = Color(0xFF25473C);

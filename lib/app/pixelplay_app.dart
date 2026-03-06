@@ -5,17 +5,20 @@ import '../features/media_library/domain/contracts/media_library_repository.dart
 import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
 import '../features/shell/presentation/pixelplay_shell.dart';
+import '../features/thumbnail_engine/domain/thumbnail_queue.dart';
 import 'bindings/app_bindings.dart';
 import 'theme/app_theme.dart';
 
 class PixelPlayApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
+  final ThumbnailQueue? thumbnailQueue;
 
   const PixelPlayApp({
     super.key,
     required this.settingsRepository,
     required this.mediaLibraryRepository,
+    this.thumbnailQueue,
   });
 
   @override
@@ -31,6 +34,7 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
     AppBindings(
       settingsRepository: widget.settingsRepository,
       mediaLibraryRepository: widget.mediaLibraryRepository,
+      thumbnailQueue: widget.thumbnailQueue,
     ).dependencies();
     _settingsController = Get.find<SettingsController>();
   }

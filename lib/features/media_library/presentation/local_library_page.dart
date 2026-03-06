@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../shared/utils/not_implemented.dart';
+import '../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../domain/contracts/media_library_repository.dart';
 import '../domain/entities/local_album.dart';
 import 'album_page.dart';
@@ -121,6 +122,11 @@ class _LibraryAlbumGrid extends StatelessWidget {
             icon: _resolveAlbumIcon(title),
             startColor: palette.start,
             endColor: palette.end,
+            thumbnailRequest: VideoThumbnailRequest.album(
+              videoId: album.latestVideoId,
+              videoPath: album.latestVideoPath,
+              dateModified: album.latestVideoDateModified,
+            ),
           ),
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/utils/media_formatters.dart';
 import '../../../shared/utils/not_implemented.dart';
+import '../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../domain/contracts/media_library_repository.dart';
 import '../domain/entities/local_album.dart';
 import '../domain/entities/local_video.dart';
@@ -106,6 +107,11 @@ class _AlbumPageState extends State<AlbumPage> {
       sizeText: formatFileSize(video.size),
       modifiedTimeText: _formatModifiedTime(video.dateModified),
       previewSeed: video.id,
+      thumbnailRequest: VideoThumbnailRequest.tile(
+        videoId: video.id,
+        videoPath: video.path,
+        dateModified: video.dateModified,
+      ),
     );
   }
 }

@@ -9,11 +9,13 @@ import 'package:pixelplay/features/media_library/presentation/widgets/album_vide
 import 'package:pixelplay/features/media_library/presentation/widgets/library_album_card.dart';
 import 'package:pixelplay/shared/utils/media_formatters.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
+import 'package:pixelplay/features/thumbnail_engine/data/in_memory_thumbnail_queue.dart';
 
 PixelPlayApp buildTestApp() {
   return PixelPlayApp(
     settingsRepository: InMemorySettingsRepository(),
     mediaLibraryRepository: const InMemoryMediaLibraryRepository(),
+    thumbnailQueue: InMemoryThumbnailQueue(),
   );
 }
 

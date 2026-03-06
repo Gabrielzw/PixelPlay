@@ -111,7 +111,10 @@ data class NativeAlbumRecord (
   val bucketId: String,
   val bucketName: String,
   val videoCount: Long,
-  val latestDateAddedSeconds: Long
+  val latestDateAddedSeconds: Long,
+  val latestVideoId: Long,
+  val latestVideoPath: String,
+  val latestVideoDateModified: Long
 )
  {
   companion object {
@@ -120,7 +123,10 @@ data class NativeAlbumRecord (
       val bucketName = pigeonVar_list[1] as String
       val videoCount = pigeonVar_list[2] as Long
       val latestDateAddedSeconds = pigeonVar_list[3] as Long
-      return NativeAlbumRecord(bucketId, bucketName, videoCount, latestDateAddedSeconds)
+      val latestVideoId = pigeonVar_list[4] as Long
+      val latestVideoPath = pigeonVar_list[5] as String
+      val latestVideoDateModified = pigeonVar_list[6] as Long
+      return NativeAlbumRecord(bucketId, bucketName, videoCount, latestDateAddedSeconds, latestVideoId, latestVideoPath, latestVideoDateModified)
     }
   }
   fun toList(): List<Any?> {
@@ -129,6 +135,9 @@ data class NativeAlbumRecord (
       bucketName,
       videoCount,
       latestDateAddedSeconds,
+      latestVideoId,
+      latestVideoPath,
+      latestVideoDateModified,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -200,6 +209,46 @@ data class NativeVideoRecord (
 
   override fun hashCode(): Int = toList().hashCode()
 }
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class NativeThumbnailRequest (
+  val videoId: Long,
+  val videoPath: String,
+  val targetWidth: Long,
+  val targetHeight: Long,
+  val dateModified: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): NativeThumbnailRequest {
+      val videoId = pigeonVar_list[0] as Long
+      val videoPath = pigeonVar_list[1] as String
+      val targetWidth = pigeonVar_list[2] as Long
+      val targetHeight = pigeonVar_list[3] as Long
+      val dateModified = pigeonVar_list[4] as Long
+      return NativeThumbnailRequest(videoId, videoPath, targetWidth, targetHeight, dateModified)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      videoId,
+      videoPath,
+      targetWidth,
+      targetHeight,
+      dateModified,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other !is NativeThumbnailRequest) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    return MediaStoreAlbumsApiPigeonUtils.deepEquals(toList(), other.toList())  }
+
+  override fun hashCode(): Int = toList().hashCode()
+}
 private open class media_store_albums_apiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -216,6 +265,11 @@ private open class media_store_albums_apiPigeonCodec : StandardMessageCodec() {
       131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           NativeVideoRecord.fromList(it)
+        }
+      }
+      132.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          NativeThumbnailRequest.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -235,6 +289,10 @@ private open class media_store_albums_apiPigeonCodec : StandardMessageCodec() {
         stream.write(131)
         writeValue(stream, value.toList())
       }
+      is NativeThumbnailRequest -> {
+        stream.write(132)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -247,6 +305,8 @@ interface MediaStoreAlbumsApi {
   fun requestVideoPermission(callback: (Result<Boolean>) -> Unit)
   fun scanLocalVideoAlbums(callback: (Result<List<NativeAlbumRecord>>) -> Unit)
   fun scanAlbumVideos(bucketId: String, callback: (Result<List<NativeVideoRecord>>) -> Unit)
+  fun resolveVideoThumbnail(request: NativeThumbnailRequest, callback: (Result<String>) -> Unit)
+  fun clearThumbnailCache(callback: (Result<Unit>) -> Unit)
 
   companion object {
     /** The codec used by MediaStoreAlbumsApi. */
@@ -324,6 +384,43 @@ interface MediaStoreAlbumsApi {
               } else {
                 val data = result.getOrNull()
                 reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.resolveVideoThumbnail$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val requestArg = args[0] as NativeThumbnailRequest
+            api.resolveVideoThumbnail(requestArg) { result: Result<String> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.pixelplay.MediaStoreAlbumsApi.clearThumbnailCache$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            api.clearThumbnailCache{ result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(MediaStoreAlbumsApiPigeonUtils.wrapResult(null))
               }
             }
           }

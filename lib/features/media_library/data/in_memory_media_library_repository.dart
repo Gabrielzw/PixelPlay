@@ -11,6 +11,9 @@ const List<LocalAlbum> kDemoLocalAlbums = <LocalAlbum>[
     bucketName: 'Screenshots',
     videoCount: 4,
     latestDateAddedSeconds: kDemoAlbumDateAddedSeconds,
+    latestVideoId: 1,
+    latestVideoPath: 'content://media/external/video/media/1',
+    latestVideoDateModified: kDemoAlbumDateAddedSeconds - 180,
   ),
   LocalAlbum(
     bucketId: 'demo_camera',
@@ -18,6 +21,10 @@ const List<LocalAlbum> kDemoLocalAlbums = <LocalAlbum>[
     videoCount: 3,
     latestDateAddedSeconds:
         kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds,
+    latestVideoId: 5,
+    latestVideoPath: 'content://media/external/video/media/5',
+    latestVideoDateModified:
+        kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds - 120,
   ),
   LocalAlbum(
     bucketId: 'demo_download',
@@ -25,6 +32,10 @@ const List<LocalAlbum> kDemoLocalAlbums = <LocalAlbum>[
     videoCount: 2,
     latestDateAddedSeconds:
         kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds * 2,
+    latestVideoId: 8,
+    latestVideoPath: 'content://media/external/video/media/8',
+    latestVideoDateModified:
+        kDemoAlbumDateAddedSeconds - kDemoAlbumDateAddedStepSeconds * 2 - 90,
   ),
 ];
 

@@ -27,16 +27,18 @@ internal class MediaStoreVideoScanner(
   private fun queryAlbumAggregationCursor(): Cursor? {
     val projection =
       arrayOf(
+        MediaStore.Video.Media._ID,
         MediaStore.Video.Media.BUCKET_ID,
         MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
         MediaStore.Video.Media.DATE_ADDED,
+        MediaStore.Video.Media.DATE_MODIFIED,
       )
     return contentResolver.query(
       MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
       projection,
       null,
       null,
-      "${MediaStore.Video.Media.DATE_ADDED} DESC",
+      "${MediaStore.Video.Media.DATE_ADDED} DESC, ${MediaStore.Video.Media._ID} DESC",
     )
   }
 
@@ -65,16 +67,24 @@ internal class MediaStoreVideoScanner(
 
   private fun buildAlbumMap(cursor: Cursor): LinkedHashMap<String, AlbumAccumulator> {
     val albumsByBucketId = LinkedHashMap<String, AlbumAccumulator>()
+    val videoIdIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
     val bucketIdIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_ID)
     val bucketNameIndex =
       cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME)
     val dateAddedIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+    val dateModifiedIndex =
+      cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED)
 
     while (cursor.moveToNext()) {
       val bucketId = cursor.getString(bucketIdIndex) ?: continue
-      val bucketName = cursor.getString(bucketNameIndex) ?: ""
-      val dateAdded = cursor.getLong(dateAddedIndex)
-      mergeAlbum(albumsByBucketId, bucketId, bucketName, dateAdded)
+      mergeAlbum(
+        albumsByBucketId = albumsByBucketId,
+        videoId = cursor.getLong(videoIdIndex),
+        bucketId = bucketId,
+        bucketName = cursor.getString(bucketNameIndex) ?: "",
+        dateAddedSeconds = cursor.getLong(dateAddedIndex),
+        dateModifiedSeconds = cursor.getLong(dateModifiedIndex),
+      )
     }
 
     return albumsByBucketId
@@ -82,23 +92,45 @@ internal class MediaStoreVideoScanner(
 
   private fun mergeAlbum(
     albumsByBucketId: LinkedHashMap<String, AlbumAccumulator>,
+    videoId: Long,
     bucketId: String,
     bucketName: String,
     dateAddedSeconds: Long,
+    dateModifiedSeconds: Long,
   ) {
     val current = albumsByBucketId[bucketId]
     if (current == null) {
-      albumsByBucketId[bucketId] = AlbumAccumulator(bucketName, 1, dateAddedSeconds)
+      albumsByBucketId[bucketId] =
+        AlbumAccumulator(
+          bucketName = bucketName,
+          videoCount = 1,
+          latestDateAddedSeconds = dateAddedSeconds,
+          latestVideoId = videoId,
+          latestVideoDateModified = dateModifiedSeconds,
+        )
       return
     }
 
     current.videoCount += 1
-    if (dateAddedSeconds > current.latestDateAddedSeconds) {
+    if (shouldUpdateLatestVideo(current, dateAddedSeconds, videoId)) {
       current.latestDateAddedSeconds = dateAddedSeconds
+      current.latestVideoId = videoId
+      current.latestVideoDateModified = dateModifiedSeconds
     }
     if (current.bucketName.isEmpty() && bucketName.isNotEmpty()) {
       current.bucketName = bucketName
     }
+  }
+
+  private fun shouldUpdateLatestVideo(
+    current: AlbumAccumulator,
+    dateAddedSeconds: Long,
+    videoId: Long,
+  ): Boolean {
+    if (dateAddedSeconds != current.latestDateAddedSeconds) {
+      return dateAddedSeconds > current.latestDateAddedSeconds
+    }
+    return videoId > current.latestVideoId
   }
 
   private fun buildVideoRecords(cursor: Cursor): List<NativeVideoRecord> {
@@ -173,6 +205,9 @@ internal class MediaStoreVideoScanner(
           bucketName = entry.value.bucketName,
           videoCount = entry.value.videoCount.toLong(),
           latestDateAddedSeconds = entry.value.latestDateAddedSeconds,
+          latestVideoId = entry.value.latestVideoId,
+          latestVideoPath = buildVideoUri(entry.value.latestVideoId).toString(),
+          latestVideoDateModified = entry.value.latestVideoDateModified,
         )
       }
       .sortedByDescending { it.latestDateAddedSeconds }
@@ -183,6 +218,8 @@ private data class AlbumAccumulator(
   var bucketName: String,
   var videoCount: Int,
   var latestDateAddedSeconds: Long,
+  var latestVideoId: Long,
+  var latestVideoDateModified: Long,
 )
 
 private data class VideoCursorColumns(

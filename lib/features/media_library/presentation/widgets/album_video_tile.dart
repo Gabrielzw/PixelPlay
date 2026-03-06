@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import 'album_video_preview.dart';
 
 const double kAlbumVideoTileHeight = 118;
@@ -19,6 +20,7 @@ class AlbumVideoTileData {
   final String sizeText;
   final String modifiedTimeText;
   final int previewSeed;
+  final VideoThumbnailRequest thumbnailRequest;
 
   const AlbumVideoTileData({
     required this.id,
@@ -28,6 +30,7 @@ class AlbumVideoTileData {
     required this.sizeText,
     required this.modifiedTimeText,
     required this.previewSeed,
+    required this.thumbnailRequest,
   });
 }
 
@@ -59,6 +62,7 @@ class AlbumVideoTile extends StatelessWidget {
               AlbumVideoPreview(
                 durationText: data.durationText,
                 previewSeed: data.previewSeed,
+                thumbnailRequest: data.thumbnailRequest,
               ),
               const SizedBox(width: kAlbumVideoTileGap),
               Expanded(child: _AlbumVideoInfo(data: data)),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
+import '../../../thumbnail_engine/presentation/widgets/video_thumbnail_image.dart';
+
 const double kLibraryAlbumCardRadius = 24;
 const double kLibraryAlbumCoverAspectRatio = 1.56;
 const double kLibraryAlbumShadowBlur = 18;
@@ -15,6 +18,7 @@ class LibraryAlbumPreview {
   final IconData icon;
   final Color startColor;
   final Color endColor;
+  final VideoThumbnailRequest? thumbnailRequest;
 
   const LibraryAlbumPreview({
     required this.title,
@@ -22,6 +26,7 @@ class LibraryAlbumPreview {
     required this.icon,
     required this.startColor,
     required this.endColor,
+    this.thumbnailRequest,
   });
 }
 
@@ -144,7 +149,7 @@ class _LibraryAlbumCover extends StatelessWidget {
                 ),
               ),
             ),
-            const Positioned.fill(child: _PreviewStack()),
+            Positioned.fill(child: _AlbumCoverThumbnail(album: album)),
             Align(
               alignment: Alignment.bottomLeft,
               child: Padding(
@@ -165,6 +170,27 @@ class _LibraryAlbumCover extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AlbumCoverThumbnail extends StatelessWidget {
+  final LibraryAlbumPreview album;
+
+  const _AlbumCoverThumbnail({required this.album});
+
+  @override
+  Widget build(BuildContext context) {
+    final thumbnailRequest = album.thumbnailRequest;
+    if (thumbnailRequest == null) {
+      return const _PreviewStack();
+    }
+
+    return VideoThumbnailImage(
+      request: thumbnailRequest,
+      fit: BoxFit.cover,
+      priority: 1,
+      placeholder: const _PreviewStack(),
     );
   }
 }

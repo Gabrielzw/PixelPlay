@@ -13,14 +13,20 @@ import java.util.concurrent.Executors
 import media.gabriel.pixelplay.pigeon.FlutterError
 import media.gabriel.pixelplay.pigeon.MediaStoreAlbumsApi
 import media.gabriel.pixelplay.pigeon.NativeAlbumRecord
+import media.gabriel.pixelplay.pigeon.NativeThumbnailRequest
 import media.gabriel.pixelplay.pigeon.NativeVideoRecord
 
 private const val kPermissionRequestCode = 4127
+private const val kMaxThumbnailThreads = 4
 
 class MediaStoreAlbumsApiImpl(private val activity: Activity) : MediaStoreAlbumsApi {
-  private val executor: ExecutorService = Executors.newSingleThreadExecutor()
+  private val scanExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+  private val thumbnailExecutor: ExecutorService =
+    Executors.newFixedThreadPool(resolveThumbnailThreadCount())
   private val mainHandler = Handler(Looper.getMainLooper())
   private val scanner = MediaStoreVideoScanner(activity.contentResolver)
+  private val thumbnailStore =
+    MediaStoreThumbnailStore(activity.contentResolver, activity.cacheDir)
   private var pendingPermissionCallback: ((Result<Boolean>) -> Unit)? = null
 
   override fun hasVideoPermission(callback: (Result<Boolean>) -> Unit) {
@@ -46,14 +52,29 @@ class MediaStoreAlbumsApiImpl(private val activity: Activity) : MediaStoreAlbums
   }
 
   override fun scanLocalVideoAlbums(callback: (Result<List<NativeAlbumRecord>>) -> Unit) {
-    executeQuery(callback) { scanner.scanAlbums() }
+    executeProtectedQuery(scanExecutor, callback) { scanner.scanAlbums() }
   }
 
   override fun scanAlbumVideos(
     bucketId: String,
     callback: (Result<List<NativeVideoRecord>>) -> Unit,
   ) {
-    executeQuery(callback) { scanner.scanAlbumVideos(bucketId) }
+    executeProtectedQuery(scanExecutor, callback) { scanner.scanAlbumVideos(bucketId) }
+  }
+
+  override fun resolveVideoThumbnail(
+    request: NativeThumbnailRequest,
+    callback: (Result<String>) -> Unit,
+  ) {
+    executeProtectedQuery(thumbnailExecutor, callback) {
+      thumbnailStore.resolveThumbnail(request)
+    }
+  }
+
+  override fun clearThumbnailCache(callback: (Result<Unit>) -> Unit) {
+    executeQuery(thumbnailExecutor, callback) {
+      thumbnailStore.clearCache()
+    }
   }
 
   fun onRequestPermissionsResult(requestCode: Int, grantResults: IntArray): Boolean {
@@ -67,7 +88,8 @@ class MediaStoreAlbumsApiImpl(private val activity: Activity) : MediaStoreAlbums
     return true
   }
 
-  private fun <T> executeQuery(
+  private fun <T> executeProtectedQuery(
+    executor: ExecutorService,
     callback: (Result<T>) -> Unit,
     query: () -> T,
   ) {
@@ -76,6 +98,14 @@ class MediaStoreAlbumsApiImpl(private val activity: Activity) : MediaStoreAlbums
       return
     }
 
+    executeQuery(executor, callback, query)
+  }
+
+  private fun <T> executeQuery(
+    executor: ExecutorService,
+    callback: (Result<T>) -> Unit,
+    query: () -> T,
+  ) {
     executor.execute {
       val result = runCatching(query)
       mainHandler.post { callback(result) }
@@ -108,5 +138,10 @@ class MediaStoreAlbumsApiImpl(private val activity: Activity) : MediaStoreAlbums
       code = "permission_request_in_flight",
       message = "Video permission request already running.",
     )
+  }
+
+  private fun resolveThumbnailThreadCount(): Int {
+    val candidate = Runtime.getRuntime().availableProcessors() - 1
+    return candidate.coerceIn(1, kMaxThumbnailThreads)
   }
 }

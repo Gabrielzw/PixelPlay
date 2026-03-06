@@ -28,6 +28,9 @@ class AndroidMediaLibraryRepository implements MediaLibraryRepository {
             bucketName: record.bucketName,
             videoCount: record.videoCount,
             latestDateAddedSeconds: record.latestDateAddedSeconds,
+            latestVideoId: record.latestVideoId,
+            latestVideoPath: record.latestVideoPath,
+            latestVideoDateModified: record.latestVideoDateModified,
           ),
         )
         .toList(growable: false);
