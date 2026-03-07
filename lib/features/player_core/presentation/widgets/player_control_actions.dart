@@ -5,6 +5,16 @@ import '../../domain/player_controller.dart';
 import 'player_device_status_strip.dart';
 import 'player_ui_constants.dart';
 
+const double _kTopBarHorizontalPadding = 16;
+const double _kTopBarPortraitTopPadding = 8;
+const double _kTopBarLandscapeTopPadding = 6;
+const double _kTopBarBottomPadding = 6;
+const double _kTopBarButtonSize = 34;
+const double _kTopBarButtonIconSize = 22;
+const double _kTopBarStatusSpacing = 4;
+const double _kTopBarActionSpacing = 6;
+const double _kWideTopBarMinWidth = 720;
+
 class PlayerControlActions extends StatelessWidget {
   final PlayerController controller;
   final VoidCallback onBack;
@@ -21,75 +31,149 @@ class PlayerControlActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final item = controller.currentItem.value;
+      final mediaQuery = MediaQuery.of(context);
+      final orientation = mediaQuery.orientation;
+      final isLandscape = orientation == Orientation.landscape;
+      final showScreenshotAction = _shouldShowScreenshotAction(
+        mediaQuery.size,
+        orientation,
+      );
+
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              applyOpacity(Colors.black, kPlayerTopGradientStartOpacity),
-              Colors.transparent,
-            ],
-          ),
+        padding: EdgeInsets.fromLTRB(
+          _kTopBarHorizontalPadding,
+          isLandscape
+              ? _kTopBarLandscapeTopPadding
+              : _kTopBarPortraitTopPadding,
+          _kTopBarHorizontalPadding,
+          _kTopBarBottomPadding,
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            IconButton(
-              tooltip: '返回',
-              onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_rounded),
-              color: Colors.white,
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          item.sourceLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Colors.white70),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      PlayerDeviceStatusStrip(controller: controller),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: '截图',
-              onPressed: controller.showScreenshotUnavailable,
-              icon: const Icon(Icons.photo_camera_outlined),
-              color: Colors.white,
-            ),
-            IconButton(
-              tooltip: '更多',
-              onPressed: onShowMore,
-              icon: const Icon(Icons.more_vert_rounded),
-              color: Colors.white,
+            _PlayerTopStatusRow(controller: controller),
+            const SizedBox(height: _kTopBarStatusSpacing),
+            _PlayerTopMainRow(
+              title: item.title,
+              onBack: onBack,
+              onShowMore: onShowMore,
+              onScreenshot: controller.showScreenshotUnavailable,
+              showScreenshotAction: showScreenshotAction,
             ),
           ],
         ),
       );
     });
+  }
+
+  bool _shouldShowScreenshotAction(Size size, Orientation orientation) {
+    return orientation == Orientation.landscape ||
+        size.width >= _kWideTopBarMinWidth;
+  }
+}
+
+class _PlayerTopStatusRow extends StatelessWidget {
+  final PlayerController controller;
+
+  const _PlayerTopStatusRow({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: PlayerDeviceStatusStrip(controller: controller),
+      ),
+    );
+  }
+}
+
+class _PlayerTopMainRow extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+  final VoidCallback onShowMore;
+  final VoidCallback onScreenshot;
+  final bool showScreenshotAction;
+
+  const _PlayerTopMainRow({
+    required this.title,
+    required this.onBack,
+    required this.onShowMore,
+    required this.onScreenshot,
+    required this.showScreenshotAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        _PlayerTopBarButton(
+          icon: Icons.arrow_back_rounded,
+          tooltip: '返回',
+          onPressed: onBack,
+        ),
+        const SizedBox(width: _kTopBarActionSpacing),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        if (showScreenshotAction) ...<Widget>[
+          const SizedBox(width: _kTopBarActionSpacing),
+          _PlayerTopBarButton(
+            icon: Icons.photo_camera_outlined,
+            tooltip: '截图',
+            onPressed: onScreenshot,
+          ),
+        ],
+        const SizedBox(width: _kTopBarActionSpacing),
+        _PlayerTopBarButton(
+          icon: Icons.more_horiz_rounded,
+          tooltip: '更多',
+          onPressed: onShowMore,
+        ),
+      ],
+    );
+  }
+}
+
+class _PlayerTopBarButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _PlayerTopBarButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: _kTopBarButtonSize,
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        style: IconButton.styleFrom(
+          minimumSize: const Size.square(_kTopBarButtonSize),
+          padding: EdgeInsets.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+        color: Colors.white,
+        icon: Icon(icon, size: _kTopBarButtonIconSize),
+      ),
+    );
   }
 }
 

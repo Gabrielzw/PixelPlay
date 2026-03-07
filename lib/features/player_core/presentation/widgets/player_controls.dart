@@ -40,6 +40,8 @@ class PlayerControlsOverlay extends StatelessWidget {
     required this.flipVertical,
   });
 
+  static const double _kControlsScrimOpacity = 0.4;
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -52,6 +54,17 @@ class PlayerControlsOverlay extends StatelessWidget {
 
       return Stack(
         children: <Widget>[
+          Positioned.fill(
+            child: AnimatedOpacity(
+              opacity: visible || panelsOpen ? 1 : 0,
+              duration: kPlayerOverlayAnimationDuration,
+              child: IgnorePointer(
+                child: ColoredBox(
+                  color: applyOpacity(Colors.black, _kControlsScrimOpacity),
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: AnimatedOpacity(
               opacity: visible ? 1 : 0,
@@ -98,7 +111,7 @@ class PlayerControlsOverlay extends StatelessWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onClosePanels,
-                child: ColoredBox(color: applyOpacity(Colors.black, 0.34)),
+                child: const SizedBox.expand(),
               ),
             ),
           PlayerEpisodePanel(

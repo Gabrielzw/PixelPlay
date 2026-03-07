@@ -31,17 +31,6 @@ class PlayerControlBottomBar extends StatelessWidget {
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              Colors.transparent,
-              applyOpacity(Colors.black, kPlayerBottomGradientEndOpacity),
-            ],
-          ),
-          borderRadius: const BorderRadius.all(Radius.circular(24)),
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
