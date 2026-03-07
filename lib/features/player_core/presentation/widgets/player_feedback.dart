@@ -29,11 +29,18 @@ class PlayerFeedbackLayer extends StatelessWidget {
               left: 0,
               right: 0,
               bottom: 104,
-              child: Center(
-                child: FilledButton.icon(
-                  onPressed: controller.resetVideoTransform,
-                  icon: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('还原画面'),
+              child: AnimatedOpacity(
+                opacity: controller.controlsVisible.value ? 1 : 0,
+                duration: kPlayerOverlayAnimationDuration,
+                child: IgnorePointer(
+                  ignoring: !controller.controlsVisible.value,
+                  child: Center(
+                    child: FilledButton.icon(
+                      onPressed: controller.resetVideoTransform,
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text('还原画面'),
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -13,7 +13,9 @@ const double _kTopBarButtonSize = 34;
 const double _kTopBarButtonIconSize = 22;
 const double _kTopBarStatusSpacing = 4;
 const double _kTopBarActionSpacing = 6;
-const double _kWideTopBarMinWidth = 720;
+const double kPlayerSideActionHorizontalPadding = 12;
+const double _kSideActionBackgroundOpacity = 0.42;
+const double _kSideActionBorderRadius = 20;
 
 class PlayerControlActions extends StatelessWidget {
   final PlayerController controller;
@@ -31,13 +33,8 @@ class PlayerControlActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final item = controller.currentItem.value;
-      final mediaQuery = MediaQuery.of(context);
-      final orientation = mediaQuery.orientation;
-      final isLandscape = orientation == Orientation.landscape;
-      final showScreenshotAction = _shouldShowScreenshotAction(
-        mediaQuery.size,
-        orientation,
-      );
+      final isLandscape =
+          MediaQuery.of(context).orientation == Orientation.landscape;
 
       return Container(
         width: double.infinity,
@@ -58,18 +55,11 @@ class PlayerControlActions extends StatelessWidget {
               title: item.title,
               onBack: onBack,
               onShowMore: onShowMore,
-              onScreenshot: controller.showScreenshotUnavailable,
-              showScreenshotAction: showScreenshotAction,
             ),
           ],
         ),
       );
     });
-  }
-
-  bool _shouldShowScreenshotAction(Size size, Orientation orientation) {
-    return orientation == Orientation.landscape ||
-        size.width >= _kWideTopBarMinWidth;
   }
 }
 
@@ -95,15 +85,11 @@ class _PlayerTopMainRow extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
   final VoidCallback onShowMore;
-  final VoidCallback onScreenshot;
-  final bool showScreenshotAction;
 
   const _PlayerTopMainRow({
     required this.title,
     required this.onBack,
     required this.onShowMore,
-    required this.onScreenshot,
-    required this.showScreenshotAction,
   });
 
   @override
@@ -112,7 +98,7 @@ class _PlayerTopMainRow extends StatelessWidget {
       children: <Widget>[
         _PlayerTopBarButton(
           icon: Icons.arrow_back_rounded,
-          tooltip: '返回',
+          tooltip: '\u8fd4\u56de',
           onPressed: onBack,
         ),
         const SizedBox(width: _kTopBarActionSpacing),
@@ -127,18 +113,10 @@ class _PlayerTopMainRow extends StatelessWidget {
             ),
           ),
         ),
-        if (showScreenshotAction) ...<Widget>[
-          const SizedBox(width: _kTopBarActionSpacing),
-          _PlayerTopBarButton(
-            icon: Icons.photo_camera_outlined,
-            tooltip: '截图',
-            onPressed: onScreenshot,
-          ),
-        ],
         const SizedBox(width: _kTopBarActionSpacing),
         _PlayerTopBarButton(
           icon: Icons.more_horiz_rounded,
-          tooltip: '更多',
+          tooltip: '\u66f4\u591a',
           onPressed: onShowMore,
         ),
       ],
@@ -184,13 +162,73 @@ class PlayerLockedOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return PlayerSideSafeArea(
       child: Align(
-        alignment: Alignment.centerLeft,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: PlayerSideLockButton(isLocked: true, onPressed: onUnlock),
+        alignment: Alignment.centerRight,
+        child: PlayerSideLockButton(isLocked: true, onPressed: onUnlock),
+      ),
+    );
+  }
+}
+
+class PlayerSideSafeArea extends StatelessWidget {
+  final Widget child;
+
+  const PlayerSideSafeArea({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      bottom: false,
+      minimum: const EdgeInsets.symmetric(
+        horizontal: kPlayerSideActionHorizontalPadding,
+      ),
+      child: child,
+    );
+  }
+}
+
+class PlayerSideScreenshotButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const PlayerSideScreenshotButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return _PlayerSideActionButton(
+      tooltip: '\u622a\u56fe',
+      icon: Icons.photo_camera_outlined,
+      onPressed: onPressed,
+    );
+  }
+}
+
+class _PlayerSideActionButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _PlayerSideActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: applyOpacity(Colors.black, _kSideActionBackgroundOpacity),
+        borderRadius: const BorderRadius.all(
+          Radius.circular(_kSideActionBorderRadius),
         ),
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: Icon(icon),
+        color: Colors.white,
       ),
     );
   }
@@ -208,17 +246,10 @@ class PlayerSideLockButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: applyOpacity(Colors.black, 0.42),
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
-      ),
-      child: IconButton(
-        tooltip: isLocked ? '解锁' : '锁定',
-        onPressed: onPressed,
-        icon: Icon(isLocked ? Icons.lock_rounded : Icons.lock_open_rounded),
-        color: Colors.white,
-      ),
+    return _PlayerSideActionButton(
+      tooltip: isLocked ? '\u89e3\u9501' : '\u9501\u5b9a',
+      icon: isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
+      onPressed: onPressed,
     );
   }
 }

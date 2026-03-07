@@ -88,22 +88,11 @@ class PlayerControlsOverlay extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            left: 12,
-            top: 0,
-            bottom: 0,
-            child: AnimatedOpacity(
-              opacity: visible ? 1 : 0,
-              duration: kPlayerOverlayAnimationDuration,
-              child: IgnorePointer(
-                ignoring: !visible,
-                child: Center(
-                  child: PlayerSideLockButton(
-                    isLocked: false,
-                    onPressed: onToggleLock,
-                  ),
-                ),
-              ),
+          Positioned.fill(
+            child: _PlayerSideActionsOverlay(
+              visible: visible,
+              onScreenshot: controller.showScreenshotUnavailable,
+              onToggleLock: onToggleLock,
             ),
           ),
           if (panelsOpen)
@@ -132,5 +121,49 @@ class PlayerControlsOverlay extends StatelessWidget {
         ],
       );
     });
+  }
+}
+
+class _PlayerSideActionsOverlay extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onScreenshot;
+  final VoidCallback onToggleLock;
+
+  const _PlayerSideActionsOverlay({
+    required this.visible,
+    required this.onScreenshot,
+    required this.onToggleLock,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: visible ? 1 : 0,
+      duration: kPlayerOverlayAnimationDuration,
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: PlayerSideSafeArea(
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: PlayerSideScreenshotButton(onPressed: onScreenshot),
+                ),
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: PlayerSideLockButton(
+                    isLocked: false,
+                    onPressed: onToggleLock,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
