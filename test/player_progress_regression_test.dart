@@ -10,9 +10,8 @@ import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 
-class DelayedPlaybackPositionRepository implements PlaybackPositionRepository {
-  final Completer<void> saveCompleter = Completer<void>();
-
+class RecordingPlaybackPositionRepository
+    implements PlaybackPositionRepository {
   PlaybackPositionRecord? savedRecord;
 
   @override
@@ -23,7 +22,6 @@ class DelayedPlaybackPositionRepository implements PlaybackPositionRepository {
   @override
   Future<void> save(PlaybackPositionRecord record) async {
     savedRecord = record;
-    await saveCompleter.future;
   }
 
   @override
@@ -32,7 +30,7 @@ class DelayedPlaybackPositionRepository implements PlaybackPositionRepository {
   }
 }
 
-class ControllablePlaybackPort implements PlayerPlaybackPort {
+class RegressionPlaybackPort implements PlayerPlaybackPort {
   final StreamController<bool> _bufferingController =
       StreamController<bool>.broadcast();
   final StreamController<bool> _completedController =
@@ -45,6 +43,10 @@ class ControllablePlaybackPort implements PlayerPlaybackPort {
       StreamController<bool>.broadcast();
   final StreamController<Duration> _positionController =
       StreamController<Duration>.broadcast();
+
+  bool? lastOpenPlayValue;
+  int playCallCount = 0;
+  Duration? lastSeekPosition;
 
   @override
   Stream<bool> get bufferingStream => _bufferingController.stream;
@@ -89,6 +91,7 @@ class ControllablePlaybackPort implements PlayerPlaybackPort {
 
   @override
   Future<void> open(PlayerQueueItem item, {required bool play}) async {
+    lastOpenPlayValue = play;
     _playingController.add(play);
   }
 
@@ -99,11 +102,13 @@ class ControllablePlaybackPort implements PlayerPlaybackPort {
 
   @override
   Future<void> play() async {
+    playCallCount += 1;
     _playingController.add(true);
   }
 
   @override
   Future<void> seek(Duration position) async {
+    lastSeekPosition = position;
     _positionController.add(position);
   }
 
@@ -120,13 +125,13 @@ void main() {
     Get.reset();
   });
 
-  testWidgets('player page waits for progress save before popping', (
+  testWidgets('player page saves latest observed position before popping', (
     WidgetTester tester,
   ) async {
     final navigatorKey = GlobalKey<NavigatorState>();
     final settingsRepository = InMemorySettingsRepository();
-    final progressRepository = DelayedPlaybackPositionRepository();
-    final playbackPort = ControllablePlaybackPort();
+    final progressRepository = RecordingPlaybackPositionRepository();
+    final playbackPort = RegressionPlaybackPort();
 
     Get.put<SettingsController>(
       SettingsController(repository: settingsRepository),
@@ -148,10 +153,10 @@ void main() {
                           playbackPort: playbackPort,
                           playlist: <PlayerQueueItem>[
                             PlayerQueueItem(
-                              id: 'video-exit',
-                              title: 'Exit Resume.mp4',
+                              id: 'video-latest',
+                              title: 'Latest Position.mp4',
                               sourceLabel: '本地 / Camera',
-                              sourceUri: 'test://video-exit',
+                              sourceUri: 'test://video-latest',
                               duration: const Duration(minutes: 10),
                             ),
                           ],
@@ -176,19 +181,102 @@ void main() {
     playbackPort.emitPosition(const Duration(minutes: 2));
     await tester.pump();
 
-    final Future<bool> popFuture = navigatorKey.currentState!.maybePop();
+    playbackPort.emitPosition(const Duration(minutes: 2, milliseconds: 500));
     await tester.pump();
 
-    expect(find.byType(PlayerPage), findsOneWidget);
-    expect(progressRepository.savedRecord?.mediaId, 'video-exit');
-    expect(progressRepository.savedRecord?.positionMs, 120000);
-    expect(progressRepository.savedRecord?.durationMs, 600000);
-
-    progressRepository.saveCompleter.complete();
-    await popFuture;
+    await navigatorKey.currentState!.maybePop();
     await tester.pumpAndSettle();
 
-    expect(find.byType(PlayerPage), findsNothing);
-    expect(find.text('open player'), findsOneWidget);
+    expect(progressRepository.savedRecord?.mediaId, 'video-latest');
+    expect(progressRepository.savedRecord?.positionMs, 120500);
+    expect(progressRepository.savedRecord?.durationMs, 600000);
+  });
+
+  testWidgets('player page saves progress when app goes to background', (
+    WidgetTester tester,
+  ) async {
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = RecordingPlaybackPositionRepository();
+    final playbackPort = RegressionPlaybackPort();
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: PlayerPage(
+          playbackPort: playbackPort,
+          playlist: <PlayerQueueItem>[
+            PlayerQueueItem(
+              id: 'video-background',
+              title: 'Background Save.mp4',
+              sourceLabel: '本地 / Camera',
+              sourceUri: 'test://video-background',
+              duration: const Duration(minutes: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    playbackPort.emitDuration(const Duration(minutes: 10));
+    playbackPort.emitPosition(const Duration(minutes: 2, seconds: 30));
+    await tester.pump();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    expect(progressRepository.savedRecord?.mediaId, 'video-background');
+    expect(progressRepository.savedRecord?.positionMs, 150000);
+    expect(progressRepository.savedRecord?.durationMs, 600000);
+  });
+
+  testWidgets('player page restores saved progress near the start', (
+    WidgetTester tester,
+  ) async {
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = RecordingPlaybackPositionRepository()
+      ..savedRecord = const PlaybackPositionRecord(
+        mediaId: 'video-near-start',
+        positionMs: 3000,
+        durationMs: 600000,
+      );
+    final playbackPort = RegressionPlaybackPort();
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: PlayerPage(
+          playbackPort: playbackPort,
+          playlist: <PlayerQueueItem>[
+            PlayerQueueItem(
+              id: 'video-near-start',
+              title: 'Near Start Resume.mp4',
+              sourceLabel: '本地 / Camera',
+              sourceUri: 'test://video-near-start',
+              duration: const Duration(minutes: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(playbackPort.lastOpenPlayValue, isFalse);
+    expect(playbackPort.playCallCount, 0);
+    expect(playbackPort.lastSeekPosition, isNull);
+
+    playbackPort.emitDuration(const Duration(minutes: 10));
+    await tester.pump();
+
+    expect(playbackPort.lastSeekPosition, const Duration(seconds: 3));
+    expect(playbackPort.playCallCount, 1);
   });
 }

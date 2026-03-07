@@ -178,9 +178,8 @@ class _AlbumVideoListView extends StatelessWidget {
         .toList(growable: false);
 
     Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            PlayerPage(playlist: playlist, initialIndex: initialIndex),
+      buildPlayerPageRoute(
+        child: PlayerPage(playlist: playlist, initialIndex: initialIndex),
       ),
     );
   }

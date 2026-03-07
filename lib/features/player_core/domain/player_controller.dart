@@ -47,6 +47,7 @@ class PlayerController extends GetxController {
   Duration? _pendingRestorePosition;
   DateTime? _lastPositionSyncAt;
   Duration _lastSyncedPosition = Duration.zero;
+  Duration _latestObservedPosition = Duration.zero;
   bool _showPendingRestoreMessage = false;
   bool _hasObservedPlaybackDuration = false;
   bool _isApplyingPendingRestore = false;
@@ -221,6 +222,9 @@ class PlayerController extends GetxController {
     }
 
     await playbackPort.seek(pendingPosition);
+    _latestObservedPosition = pendingPosition;
+    _lastPositionSyncAt = DateTime.now();
+    _lastSyncedPosition = pendingPosition;
     _pendingSeekPosition = null;
     scheduleProgressSave();
     armControlsAutoHide();

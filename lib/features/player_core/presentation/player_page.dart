@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -11,6 +13,19 @@ import '../domain/player_playback_port.dart';
 import '../domain/player_queue_item.dart';
 import 'widgets/player_layout.dart';
 import 'widgets/player_ui_constants.dart';
+
+Route<void> buildPlayerPageRoute({required Widget child}) {
+  return PageRouteBuilder<void>(
+    transitionDuration: Duration.zero,
+    reverseTransitionDuration: Duration.zero,
+    pageBuilder:
+        (
+          BuildContext context,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+        ) => child,
+  );
+}
 
 class PlayerPage extends StatefulWidget {
   final List<PlayerQueueItem> playlist;
@@ -28,15 +43,16 @@ class PlayerPage extends StatefulWidget {
   State<PlayerPage> createState() => _PlayerPageState();
 }
 
-class _PlayerPageState extends State<PlayerPage> {
+class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   late final String _controllerTag;
   late final PlayerPlaybackPort _playbackPort;
   late final PlayerController _controller;
-  bool _isPersistingBeforeExit = false;
+  Future<void>? _persistProgressTask;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controllerTag = 'player_${identityHashCode(this)}';
     _playbackPort = widget.playbackPort ?? MediaKitPlaybackAdapter();
     _controller = Get.put<PlayerController>(
@@ -54,10 +70,19 @@ class _PlayerPageState extends State<PlayerPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     Get.delete<PlayerController>(tag: _controllerTag, force: true);
     _playbackPort.disposePlayback();
     _restoreSystemUi();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_shouldPersistForLifecycle(state)) {
+      return;
+    }
+    unawaited(_persistProgressIfNeeded());
   }
 
   @override
@@ -84,17 +109,12 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   Future<bool> _handleWillPop() async {
-    if (_isPersistingBeforeExit) {
+    if (_persistProgressTask != null) {
       return false;
     }
 
-    _isPersistingBeforeExit = true;
-    try {
-      await _controller.persistProgressBeforeExit();
-      return true;
-    } finally {
-      _isPersistingBeforeExit = false;
-    }
+    await _persistProgressIfNeeded();
+    return true;
   }
 
   Future<void> _openSettings() async {
@@ -110,5 +130,27 @@ class _PlayerPageState extends State<PlayerPage> {
 
   void _restoreSystemUi() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  Future<void> _persistProgressIfNeeded() async {
+    final activeTask = _persistProgressTask;
+    if (activeTask != null) {
+      return activeTask;
+    }
+
+    final task = _controller.persistProgressBeforeExit();
+    _persistProgressTask = task;
+    try {
+      await task;
+    } finally {
+      _persistProgressTask = null;
+    }
+  }
+
+  bool _shouldPersistForLifecycle(AppLifecycleState state) {
+    return state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached;
   }
 }

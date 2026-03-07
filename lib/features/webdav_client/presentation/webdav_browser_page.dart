@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -272,18 +272,16 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
         final playlist = _entries
             .where((WebDavEntry item) => item.type == WebDavEntryType.video)
             .map(
-              (WebDavEntry item) => _mapPlayerItem(
-                entry: item,
-                password: password,
-              ),
+              (WebDavEntry item) =>
+                  _mapPlayerItem(entry: item, password: password),
             )
             .toList(growable: false);
         final initialIndex = playlist.indexWhere(
           (PlayerQueueItem item) => item.id == entry.path,
         );
         Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder: (_) => PlayerPage(
+          buildPlayerPageRoute(
+            child: PlayerPage(
               playlist: playlist,
               initialIndex: initialIndex < 0 ? 0 : initialIndex,
             ),
@@ -313,9 +311,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
         path: entry.path,
       ).toString(),
       isRemote: true,
-      httpHeaders: <String, String>{
-        'Authorization': 'Basic $authorization',
-      },
+      httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
     );
   }
 }
@@ -327,5 +323,3 @@ String _formatError(Object error) {
       .replaceFirst('Bad state: ', '')
       .trim();
 }
-
-

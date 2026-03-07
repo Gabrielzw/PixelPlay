@@ -1,7 +1,5 @@
 part of 'player_controller.dart';
 
-const double kPlaybackRestoreMinRatio = 0.05;
-const double kPlaybackRestoreMaxRatio = 0.95;
 const double kGestureDefaultLevel = 0.6;
 const double kGestureDecisionSlop = 12;
 

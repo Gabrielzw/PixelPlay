@@ -43,6 +43,7 @@ extension _PlayerPlaybackLogic on PlayerController {
   }
 
   void _handlePositionChanged(Duration value) {
+    _latestObservedPosition = value.isNegative ? Duration.zero : value;
     if (_pendingRestorePosition != null ||
         _pendingSeekPosition != null ||
         !_shouldSyncPosition(value)) {
@@ -60,15 +61,7 @@ extension _PlayerPlaybackLogic on PlayerController {
 
   Future<void> switchToIndex(int index) async {
     await persistCurrentProgress();
-    _progressSaveTimer?.cancel();
-    _gestureSession = null;
-    _pendingSeekPosition = null;
-    _pendingRestorePosition = null;
-    _lastPositionSyncAt = null;
-    _lastSyncedPosition = Duration.zero;
-    _showPendingRestoreMessage = false;
-    _hasObservedPlaybackDuration = false;
-    _isApplyingPendingRestore = false;
+    _resetPlaybackTracking();
 
     final nextItem = queue[index];
     currentIndex.value = index;
@@ -92,13 +85,7 @@ extension _PlayerPlaybackLogic on PlayerController {
     }
 
     clearError();
-    _pendingSeekPosition = null;
-    _pendingRestorePosition = null;
-    _lastPositionSyncAt = null;
-    _lastSyncedPosition = Duration.zero;
-    _showPendingRestoreMessage = false;
-    _hasObservedPlaybackDuration = false;
-    _isApplyingPendingRestore = false;
+    _resetPlaybackTracking();
     duration.value = item.duration;
     applyPosition(Duration.zero);
     isBuffering.value = true;
@@ -137,16 +124,8 @@ extension _PlayerPlaybackLogic on PlayerController {
     final item = currentItem.value;
     final record = await playbackPositionRepository.load(item.id);
     final restoredPositionMs = record?.positionMs ?? item.lastKnownPositionMs;
-    final restoredDurationMs =
-        record?.durationMs ?? item.duration.inMilliseconds;
 
-    if (restoredPositionMs == null || restoredDurationMs <= 0) {
-      return null;
-    }
-
-    final restoredRatio = restoredPositionMs / restoredDurationMs;
-    if (restoredRatio <= kPlaybackRestoreMinRatio ||
-        restoredRatio >= kPlaybackRestoreMaxRatio) {
+    if (restoredPositionMs == null || restoredPositionMs <= 0) {
       return null;
     }
 
@@ -159,12 +138,9 @@ extension _PlayerPlaybackLogic on PlayerController {
       return;
     }
 
-    final currentPosition = _pendingSeekPosition ?? position.value;
-    final progressRatio =
-        currentPosition.inMilliseconds / duration.value.inMilliseconds;
+    final currentPosition = _resolvePersistedPosition();
     final itemId = currentItem.value.id;
-    if (progressRatio <= kPlaybackRestoreMinRatio ||
-        progressRatio >= kPlaybackRestoreMaxRatio) {
+    if (currentPosition <= Duration.zero) {
       await playbackPositionRepository.clear(itemId);
       return;
     }
@@ -208,6 +184,9 @@ extension _PlayerPlaybackLogic on PlayerController {
     try {
       await playbackPort.seek(_pendingSeekPosition!);
       applyPosition(_pendingSeekPosition!);
+      _latestObservedPosition = _pendingSeekPosition!;
+      _lastPositionSyncAt = DateTime.now();
+      _lastSyncedPosition = _pendingSeekPosition!;
       _pendingSeekPosition = null;
       _pendingRestorePosition = null;
       final showMessage = _showPendingRestoreMessage;
@@ -252,6 +231,32 @@ extension _PlayerPlaybackLogic on PlayerController {
       return true;
     }
     return positionDeltaMs >= kPlaybackPositionJumpThreshold.inMilliseconds;
+  }
+
+  Duration _resolvePersistedPosition() {
+    final pendingPosition = _pendingSeekPosition;
+    if (pendingPosition != null) {
+      return _clampToDuration(pendingPosition);
+    }
+
+    final latestPosition = _latestObservedPosition;
+    if (latestPosition > position.value) {
+      return _clampToDuration(latestPosition);
+    }
+    return _clampToDuration(position.value);
+  }
+
+  void _resetPlaybackTracking() {
+    _progressSaveTimer?.cancel();
+    _gestureSession = null;
+    _pendingSeekPosition = null;
+    _pendingRestorePosition = null;
+    _lastPositionSyncAt = null;
+    _lastSyncedPosition = Duration.zero;
+    _latestObservedPosition = Duration.zero;
+    _showPendingRestoreMessage = false;
+    _hasObservedPlaybackDuration = false;
+    _isApplyingPendingRestore = false;
   }
 
   String _cleanPlaybackError(Object error) {

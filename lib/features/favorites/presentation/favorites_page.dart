@@ -84,8 +84,8 @@ class _FavoriteTile extends StatelessWidget {
         subtitle: Text(item.source),
         onTap: () {
           Navigator.of(context, rootNavigator: true).push(
-            MaterialPageRoute<void>(
-              builder: (_) => PlayerPage(
+            buildPlayerPageRoute(
+              child: PlayerPage(
                 playlist: <PlayerQueueItem>[
                   PlayerQueueItem(
                     id: '${item.source}:${item.title}',
