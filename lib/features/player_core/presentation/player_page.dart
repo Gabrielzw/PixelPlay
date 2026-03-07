@@ -6,9 +6,11 @@ import 'package:get/get.dart';
 
 import '../../settings/domain/settings_controller.dart';
 import '../data/media_kit_playback_adapter.dart';
+import '../data/player_device_adapter.dart';
 import '../../settings/presentation/player_settings_page.dart';
 import '../domain/playback_position_repository.dart';
 import '../domain/player_controller.dart';
+import '../domain/player_device_port.dart';
 import '../domain/player_playback_port.dart';
 import '../domain/player_queue_item.dart';
 import 'widgets/player_layout.dart';
@@ -31,12 +33,14 @@ class PlayerPage extends StatefulWidget {
   final List<PlayerQueueItem> playlist;
   final int initialIndex;
   final PlayerPlaybackPort? playbackPort;
+  final PlayerDevicePort? devicePort;
 
   const PlayerPage({
     super.key,
     required this.playlist,
     this.initialIndex = 0,
     this.playbackPort,
+    this.devicePort,
   });
 
   @override
@@ -46,6 +50,7 @@ class PlayerPage extends StatefulWidget {
 class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   late final String _controllerTag;
   late final PlayerPlaybackPort _playbackPort;
+  late final PlayerDevicePort _devicePort;
   late final PlayerController _controller;
   Future<void>? _persistProgressTask;
   bool _showEpisodePanel = false;
@@ -59,11 +64,13 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _controllerTag = 'player_${identityHashCode(this)}';
     _playbackPort = widget.playbackPort ?? MediaKitPlaybackAdapter();
+    _devicePort = widget.devicePort ?? PlayerDeviceAdapter();
     _controller = Get.put<PlayerController>(
       PlayerController(
         settingsController: Get.find<SettingsController>(),
         playbackPositionRepository: Get.find<PlaybackPositionRepository>(),
         playbackPort: _playbackPort,
+        devicePort: _devicePort,
         queue: widget.playlist,
         initialIndex: widget.initialIndex,
       ),
@@ -83,6 +90,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_controller.refreshDeviceSnapshot());
+      return;
+    }
     if (!_shouldPersistForLifecycle(state)) {
       return;
     }

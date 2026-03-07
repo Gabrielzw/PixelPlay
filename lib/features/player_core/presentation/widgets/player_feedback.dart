@@ -23,6 +23,20 @@ class PlayerFeedbackLayer extends StatelessWidget {
             IgnorePointer(
               child: _HudOverlay(state: controller.hudState.value!),
             ),
+          if (controller.hasActiveVideoTransform &&
+              !controller.controlsLocked.value)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 104,
+              child: Center(
+                child: FilledButton.icon(
+                  onPressed: controller.resetVideoTransform,
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: const Text('还原画面'),
+                ),
+              ),
+            ),
           if (controller.isBuffering.value)
             const IgnorePointer(child: _BufferingOverlay()),
           if (controller.errorMessage.value != null)

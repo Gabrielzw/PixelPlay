@@ -183,15 +183,27 @@ extension PlayerControllerCommands on PlayerController {
   void beginSurfaceGesture({
     required Offset localPosition,
     required Size viewportSize,
+    required int pointerCount,
   }) {
     handleSurfaceGestureStart(
       localPosition: localPosition,
       viewportSize: viewportSize,
+      pointerCount: pointerCount,
     );
   }
 
-  void updateSurfaceGesture({required Offset localPosition}) {
-    handleSurfaceGestureUpdate(localPosition: localPosition);
+  void updateSurfaceGesture({
+    required Offset localPosition,
+    required int pointerCount,
+    required double scale,
+    required double rotation,
+  }) {
+    handleSurfaceGestureUpdate(
+      localPosition: localPosition,
+      pointerCount: pointerCount,
+      scale: scale,
+      rotation: rotation,
+    );
   }
 
   void endSurfaceGesture() {

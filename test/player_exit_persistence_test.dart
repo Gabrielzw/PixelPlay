@@ -10,6 +10,8 @@ import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 
+import 'player_test_device_port.dart';
+
 class DelayedPlaybackPositionRepository implements PlaybackPositionRepository {
   final Completer<void> saveCompleter = Completer<void>();
 
@@ -150,6 +152,7 @@ void main() {
                       MaterialPageRoute<void>(
                         builder: (_) => PlayerPage(
                           playbackPort: playbackPort,
+                          devicePort: TestPlayerDevicePort(),
                           playlist: <PlayerQueueItem>[
                             PlayerQueueItem(
                               id: 'video-exit',

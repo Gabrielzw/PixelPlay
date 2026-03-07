@@ -33,32 +33,33 @@ class PlayerGestureLayer extends StatelessWidget {
           onLongPressEnd: interactionsEnabled
               ? (_) => controller.endLongPressSpeedBoost()
               : null,
-          onPanStart: (DragStartDetails details) {
+          onScaleStart: (ScaleStartDetails details) {
             if (!interactionsEnabled) {
               return;
             }
             controller.beginSurfaceGesture(
-              localPosition: details.localPosition,
+              localPosition: details.localFocalPoint,
               viewportSize: viewportSize,
+              pointerCount: details.pointerCount,
             );
           },
-          onPanUpdate: (DragUpdateDetails details) {
+          onScaleUpdate: (ScaleUpdateDetails details) {
             if (!interactionsEnabled) {
               return;
             }
             controller.updateSurfaceGesture(
-              localPosition: details.localPosition,
+              localPosition: details.localFocalPoint,
+              pointerCount: details.pointerCount,
+              scale: details.scale,
+              rotation: details.rotation,
             );
           },
-          onPanEnd: (_) {
+          onScaleEnd: (_) {
             if (!interactionsEnabled) {
               return;
             }
             controller.endSurfaceGesture();
           },
-          onPanCancel: interactionsEnabled
-              ? controller.endSurfaceGesture
-              : null,
         );
       },
     );

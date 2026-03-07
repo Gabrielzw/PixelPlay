@@ -5,13 +5,12 @@ import '../../domain/player_playback_port.dart';
 import 'player_ui_constants.dart';
 
 const double _kControlsMaskOpacity = 0.08;
-const double _kBrightnessMaskMaxOpacity = 0.72;
 
 class PlayerSurface extends StatelessWidget {
   final PlayerPlaybackPort playbackPort;
   final PlayerAspectRatio aspectRatioMode;
   final bool controlsVisible;
-  final double brightnessLevel;
+  final Matrix4 transformMatrix;
   final bool flipHorizontal;
   final bool flipVertical;
 
@@ -20,26 +19,27 @@ class PlayerSurface extends StatelessWidget {
     required this.playbackPort,
     required this.aspectRatioMode,
     required this.controlsVisible,
-    required this.brightnessLevel,
+    required this.transformMatrix,
     required this.flipHorizontal,
     required this.flipVertical,
   });
 
   @override
   Widget build(BuildContext context) {
-    final brightnessMaskOpacity =
-        (1 - brightnessLevel.clamp(0.0, 1.0)) * _kBrightnessMaskMaxOpacity;
-
     return ColoredBox(
       color: kPlayerBackground,
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          Transform.flip(
-            flipX: flipHorizontal,
-            flipY: flipVertical,
-            child: playbackPort.buildVideoView(
-              fit: _resolveBoxFit(aspectRatioMode),
+          Transform(
+            alignment: Alignment.center,
+            transform: transformMatrix,
+            child: Transform.flip(
+              flipX: flipHorizontal,
+              flipY: flipVertical,
+              child: playbackPort.buildVideoView(
+                fit: _resolveBoxFit(aspectRatioMode),
+              ),
             ),
           ),
           IgnorePointer(
@@ -61,12 +61,6 @@ class PlayerSurface extends StatelessWidget {
               ),
             ),
           ),
-          if (brightnessMaskOpacity > 0)
-            IgnorePointer(
-              child: ColoredBox(
-                color: applyOpacity(Colors.black, brightnessMaskOpacity),
-              ),
-            ),
         ],
       ),
     );

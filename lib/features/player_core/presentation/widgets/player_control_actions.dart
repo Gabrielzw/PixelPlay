@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../domain/player_controller.dart';
+import 'player_device_status_strip.dart';
 import 'player_ui_constants.dart';
 
 class PlayerControlActions extends StatelessWidget {
@@ -22,9 +21,6 @@ class PlayerControlActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final item = controller.currentItem.value;
-      final isLandscape =
-          MediaQuery.of(context).orientation == Orientation.landscape;
-
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
@@ -59,19 +55,25 @@ class PlayerControlActions extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Text(
-                    item.sourceLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          item.sourceLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.white70),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PlayerDeviceStatusStrip(controller: controller),
+                    ],
                   ),
                 ],
               ),
             ),
-            if (isLandscape) const _CurrentTimeLabel(),
-            if (isLandscape) const SizedBox(width: 8),
             IconButton(
               tooltip: '截图',
               onPressed: controller.showScreenshotUnavailable,
@@ -88,54 +90,6 @@ class PlayerControlActions extends StatelessWidget {
         ),
       );
     });
-  }
-}
-
-class _CurrentTimeLabel extends StatefulWidget {
-  const _CurrentTimeLabel();
-
-  @override
-  State<_CurrentTimeLabel> createState() => _CurrentTimeLabelState();
-}
-
-class _CurrentTimeLabelState extends State<_CurrentTimeLabel> {
-  late String _timeText;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timeText = _formatNow();
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _timeText = _formatNow());
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      _timeText,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        color: Colors.white,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-
-  String _formatNow() {
-    final now = DateTime.now();
-    final hour = now.hour.toString().padLeft(2, '0');
-    final minute = now.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 }
 

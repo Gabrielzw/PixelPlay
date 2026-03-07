@@ -39,6 +39,30 @@ dependencies:
   webdav_client: ^1.2.2
   flutter_secure_storage: ^10.0.0
 
+  # 启动屏
+  flutter_native_splash: ^2.4.7
+
+  # 加载动画
+  loading_animation_widget: ^1.3.0
+
+  # 自动旋转
+  auto_orientation_v2: ^2.3.7
+
+  # 音量控制
+  flutter_volume_controller: ^1.3.4
+
+  # 屏幕亮度控制
+  screen_brightness: ^2.1.7
+
+  # 网络状态
+  connectivity_plus: ^7.0.0
+
+  # 电池状态
+  battery_plus: ^7.0.0
+
+  # 进度条
+  audio_video_progress_bar: ^2.0.3
+
   # 数据存储
   isar_community: ^3.3.0
   isar_community_flutter_libs: ^3.3.0

@@ -54,7 +54,7 @@ class PlayerLayout extends StatelessWidget {
               playbackPort: playbackPort,
               aspectRatioMode: controller.aspectRatio.value,
               controlsVisible: controller.controlsVisible.value,
-              brightnessLevel: controller.brightnessLevel.value,
+              transformMatrix: controller.videoTransform.value,
               flipHorizontal: flipHorizontal,
               flipVertical: flipVertical,
             ),

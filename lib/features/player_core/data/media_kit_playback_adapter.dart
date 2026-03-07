@@ -7,10 +7,13 @@ import '../domain/player_queue_item.dart';
 
 const int kPlaybackBufferBytes = 48 * 1024 * 1024;
 const String kPlaybackTitle = 'PixelPlay';
+const String kPlaybackAutoSyncProperty = 'autosync';
+const int kPlaybackAutoSyncValue = 30;
 
 class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
   final Player player;
   final VideoController videoController;
+  Future<void>? _nativePlayerConfiguration;
 
   MediaKitPlaybackAdapter._({
     required this.player,
@@ -69,6 +72,8 @@ class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
     required bool play,
     Duration? startPosition,
   }) async {
+    await _ensureNativePlayerConfigured();
+
     final source = item.playbackUri;
     if (source == null || source.trim().isEmpty) {
       throw StateError('Missing playback source for media id: ${item.id}');
@@ -91,13 +96,32 @@ class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
   Future<void> seek(Duration position) => player.seek(position);
 
   @override
-  Future<void> setPlaybackSpeed(double speed) => player.setRate(speed);
+  Future<void> setPlaybackSpeed(double speed) async {
+    await _ensureNativePlayerConfigured();
+    await player.setRate(speed);
+  }
 
   @override
   Future<void> setVolume(double volume) => player.setVolume(volume * 100);
 
   @override
   Future<void> disposePlayback() => player.dispose();
+
+  Future<void> _ensureNativePlayerConfigured() {
+    return _nativePlayerConfiguration ??= _configureNativePlayer(player);
+  }
+}
+
+Future<void> _configureNativePlayer(Player player) async {
+  final platform = player.platform;
+  if (platform is! NativePlayer) {
+    return;
+  }
+
+  await platform.setProperty(
+    kPlaybackAutoSyncProperty,
+    kPlaybackAutoSyncValue.toString(),
+  );
 }
 
 Player _buildPlayer() {

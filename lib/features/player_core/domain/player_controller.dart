@@ -6,12 +6,14 @@ import 'package:get/get.dart';
 import '../../settings/domain/app_settings.dart';
 import '../../settings/domain/settings_controller.dart';
 import 'playback_position_repository.dart';
+import 'player_device_port.dart';
 import 'player_playback_port.dart';
 import 'player_queue_item.dart';
 
 part 'player_controller_commands.dart';
 part 'player_controller_state.dart';
 part 'player_controller_gestures.dart';
+part 'player_controller_device.dart';
 part 'player_controller_playback.dart';
 part 'player_controller_preferences.dart';
 part 'player_controller_visibility.dart';
@@ -20,19 +22,25 @@ class PlayerController extends GetxController {
   final SettingsController settingsController;
   final PlaybackPositionRepository playbackPositionRepository;
   final PlayerPlaybackPort playbackPort;
+  final PlayerDevicePort devicePort;
   final List<PlayerQueueItem> queue;
 
   final RxBool isPlaying = true.obs;
   final RxBool controlsVisible = true.obs;
   final RxBool controlsLocked = false.obs;
   final RxBool isBuffering = false.obs;
+  final RxBool isCharging = false.obs;
   final RxDouble progress = 0.0.obs;
   final RxDouble brightnessLevel = kGestureDefaultLevel.obs;
   final RxDouble volumeLevel = kGestureDefaultLevel.obs;
   final RxDouble playbackSpeed = 1.0.obs;
+  final RxInt batteryLevel = 100.obs;
   final RxInt currentIndex = 0.obs;
+  final RxString currentTimeText = '--:--'.obs;
   final Rxn<PlayerHudState> hudState = Rxn<PlayerHudState>();
   final RxnString errorMessage = RxnString();
+  final Rx<PlayerNetworkStatus> networkStatus = PlayerNetworkStatus.unknown.obs;
+  final Rx<Matrix4> videoTransform = Matrix4.identity().obs;
 
   late final Rx<PlayerQueueItem> currentItem;
   late final Rx<Duration> position;
@@ -59,6 +67,7 @@ class PlayerController extends GetxController {
     required this.settingsController,
     required this.playbackPositionRepository,
     required this.playbackPort,
+    required this.devicePort,
     required List<PlayerQueueItem> queue,
     int initialIndex = 0,
   }) : queue = List<PlayerQueueItem>.unmodifiable(queue) {
@@ -94,6 +103,7 @@ class PlayerController extends GetxController {
   Future<void> onReady() async {
     super.onReady();
     _bindPlaybackStreams();
+    await bindDeviceFeatures();
     await _syncPlaybackPreferences();
     await openCurrentItem(restoreProgress: true, showRestoreMessage: true);
     armControlsAutoHide();
@@ -102,6 +112,7 @@ class PlayerController extends GetxController {
   @override
   void onClose() {
     unawaited(persistCurrentProgress());
+    unawaited(devicePort.detach());
     _controlsTimer?.cancel();
     _hudTimer?.cancel();
     _progressSaveTimer?.cancel();

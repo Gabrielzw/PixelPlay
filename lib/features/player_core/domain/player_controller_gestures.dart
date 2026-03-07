@@ -4,24 +4,53 @@ extension _PlayerGestureLogic on PlayerController {
   void handleSurfaceGestureStart({
     required Offset localPosition,
     required Size viewportSize,
+    required int pointerCount,
   }) {
     if (controlsLocked.value) {
       return;
     }
 
     _hudTimer?.cancel();
-    _gestureSession = _PlayerGestureSession(
+    _gestureSession = _createGestureSession(
       startOffset: localPosition,
       viewportSize: viewportSize,
-      basePosition: position.value,
-      baseBrightness: brightnessLevel.value,
-      baseVolume: volumeLevel.value,
+      pointerCount: pointerCount,
     );
+    if (pointerCount >= 2) {
+      hudState.value = null;
+    }
   }
 
-  void handleSurfaceGestureUpdate({required Offset localPosition}) {
+  void handleSurfaceGestureUpdate({
+    required Offset localPosition,
+    required int pointerCount,
+    required double scale,
+    required double rotation,
+  }) {
     final session = _gestureSession;
     if (session == null) {
+      return;
+    }
+
+    if (pointerCount != session.pointerCount) {
+      _gestureSession = _createGestureSession(
+        startOffset: localPosition,
+        viewportSize: session.viewportSize,
+        pointerCount: pointerCount,
+      );
+      if (pointerCount >= 2) {
+        hudState.value = null;
+      }
+      return;
+    }
+
+    if (pointerCount >= 2) {
+      applyTransformGesture(
+        session,
+        localPosition: localPosition,
+        scale: scale,
+        rotation: rotation,
+      );
       return;
     }
 
@@ -30,6 +59,8 @@ extension _PlayerGestureLogic on PlayerController {
     switch (session.mode) {
       case _PlayerGestureMode.pending:
       case _PlayerGestureMode.none:
+        return;
+      case _PlayerGestureMode.transform:
         return;
       case _PlayerGestureMode.seek:
         applySeekGesture(session, delta.dx);
@@ -106,7 +137,9 @@ extension _PlayerGestureLogic on PlayerController {
   void applyBrightnessGesture(_PlayerGestureSession session, double deltaY) {
     final nextValue =
         session.baseBrightness - deltaY / session.viewportSize.height;
-    brightnessLevel.value = nextValue.clamp(0.0, 1.0);
+    final brightness = nextValue.clamp(0.0, 1.0).toDouble();
+    brightnessLevel.value = brightness;
+    unawaited(updateBrightnessLevel(brightness));
     showHud(
       PlayerHudState(
         kind: PlayerHudKind.brightness,
@@ -118,8 +151,9 @@ extension _PlayerGestureLogic on PlayerController {
 
   void applyVolumeGesture(_PlayerGestureSession session, double deltaY) {
     final nextValue = session.baseVolume - deltaY / session.viewportSize.height;
-    volumeLevel.value = nextValue.clamp(0.0, 1.0);
-    unawaited(playbackPort.setVolume(volumeLevel.value));
+    final volume = nextValue.clamp(0.0, 1.0).toDouble();
+    volumeLevel.value = volume;
+    unawaited(updateVolumeLevel(volume));
     showHud(
       PlayerHudState(
         kind: PlayerHudKind.volume,
@@ -127,6 +161,47 @@ extension _PlayerGestureLogic on PlayerController {
         alignment: const Alignment(0.72, 0),
       ),
     );
+  }
+
+  void applyTransformGesture(
+    _PlayerGestureSession session, {
+    required Offset localPosition,
+    required double scale,
+    required double rotation,
+  }) {
+    session.mode = _PlayerGestureMode.transform;
+    final deltaMatrix = Matrix4.identity()
+      ..translateByDouble(localPosition.dx, localPosition.dy, 0, 1)
+      ..rotateZ(rotation)
+      ..scaleByDouble(scale, scale, 1, 1)
+      ..translateByDouble(
+        -session.transformFocalPoint.dx,
+        -session.transformFocalPoint.dy,
+        0,
+        1,
+      );
+    applyVideoTransform(deltaMatrix * session.baseTransform);
+  }
+
+  _PlayerGestureSession _createGestureSession({
+    required Offset startOffset,
+    required Size viewportSize,
+    required int pointerCount,
+  }) {
+    final session = _PlayerGestureSession(
+      startOffset: startOffset,
+      viewportSize: viewportSize,
+      basePosition: position.value,
+      baseBrightness: brightnessLevel.value,
+      baseVolume: volumeLevel.value,
+      pointerCount: pointerCount,
+      baseTransform: Matrix4.copy(videoTransform.value),
+      transformFocalPoint: startOffset,
+    );
+    if (pointerCount >= 2) {
+      session.mode = _PlayerGestureMode.transform;
+    }
+    return session;
   }
 
   void showHud(PlayerHudState nextHud) {

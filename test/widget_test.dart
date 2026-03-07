@@ -21,6 +21,8 @@ import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_account_r
 import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_browser_repository.dart';
 import 'package:pixelplay/shared/utils/media_formatters.dart';
 
+import 'player_test_device_port.dart';
+
 PixelPlayApp buildTestApp() {
   return PixelPlayApp(
     settingsRepository: InMemorySettingsRepository(),
@@ -256,6 +258,7 @@ void main() {
       GetMaterialApp(
         home: PlayerPage(
           playbackPort: playbackPort,
+          devicePort: TestPlayerDevicePort(),
           playlist: <PlayerQueueItem>[
             PlayerQueueItem(
               id: 'video-1',
@@ -298,6 +301,7 @@ void main() {
       GetMaterialApp(
         home: PlayerPage(
           playbackPort: playbackPort,
+          devicePort: TestPlayerDevicePort(),
           playlist: <PlayerQueueItem>[
             PlayerQueueItem(
               id: 'video-2',

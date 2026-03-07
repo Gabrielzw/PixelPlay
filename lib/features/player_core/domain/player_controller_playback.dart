@@ -67,7 +67,7 @@ extension PlayerControllerPlaybackLogic on PlayerController {
 
   Future<void> _syncPlaybackPreferences() async {
     await playbackPort.setPlaybackSpeed(playbackSpeed.value);
-    await playbackPort.setVolume(volumeLevel.value);
+    await playbackPort.setVolume(kGestureDefaultLevel);
   }
 
   Future<void> switchToIndex(int index) async {
@@ -97,6 +97,7 @@ extension PlayerControllerPlaybackLogic on PlayerController {
 
     clearError();
     _resetPlaybackTracking();
+    resetVideoTransform();
     duration.value = item.duration;
     applyPosition(Duration.zero);
     isBuffering.value = true;

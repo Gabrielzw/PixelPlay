@@ -36,7 +36,7 @@ class PlayerHudState {
   });
 }
 
-enum _PlayerGestureMode { pending, none, seek, brightness, volume }
+enum _PlayerGestureMode { pending, none, seek, brightness, volume, transform }
 
 class _PlayerGestureSession {
   final Offset startOffset;
@@ -44,6 +44,9 @@ class _PlayerGestureSession {
   final Duration basePosition;
   final double baseBrightness;
   final double baseVolume;
+  final int pointerCount;
+  final Matrix4 baseTransform;
+  final Offset transformFocalPoint;
   _PlayerGestureMode mode = _PlayerGestureMode.pending;
 
   _PlayerGestureSession({
@@ -52,5 +55,8 @@ class _PlayerGestureSession {
     required this.basePosition,
     required this.baseBrightness,
     required this.baseVolume,
+    required this.pointerCount,
+    required this.baseTransform,
+    required this.transformFocalPoint,
   });
 }
