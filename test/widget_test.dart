@@ -1,6 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+
+import 'dart:async';
 
 import 'package:pixelplay/app/pixelplay_app.dart';
 import 'package:pixelplay/features/media_library/data/in_memory_media_library_repository.dart';
@@ -68,6 +70,83 @@ class FakePlayerPlaybackPort implements PlayerPlaybackPort {
 
   @override
   Future<void> seek(Duration position) async {}
+
+  @override
+  Future<void> setPlaybackSpeed(double speed) async {}
+
+  @override
+  Future<void> setVolume(double volume) async {}
+}
+
+class DeferredReadyPlaybackPort implements PlayerPlaybackPort {
+  final StreamController<Duration> _durationController =
+      StreamController<Duration>.broadcast();
+  final StreamController<Duration> _positionController =
+      StreamController<Duration>.broadcast();
+
+  bool _isReady = false;
+  bool? lastOpenPlayValue;
+  int playCallCount = 0;
+  Duration? lastAcceptedSeekPosition;
+
+  @override
+  Stream<bool> get bufferingStream => const Stream<bool>.empty();
+
+  @override
+  Stream<bool> get completedStream => const Stream<bool>.empty();
+
+  @override
+  Stream<Duration> get durationStream => _durationController.stream;
+
+  @override
+  Stream<String> get errorStream => const Stream<String>.empty();
+
+  @override
+  Stream<bool> get playingStream => const Stream<bool>.empty();
+
+  @override
+  Stream<Duration> get positionStream => _positionController.stream;
+
+  @override
+  Widget buildVideoView({required BoxFit fit}) {
+    return const SizedBox.expand();
+  }
+
+  @override
+  Future<void> disposePlayback() async {
+    await _durationController.close();
+    await _positionController.close();
+  }
+
+  void emitReady(Duration duration) {
+    _isReady = true;
+    _durationController.add(duration);
+  }
+
+  @override
+  Future<void> open(PlayerQueueItem item, {required bool play}) async {
+    lastOpenPlayValue = play;
+    _durationController.add(Duration.zero);
+    _positionController.add(Duration.zero);
+  }
+
+  @override
+  Future<void> pause() async {}
+
+  @override
+  Future<void> play() async {
+    playCallCount += 1;
+  }
+
+  @override
+  Future<void> seek(Duration position) async {
+    if (!_isReady) {
+      return;
+    }
+
+    lastAcceptedSeekPosition = position;
+    _positionController.add(position);
+  }
 
   @override
   Future<void> setPlaybackSpeed(double speed) async {}
@@ -186,7 +265,7 @@ void main() {
   ) async {
     final settingsRepository = InMemorySettingsRepository();
     final progressRepository = InMemoryPlaybackPositionRepository();
-    final playbackPort = FakePlayerPlaybackPort();
+    final playbackPort = DeferredReadyPlaybackPort();
     await progressRepository.save(
       const PlaybackPositionRecord(
         mediaId: 'video-2',
@@ -210,7 +289,7 @@ void main() {
               title: 'Resume.mp4',
               sourceLabel: '鏈湴 / Camera',
               sourceUri: 'test://video-2',
-              duration: Duration(minutes: 10),
+              duration: const Duration(minutes: 10),
             ),
           ],
         ),
@@ -218,8 +297,18 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('已恢复播放进度'), findsOneWidget);
+    expect(playbackPort.lastOpenPlayValue, isFalse);
+    expect(playbackPort.playCallCount, 0);
+    expect(playbackPort.lastAcceptedSeekPosition, isNull);
+    expect(find.text('02:00'), findsNothing);
+    expect(find.text('已恢复播放进度'), findsNothing);
+
+    playbackPort.emitReady(const Duration(minutes: 10));
+    await tester.pump();
+
+    expect(playbackPort.playCallCount, 1);
+    expect(playbackPort.lastAcceptedSeekPosition, const Duration(minutes: 2));
     expect(find.text('02:00'), findsOneWidget);
+    expect(find.text('已恢复播放进度'), findsOneWidget);
   });
 }
-

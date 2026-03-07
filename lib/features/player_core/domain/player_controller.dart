@@ -44,8 +44,12 @@ class PlayerController extends GetxController {
   Timer? _progressSaveTimer;
   _PlayerGestureSession? _gestureSession;
   Duration? _pendingSeekPosition;
+  Duration? _pendingRestorePosition;
   DateTime? _lastPositionSyncAt;
   Duration _lastSyncedPosition = Duration.zero;
+  bool _showPendingRestoreMessage = false;
+  bool _hasObservedPlaybackDuration = false;
+  bool _isApplyingPendingRestore = false;
 
   PlayerController({
     required this.settingsController,
@@ -125,6 +129,10 @@ class PlayerController extends GetxController {
     clearError();
     await playbackPort.play();
     armControlsAutoHide();
+  }
+
+  Future<void> persistProgressBeforeExit() async {
+    await persistCurrentProgress();
   }
 
   void toggleLock() {

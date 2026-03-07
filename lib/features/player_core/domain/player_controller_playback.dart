@@ -14,20 +14,10 @@ extension _PlayerPlaybackLogic on PlayerController {
       playbackPort.bufferingStream.listen((bool value) => setBuffering(value)),
     );
     _playbackSubscriptions.add(
-      playbackPort.durationStream.listen((Duration value) {
-        duration.value = value > Duration.zero ? value : currentItem.value.duration;
-        applyPosition(position.value);
-      }),
+      playbackPort.durationStream.listen(_handleDurationChanged),
     );
     _playbackSubscriptions.add(
-      playbackPort.positionStream.listen((Duration value) {
-        if (_pendingSeekPosition != null || !_shouldSyncPosition(value)) {
-          return;
-        }
-        applyPosition(value);
-        _lastPositionSyncAt = DateTime.now();
-        _lastSyncedPosition = value;
-      }),
+      playbackPort.positionStream.listen(_handlePositionChanged),
     );
     _playbackSubscriptions.add(
       playbackPort.completedStream.listen((bool value) {
@@ -41,6 +31,28 @@ extension _PlayerPlaybackLogic on PlayerController {
     );
   }
 
+  void _handleDurationChanged(Duration value) {
+    if (value > Duration.zero) {
+      _hasObservedPlaybackDuration = true;
+    }
+    duration.value = value > Duration.zero ? value : currentItem.value.duration;
+    applyPosition(position.value);
+    if (_pendingRestorePosition != null) {
+      unawaited(_applyPendingRestoreIfReady());
+    }
+  }
+
+  void _handlePositionChanged(Duration value) {
+    if (_pendingRestorePosition != null ||
+        _pendingSeekPosition != null ||
+        !_shouldSyncPosition(value)) {
+      return;
+    }
+    applyPosition(value);
+    _lastPositionSyncAt = DateTime.now();
+    _lastSyncedPosition = value;
+  }
+
   Future<void> _syncPlaybackPreferences() async {
     await playbackPort.setPlaybackSpeed(playbackSpeed.value);
     await playbackPort.setVolume(volumeLevel.value);
@@ -51,8 +63,12 @@ extension _PlayerPlaybackLogic on PlayerController {
     _progressSaveTimer?.cancel();
     _gestureSession = null;
     _pendingSeekPosition = null;
+    _pendingRestorePosition = null;
     _lastPositionSyncAt = null;
     _lastSyncedPosition = Duration.zero;
+    _showPendingRestoreMessage = false;
+    _hasObservedPlaybackDuration = false;
+    _isApplyingPendingRestore = false;
 
     final nextItem = queue[index];
     currentIndex.value = index;
@@ -77,28 +93,47 @@ extension _PlayerPlaybackLogic on PlayerController {
 
     clearError();
     _pendingSeekPosition = null;
+    _pendingRestorePosition = null;
     _lastPositionSyncAt = null;
     _lastSyncedPosition = Duration.zero;
+    _showPendingRestoreMessage = false;
+    _hasObservedPlaybackDuration = false;
+    _isApplyingPendingRestore = false;
     duration.value = item.duration;
     applyPosition(Duration.zero);
     isBuffering.value = true;
 
     try {
-      await playbackPort.open(item, play: true);
+      await playbackPort.open(item, play: false);
       await _syncPlaybackPreferences();
-      if (restoreProgress) {
-        await restoreCurrentProgress(showMessage: showRestoreMessage);
+      final bool restoreScheduled = restoreProgress
+          ? await restoreCurrentProgress(showMessage: showRestoreMessage)
+          : false;
+      if (!restoreScheduled) {
+        await playbackPort.play();
       }
     } catch (error) {
       handlePlaybackError(_cleanPlaybackError(error));
     }
   }
 
-  Future<void> restoreCurrentProgress({required bool showMessage}) async {
+  Future<bool> restoreCurrentProgress({required bool showMessage}) async {
     if (!settingsController.settings.value.rememberPlaybackPosition) {
-      return;
+      return false;
     }
 
+    final restoredPosition = await _resolveRestorablePosition();
+    if (restoredPosition == null) {
+      return false;
+    }
+
+    _pendingRestorePosition = restoredPosition;
+    _showPendingRestoreMessage = showMessage;
+    await _applyPendingRestoreIfReady();
+    return true;
+  }
+
+  Future<Duration?> _resolveRestorablePosition() async {
     final item = currentItem.value;
     final record = await playbackPositionRepository.load(item.id);
     final restoredPositionMs = record?.positionMs ?? item.lastKnownPositionMs;
@@ -106,22 +141,16 @@ extension _PlayerPlaybackLogic on PlayerController {
         record?.durationMs ?? item.duration.inMilliseconds;
 
     if (restoredPositionMs == null || restoredDurationMs <= 0) {
-      return;
+      return null;
     }
 
     final restoredRatio = restoredPositionMs / restoredDurationMs;
     if (restoredRatio <= kPlaybackRestoreMinRatio ||
         restoredRatio >= kPlaybackRestoreMaxRatio) {
-      return;
+      return null;
     }
 
-    final restoredPosition = Duration(milliseconds: restoredPositionMs);
-    previewSeekPosition(restoredPosition);
-    await playbackPort.seek(restoredPosition);
-    _pendingSeekPosition = null;
-    if (showMessage) {
-      showInfoHud('已恢复播放进度');
-    }
+    return Duration(milliseconds: restoredPositionMs);
   }
 
   Future<void> persistCurrentProgress() async {
@@ -131,8 +160,8 @@ extension _PlayerPlaybackLogic on PlayerController {
     }
 
     final currentPosition = _pendingSeekPosition ?? position.value;
-    final progressRatio = currentPosition.inMilliseconds /
-        duration.value.inMilliseconds;
+    final progressRatio =
+        currentPosition.inMilliseconds / duration.value.inMilliseconds;
     final itemId = currentItem.value.id;
     if (progressRatio <= kPlaybackRestoreMinRatio ||
         progressRatio >= kPlaybackRestoreMaxRatio) {
@@ -166,6 +195,37 @@ extension _PlayerPlaybackLogic on PlayerController {
     applyPosition(_pendingSeekPosition!);
   }
 
+  Future<void> _applyPendingRestoreIfReady() async {
+    final restoredPosition = _pendingRestorePosition;
+    if (restoredPosition == null ||
+        !_hasObservedPlaybackDuration ||
+        _isApplyingPendingRestore) {
+      return;
+    }
+
+    _isApplyingPendingRestore = true;
+    _pendingSeekPosition = _clampToDuration(restoredPosition);
+    try {
+      await playbackPort.seek(_pendingSeekPosition!);
+      applyPosition(_pendingSeekPosition!);
+      _pendingSeekPosition = null;
+      _pendingRestorePosition = null;
+      final showMessage = _showPendingRestoreMessage;
+      _showPendingRestoreMessage = false;
+      if (showMessage) {
+        showInfoHud('已恢复播放进度');
+      }
+      await playbackPort.play();
+    } catch (error) {
+      _pendingSeekPosition = null;
+      _pendingRestorePosition = null;
+      _showPendingRestoreMessage = false;
+      handlePlaybackError(_cleanPlaybackError(error));
+    } finally {
+      _isApplyingPendingRestore = false;
+    }
+  }
+
   Duration _clampToDuration(Duration value) {
     if (!hasKnownDuration) {
       return value.isNegative ? Duration.zero : value;
@@ -186,7 +246,8 @@ extension _PlayerPlaybackLogic on PlayerController {
 
     final syncAge = DateTime.now().difference(lastSyncAt);
     final positionDeltaMs =
-        (nextPosition.inMilliseconds - _lastSyncedPosition.inMilliseconds).abs();
+        (nextPosition.inMilliseconds - _lastSyncedPosition.inMilliseconds)
+            .abs();
     if (syncAge >= kPlaybackPositionSyncInterval) {
       return true;
     }

@@ -1,0 +1,194 @@
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
+import 'package:pixelplay/features/player_core/domain/player_playback_port.dart';
+import 'package:pixelplay/features/player_core/domain/player_queue_item.dart';
+import 'package:pixelplay/features/player_core/presentation/player_page.dart';
+import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
+import 'package:pixelplay/features/settings/domain/settings_controller.dart';
+
+class DelayedPlaybackPositionRepository implements PlaybackPositionRepository {
+  final Completer<void> saveCompleter = Completer<void>();
+
+  PlaybackPositionRecord? savedRecord;
+
+  @override
+  Future<PlaybackPositionRecord?> load(String mediaId) async {
+    return savedRecord;
+  }
+
+  @override
+  Future<void> save(PlaybackPositionRecord record) async {
+    savedRecord = record;
+    await saveCompleter.future;
+  }
+
+  @override
+  Future<void> clear(String mediaId) async {
+    savedRecord = null;
+  }
+}
+
+class ControllablePlaybackPort implements PlayerPlaybackPort {
+  final StreamController<bool> _bufferingController =
+      StreamController<bool>.broadcast();
+  final StreamController<bool> _completedController =
+      StreamController<bool>.broadcast();
+  final StreamController<Duration> _durationController =
+      StreamController<Duration>.broadcast();
+  final StreamController<String> _errorController =
+      StreamController<String>.broadcast();
+  final StreamController<bool> _playingController =
+      StreamController<bool>.broadcast();
+  final StreamController<Duration> _positionController =
+      StreamController<Duration>.broadcast();
+
+  @override
+  Stream<bool> get bufferingStream => _bufferingController.stream;
+
+  @override
+  Stream<bool> get completedStream => _completedController.stream;
+
+  @override
+  Stream<Duration> get durationStream => _durationController.stream;
+
+  @override
+  Stream<String> get errorStream => _errorController.stream;
+
+  @override
+  Stream<bool> get playingStream => _playingController.stream;
+
+  @override
+  Stream<Duration> get positionStream => _positionController.stream;
+
+  @override
+  Widget buildVideoView({required BoxFit fit}) {
+    return const SizedBox.expand();
+  }
+
+  @override
+  Future<void> disposePlayback() async {
+    await _bufferingController.close();
+    await _completedController.close();
+    await _durationController.close();
+    await _errorController.close();
+    await _playingController.close();
+    await _positionController.close();
+  }
+
+  void emitDuration(Duration value) {
+    _durationController.add(value);
+  }
+
+  void emitPosition(Duration value) {
+    _positionController.add(value);
+  }
+
+  @override
+  Future<void> open(PlayerQueueItem item, {required bool play}) async {
+    _playingController.add(play);
+  }
+
+  @override
+  Future<void> pause() async {
+    _playingController.add(false);
+  }
+
+  @override
+  Future<void> play() async {
+    _playingController.add(true);
+  }
+
+  @override
+  Future<void> seek(Duration position) async {
+    _positionController.add(position);
+  }
+
+  @override
+  Future<void> setPlaybackSpeed(double speed) async {}
+
+  @override
+  Future<void> setVolume(double volume) async {}
+}
+
+void main() {
+  setUp(() {
+    Get.testMode = true;
+    Get.reset();
+  });
+
+  testWidgets('player page waits for progress save before popping', (
+    WidgetTester tester,
+  ) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = DelayedPlaybackPositionRepository();
+    final playbackPort = ControllablePlaybackPort();
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        navigatorKey: navigatorKey,
+        home: Builder(
+          builder: (BuildContext context) {
+            return Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PlayerPage(
+                          playbackPort: playbackPort,
+                          playlist: <PlayerQueueItem>[
+                            PlayerQueueItem(
+                              id: 'video-exit',
+                              title: 'Exit Resume.mp4',
+                              sourceLabel: '本地 / Camera',
+                              sourceUri: 'test://video-exit',
+                              duration: const Duration(minutes: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open player'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open player'));
+    await tester.pump();
+    await tester.pump();
+
+    playbackPort.emitDuration(const Duration(minutes: 10));
+    playbackPort.emitPosition(const Duration(minutes: 2));
+    await tester.pump();
+
+    final Future<bool> popFuture = navigatorKey.currentState!.maybePop();
+    await tester.pump();
+
+    expect(find.byType(PlayerPage), findsOneWidget);
+    expect(progressRepository.savedRecord?.mediaId, 'video-exit');
+    expect(progressRepository.savedRecord?.positionMs, 120000);
+    expect(progressRepository.savedRecord?.durationMs, 600000);
+
+    progressRepository.saveCompleter.complete();
+    await popFuture;
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PlayerPage), findsNothing);
+    expect(find.text('open player'), findsOneWidget);
+  });
+}

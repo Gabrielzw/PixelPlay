@@ -96,7 +96,7 @@ class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
 Player _buildPlayer() {
   return Player(
     configuration: const PlayerConfiguration(
-      title: kPlaybackTitle,
+      // title: kPlaybackTitle,
       osc: false,
       bufferSize: kPlaybackBufferBytes,
       logLevel: MPVLogLevel.error,
