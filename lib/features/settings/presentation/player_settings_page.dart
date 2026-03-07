@@ -12,115 +12,160 @@ class PlayerSettingsPage extends GetView<SettingsController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final settings = controller.settings.value;
-
       return Scaffold(
         appBar: AppBar(title: const Text('播放器设置')),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: <Widget>[
-            const UiSkeletonNotice(message: '这里的配置会作为播放器页面的默认值，并影响手势和播放行为。'),
-            const SizedBox(height: 12),
-            _DropdownTile<double>(
-              title: '默认倍速',
-              value: settings.defaultPlaybackSpeed,
-              items: kPlaybackSpeedOptions,
-              labelBuilder: (double speed) => '${speed}x',
-              onChanged: controller.setDefaultPlaybackSpeed,
-            ),
-            const SizedBox(height: 12),
-            _ChoiceTile<PlayerPlaybackMode>(
-              title: '默认播放方式',
-              options: PlayerPlaybackMode.values,
-              selected: settings.defaultPlaybackMode,
-              labelBuilder: (PlayerPlaybackMode mode) => mode.label,
-              iconBuilder: (PlayerPlaybackMode mode) => mode.icon,
-              onSelected: controller.setDefaultPlaybackMode,
-            ),
-            const SizedBox(height: 12),
-            _ChoiceTile<PlayerAspectRatio>(
-              title: '默认画面比例',
-              options: PlayerAspectRatio.values,
-              selected: settings.defaultAspectRatio,
-              labelBuilder: (PlayerAspectRatio ratio) => ratio.label,
-              iconBuilder: (PlayerAspectRatio ratio) => ratio.icon,
-              onSelected: controller.setDefaultAspectRatio,
-            ),
-            const SizedBox(height: 12),
-            _ChoiceTile<double>(
-              title: '长按倍速',
-              options: kLongPressSpeedOptions,
-              selected: settings.longPressPlaybackSpeed,
-              labelBuilder: (double speed) => '${speed}x',
-              iconBuilder: (_) => Icons.speed_rounded,
-              onSelected: controller.setLongPressPlaybackSpeed,
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Column(
-                children: <Widget>[
-                  SwitchListTile(
-                    value: settings.gestureSeekUsesVideoDuration,
-                    onChanged: controller.setGestureSeekUsesVideoDuration,
-                    title: const Text('按视频总时长拖动'),
-                    subtitle: const Text('开启后，滑动距离会按视频总时长比例换算'),
-                  ),
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          '整屏滑动对应时长：${settings.gestureSeekSecondsPerSwipe}s',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '关闭“按视频总时长拖动”后，横向滑动会按这个固定时长快进快退。',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        Slider(
-                          value: settings.gestureSeekSecondsPerSwipe.toDouble(),
-                          min: kGestureSeekMinSeconds.toDouble(),
-                          max: kGestureSeekMaxSeconds.toDouble(),
-                          divisions: kGestureSeekDivisions,
-                          label: '${settings.gestureSeekSecondsPerSwipe}s',
-                          onChanged: (double next) {
-                            controller.setGestureSeekSecondsPerSwipe(
-                              next.round(),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Column(
-                children: <Widget>[
-                  SwitchListTile(
-                    value: settings.rememberPlaybackPosition,
-                    onChanged: controller.setRememberPlaybackPosition,
-                    title: const Text('记忆播放进度'),
-                    subtitle: const Text('下次打开同一视频时继续播放'),
-                  ),
-                  const Divider(height: 1),
-                  SwitchListTile(
-                    value: settings.autoPlayNext,
-                    onChanged: controller.setAutoPlayNext,
-                    title: const Text('自动连播'),
-                    subtitle: const Text('播放完成后自动跳到下一集'),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        body: _PlayerSettingsContent(
+          settings: settings,
+          controller: controller,
         ),
       );
     });
+  }
+}
+
+class _PlayerSettingsContent extends StatelessWidget {
+  final AppSettings settings;
+  final SettingsController controller;
+
+  const _PlayerSettingsContent({
+    required this.settings,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: <Widget>[
+        const UiSkeletonNotice(message: '这里的配置会作为播放器页面的默认值，并影响手势和播放行为。'),
+        const SizedBox(height: 12),
+        _DropdownTile<double>(
+          title: '默认倍速',
+          value: settings.defaultPlaybackSpeed,
+          items: kPlaybackSpeedOptions,
+          labelBuilder: (double speed) => '${speed}x',
+          onChanged: controller.setDefaultPlaybackSpeed,
+        ),
+        const SizedBox(height: 12),
+        _ChoiceTile<PlayerPlaybackMode>(
+          title: '默认播放方式',
+          options: PlayerPlaybackMode.values,
+          selected: settings.defaultPlaybackMode,
+          labelBuilder: (PlayerPlaybackMode mode) => mode.label,
+          iconBuilder: (PlayerPlaybackMode mode) => mode.icon,
+          onSelected: controller.setDefaultPlaybackMode,
+        ),
+        const SizedBox(height: 12),
+        _ChoiceTile<PlayerAspectRatio>(
+          title: '默认画面比例',
+          options: PlayerAspectRatio.values,
+          selected: settings.defaultAspectRatio,
+          labelBuilder: (PlayerAspectRatio ratio) => ratio.label,
+          iconBuilder: (PlayerAspectRatio ratio) => ratio.icon,
+          onSelected: controller.setDefaultAspectRatio,
+        ),
+        const SizedBox(height: 12),
+        _ChoiceTile<double>(
+          title: '长按倍速',
+          options: kLongPressSpeedOptions,
+          selected: settings.longPressPlaybackSpeed,
+          labelBuilder: (double speed) => '${speed}x',
+          iconBuilder: (_) => Icons.speed_rounded,
+          onSelected: controller.setLongPressPlaybackSpeed,
+        ),
+        const SizedBox(height: 12),
+        _GestureSettingsCard(settings: settings, controller: controller),
+        const SizedBox(height: 12),
+        _BehaviorSettingsCard(settings: settings, controller: controller),
+      ],
+    );
+  }
+}
+
+class _GestureSettingsCard extends StatelessWidget {
+  final AppSettings settings;
+  final SettingsController controller;
+
+  const _GestureSettingsCard({
+    required this.settings,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        children: <Widget>[
+          SwitchListTile(
+            value: settings.gestureSeekUsesVideoDuration,
+            onChanged: controller.setGestureSeekUsesVideoDuration,
+            title: const Text('按视频总时长拖动'),
+            subtitle: const Text('开启后，滑动距离会按视频总时长比例换算。'),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '整屏滑动对应时长：${settings.gestureSeekSecondsPerSwipe}s',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '关闭“按视频总时长拖动”后，横向滑动会按这个固定时长快进快退。',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Slider(
+                  value: settings.gestureSeekSecondsPerSwipe.toDouble(),
+                  min: kGestureSeekMinSeconds.toDouble(),
+                  max: kGestureSeekMaxSeconds.toDouble(),
+                  divisions: kGestureSeekDivisions,
+                  label: '${settings.gestureSeekSecondsPerSwipe}s',
+                  onChanged: (double next) {
+                    controller.setGestureSeekSecondsPerSwipe(next.round());
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BehaviorSettingsCard extends StatelessWidget {
+  final AppSettings settings;
+  final SettingsController controller;
+
+  const _BehaviorSettingsCard({
+    required this.settings,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        children: <Widget>[
+          SwitchListTile(
+            value: settings.rememberPlaybackPosition,
+            onChanged: controller.setRememberPlaybackPosition,
+            title: const Text('记忆播放进度'),
+            subtitle: const Text('下次打开同一视频时继续播放。'),
+          ),
+          const Divider(height: 1),
+          SwitchListTile(
+            value: settings.autoPlayOnEnter,
+            onChanged: controller.setAutoPlayOnEnter,
+            title: const Text('自动播放'),
+            subtitle: const Text('进入播放器页面后自动开始播放当前视频。'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -20,7 +20,7 @@ class AppSettingsIsarModel {
   late int gestureSeekSecondsPerSwipe;
   bool? gestureSeekUsesVideoDuration;
   late bool rememberPlaybackPosition;
-  late bool autoPlayNext;
+  bool? autoPlayOnEnter;
 
   AppSettings toDomain() {
     return AppSettings(
@@ -35,7 +35,7 @@ class AppSettingsIsarModel {
       gestureSeekUsesVideoDuration:
           gestureSeekUsesVideoDuration ?? kDefaultGestureSeekUsesVideoDuration,
       rememberPlaybackPosition: rememberPlaybackPosition,
-      autoPlayNext: autoPlayNext,
+      autoPlayOnEnter: autoPlayOnEnter ?? kDefaultAutoPlayOnEnter,
     );
   }
 
@@ -51,7 +51,7 @@ class AppSettingsIsarModel {
       ..gestureSeekSecondsPerSwipe = settings.gestureSeekSecondsPerSwipe
       ..gestureSeekUsesVideoDuration = settings.gestureSeekUsesVideoDuration
       ..rememberPlaybackPosition = settings.rememberPlaybackPosition
-      ..autoPlayNext = settings.autoPlayNext;
+      ..autoPlayOnEnter = settings.autoPlayOnEnter;
   }
 }
 

@@ -14,6 +14,13 @@ extension PlayerControllerPreferences on PlayerController {
     armControlsAutoHide();
   }
 
+  Future<void> setAutoPlayOnEnter(bool enabled) async {
+    await settingsController.setAutoPlayOnEnter(enabled);
+    final message = enabled ? '进入播放器后自动播放' : '进入播放器后暂停等待';
+    showInfoHud(message);
+    armControlsAutoHide();
+  }
+
   Future<void> setLongPressPlaybackSpeed(double speed) async {
     await settingsController.setLongPressPlaybackSpeed(speed);
     showInfoHud('长按倍速 ${speed}x');

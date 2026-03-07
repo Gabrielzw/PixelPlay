@@ -74,12 +74,6 @@ extension PlayerControllerCommands on PlayerController {
         armControlsAutoHide();
         return;
       case PlayerPlaybackMode.loopList:
-        if (!settings.autoPlayNext) {
-          applyPosition(duration.value);
-          showControls();
-          cancelControlsAutoHide();
-          return;
-        }
         final nextIndex = hasNext ? currentIndex.value + 1 : 0;
         await switchToIndex(nextIndex);
         return;
@@ -177,7 +171,11 @@ extension PlayerControllerCommands on PlayerController {
 
   Future<void> retryCurrentItem() async {
     clearError();
-    await openCurrentItem(restoreProgress: true, showRestoreMessage: false);
+    await openCurrentItem(
+      restoreProgress: true,
+      showRestoreMessage: false,
+      autoPlay: true,
+    );
   }
 
   void beginSurfaceGesture({

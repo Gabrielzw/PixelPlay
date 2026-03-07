@@ -108,7 +108,11 @@ class PlayerController extends GetxController {
     _bindPlaybackStreams();
     await bindDeviceFeatures();
     await _syncPlaybackPreferences();
-    await openCurrentItem(restoreProgress: true, showRestoreMessage: true);
+    await openCurrentItem(
+      restoreProgress: true,
+      showRestoreMessage: true,
+      autoPlay: appSettings.autoPlayOnEnter,
+    );
     armControlsAutoHide();
   }
 

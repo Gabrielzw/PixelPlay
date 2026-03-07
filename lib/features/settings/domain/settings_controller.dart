@@ -57,8 +57,8 @@ class SettingsController extends GetxController {
     );
   }
 
-  Future<void> setAutoPlayNext(bool enabled) async {
-    await _saveSettings(settings.value.copyWith(autoPlayNext: enabled));
+  Future<void> setAutoPlayOnEnter(bool enabled) async {
+    await _saveSettings(settings.value.copyWith(autoPlayOnEnter: enabled));
   }
 
   Future<void> _saveSettings(AppSettings nextSettings) async {

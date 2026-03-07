@@ -86,13 +86,18 @@ extension PlayerControllerPlaybackLogic on PlayerController {
     clearError();
     applyPosition(Duration.zero);
     showControls();
-    await openCurrentItem(restoreProgress: true, showRestoreMessage: true);
+    await openCurrentItem(
+      restoreProgress: true,
+      showRestoreMessage: true,
+      autoPlay: true,
+    );
     armControlsAutoHide();
   }
 
   Future<void> openCurrentItem({
     required bool restoreProgress,
     required bool showRestoreMessage,
+    required bool autoPlay,
   }) async {
     final item = currentItem.value;
     if (!item.hasPlayableSource) {
@@ -124,6 +129,9 @@ extension PlayerControllerPlaybackLogic on PlayerController {
           restoredPosition: restoredPosition,
           showMessage: showRestoreMessage,
         );
+      }
+      if (!autoPlay) {
+        return;
       }
       await playbackPort.play();
     } catch (error) {

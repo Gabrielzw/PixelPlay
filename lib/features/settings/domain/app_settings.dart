@@ -4,11 +4,11 @@ const int kDefaultSeedColorValue = 0xFFE7A2BA;
 const double kDefaultPlaybackSpeed = 1.0;
 const double kDefaultLongPressPlaybackSpeed = 2.0;
 const PlayerAspectRatio kDefaultAspectRatio = PlayerAspectRatio.fit;
-const PlayerPlaybackMode kDefaultPlaybackMode = PlayerPlaybackMode.loopList;
+const PlayerPlaybackMode kDefaultPlaybackMode = PlayerPlaybackMode.noLoop;
 const int kDefaultGestureSeekSecondsPerSwipe = 60;
 const bool kDefaultGestureSeekUsesVideoDuration = false;
 const bool kDefaultRememberPlaybackPosition = true;
-const bool kDefaultAutoPlayNext = true;
+const bool kDefaultAutoPlayOnEnter = true;
 
 const List<double> kPlaybackSpeedOptions = <double>[
   0.5,
@@ -82,7 +82,7 @@ class AppSettings {
   final int gestureSeekSecondsPerSwipe;
   final bool gestureSeekUsesVideoDuration;
   final bool rememberPlaybackPosition;
-  final bool autoPlayNext;
+  final bool autoPlayOnEnter;
 
   const AppSettings({
     this.themeMode = ThemeMode.system,
@@ -94,7 +94,7 @@ class AppSettings {
     this.gestureSeekSecondsPerSwipe = kDefaultGestureSeekSecondsPerSwipe,
     this.gestureSeekUsesVideoDuration = kDefaultGestureSeekUsesVideoDuration,
     this.rememberPlaybackPosition = kDefaultRememberPlaybackPosition,
-    this.autoPlayNext = kDefaultAutoPlayNext,
+    this.autoPlayOnEnter = kDefaultAutoPlayOnEnter,
   });
 
   Color get seedColor => Color(seedColorValue);
@@ -109,7 +109,7 @@ class AppSettings {
     int? gestureSeekSecondsPerSwipe,
     bool? gestureSeekUsesVideoDuration,
     bool? rememberPlaybackPosition,
-    bool? autoPlayNext,
+    bool? autoPlayOnEnter,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -125,7 +125,7 @@ class AppSettings {
           gestureSeekUsesVideoDuration ?? this.gestureSeekUsesVideoDuration,
       rememberPlaybackPosition:
           rememberPlaybackPosition ?? this.rememberPlaybackPosition,
-      autoPlayNext: autoPlayNext ?? this.autoPlayNext,
+      autoPlayOnEnter: autoPlayOnEnter ?? this.autoPlayOnEnter,
     );
   }
 }

@@ -18,9 +18,9 @@ const AppSettingsIsarModelSchema = CollectionSchema(
   name: r'AppSettingsIsarModel',
   id: -142477573158583996,
   properties: {
-    r'autoPlayNext': PropertySchema(
+    r'autoPlayOnEnter': PropertySchema(
       id: 0,
-      name: r'autoPlayNext',
+      name: r'autoPlayOnEnter',
       type: IsarType.bool,
     ),
     r'defaultAspectRatioName': PropertySchema(
@@ -108,7 +108,7 @@ void _appSettingsIsarModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeBool(offsets[0], object.autoPlayNext);
+  writer.writeBool(offsets[0], object.autoPlayOnEnter);
   writer.writeString(offsets[1], object.defaultAspectRatioName);
   writer.writeString(offsets[2], object.defaultPlaybackModeName);
   writer.writeDouble(offsets[3], object.defaultPlaybackSpeed);
@@ -127,7 +127,7 @@ AppSettingsIsarModel _appSettingsIsarModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AppSettingsIsarModel();
-  object.autoPlayNext = reader.readBool(offsets[0]);
+  object.autoPlayOnEnter = reader.readBoolOrNull(offsets[0]);
   object.defaultAspectRatioName = reader.readString(offsets[1]);
   object.defaultPlaybackModeName = reader.readStringOrNull(offsets[2]);
   object.defaultPlaybackSpeed = reader.readDouble(offsets[3]);
@@ -149,7 +149,7 @@ P _appSettingsIsarModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
@@ -283,10 +283,36 @@ extension AppSettingsIsarModelQueryFilter
     AppSettingsIsarModel,
     QAfterFilterCondition
   >
-  autoPlayNextEqualTo(bool value) {
+  autoPlayOnEnterIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
-        FilterCondition.equalTo(property: r'autoPlayNext', value: value),
+        const FilterCondition.isNull(property: r'autoPlayOnEnter'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  autoPlayOnEnterIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'autoPlayOnEnter'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  autoPlayOnEnterEqualTo(bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'autoPlayOnEnter', value: value),
       );
     });
   }
@@ -1376,16 +1402,16 @@ extension AppSettingsIsarModelQueryLinks
 extension AppSettingsIsarModelQuerySortBy
     on QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QSortBy> {
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
-  sortByAutoPlayNext() {
+  sortByAutoPlayOnEnter() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'autoPlayNext', Sort.asc);
+      return query.addSortBy(r'autoPlayOnEnter', Sort.asc);
     });
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
-  sortByAutoPlayNextDesc() {
+  sortByAutoPlayOnEnterDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'autoPlayNext', Sort.desc);
+      return query.addSortBy(r'autoPlayOnEnter', Sort.desc);
     });
   }
 
@@ -1519,16 +1545,16 @@ extension AppSettingsIsarModelQuerySortBy
 extension AppSettingsIsarModelQuerySortThenBy
     on QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QSortThenBy> {
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
-  thenByAutoPlayNext() {
+  thenByAutoPlayOnEnter() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'autoPlayNext', Sort.asc);
+      return query.addSortBy(r'autoPlayOnEnter', Sort.asc);
     });
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
-  thenByAutoPlayNextDesc() {
+  thenByAutoPlayOnEnterDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'autoPlayNext', Sort.desc);
+      return query.addSortBy(r'autoPlayOnEnter', Sort.desc);
     });
   }
 
@@ -1676,9 +1702,9 @@ extension AppSettingsIsarModelQuerySortThenBy
 extension AppSettingsIsarModelQueryWhereDistinct
     on QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct> {
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct>
-  distinctByAutoPlayNext() {
+  distinctByAutoPlayOnEnter() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'autoPlayNext');
+      return query.addDistinctBy(r'autoPlayOnEnter');
     });
   }
 
@@ -1768,10 +1794,10 @@ extension AppSettingsIsarModelQueryProperty
     });
   }
 
-  QueryBuilder<AppSettingsIsarModel, bool, QQueryOperations>
-  autoPlayNextProperty() {
+  QueryBuilder<AppSettingsIsarModel, bool?, QQueryOperations>
+  autoPlayOnEnterProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'autoPlayNext');
+      return query.addPropertyName(r'autoPlayOnEnter');
     });
   }
 
