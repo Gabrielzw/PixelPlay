@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:auto_orientation_v2/auto_orientation_v2.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
@@ -12,14 +12,7 @@ import '../domain/player_video_metadata.dart';
 const Duration kPlayerClockRefreshInterval = Duration(minutes: 1);
 const Duration kPlayerBatteryRefreshInterval = Duration(minutes: 1);
 const AudioStream kPlayerVolumeAudioStream = AudioStream.music;
-const List<DeviceOrientation> kLandscapeOrientations = <DeviceOrientation>[
-  DeviceOrientation.landscapeLeft,
-  DeviceOrientation.landscapeRight,
-];
-const List<DeviceOrientation> kPortraitOrientations = <DeviceOrientation>[
-  DeviceOrientation.portraitUp,
-  DeviceOrientation.portraitDown,
-];
+const bool kLandscapeOrientationForceSensor = true;
 
 class PlayerDeviceAdapter implements PlayerDevicePort {
   final Battery _battery;
@@ -100,9 +93,17 @@ class PlayerDeviceAdapter implements PlayerDevicePort {
 
   @override
   Future<void> setPlaybackOrientation(PlayerVideoOrientation orientation) {
-    return SystemChrome.setPreferredOrientations(
-      _resolvePreferredOrientations(orientation),
-    );
+    switch (orientation) {
+      case PlayerVideoOrientation.landscape:
+        return AutoOrientation.landscapeAutoMode(
+          forceSensor: kLandscapeOrientationForceSensor,
+        );
+      case PlayerVideoOrientation.portrait:
+        return AutoOrientation.portraitAutoMode();
+      case PlayerVideoOrientation.unknown:
+      case PlayerVideoOrientation.square:
+        return AutoOrientation.fullAutoMode();
+    }
   }
 
   @override
@@ -193,19 +194,5 @@ class PlayerDeviceAdapter implements PlayerDevicePort {
       throw StateError('Failed to read the current system volume.');
     }
     return _clampLevel(value);
-  }
-
-  List<DeviceOrientation> _resolvePreferredOrientations(
-    PlayerVideoOrientation orientation,
-  ) {
-    switch (orientation) {
-      case PlayerVideoOrientation.portrait:
-        return kPortraitOrientations;
-      case PlayerVideoOrientation.landscape:
-        return kLandscapeOrientations;
-      case PlayerVideoOrientation.unknown:
-      case PlayerVideoOrientation.square:
-        return DeviceOrientation.values;
-    }
   }
 }
