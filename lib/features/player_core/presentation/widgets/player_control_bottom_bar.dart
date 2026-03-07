@@ -8,16 +8,29 @@ import 'player_ui_constants.dart';
 
 class PlayerControlBottomBar extends StatelessWidget {
   final PlayerController controller;
+  final VoidCallback onShowEpisodes;
 
-  const PlayerControlBottomBar({super.key, required this.controller});
+  const PlayerControlBottomBar({
+    super.key,
+    required this.controller,
+    required this.onShowEpisodes,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final hasDuration = controller.hasKnownDuration;
+      final currentText = hasDuration
+          ? formatVideoDuration(controller.position.value)
+          : '--:--';
+      final totalText = hasDuration
+          ? formatVideoDuration(controller.duration.value)
+          : '--:--';
+
       return Container(
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -32,112 +45,81 @@ class PlayerControlBottomBar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            _ProgressBar(controller: controller),
-            const SizedBox(height: 8),
             Row(
               children: <Widget>[
-                IconButton(
-                  tooltip: '上一首',
-                  onPressed: controller.hasPrevious
-                      ? () => controller.playPrevious()
-                      : null,
-                  icon: const Icon(Icons.skip_previous_rounded),
-                  color: Colors.white,
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      '${controller.currentIndex.value + 1}/${controller.queue.length}',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: '下一首',
-                  onPressed: controller.hasNext
-                      ? () => controller.playNext()
-                      : null,
-                  icon: const Icon(Icons.skip_next_rounded),
-                  color: Colors.white,
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: <Widget>[
-                _SpeedButton(controller: controller),
-                const SizedBox(width: 12),
-                FilledButton.tonalIcon(
-                  onPressed: controller.cycleAspectRatio,
-                  icon: const Icon(Icons.aspect_ratio_rounded),
-                  label: Text(controller.aspectRatio.value.label),
+                Text(
+                  currentText,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
                 ),
                 const Spacer(),
                 Text(
-                  controller.currentItem.value.isRemote ? 'WebDAV' : '本地视频',
+                  totalText,
                   style: Theme.of(
                     context,
-                  ).textTheme.labelMedium?.copyWith(color: Colors.white70),
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                ),
+              ],
+            ),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 3,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+              ),
+              child: Slider(
+                value: controller.progress.value,
+                min: kPlayerMinProgress,
+                max: kPlayerMaxProgress,
+                onChangeStart: hasDuration
+                    ? (_) => controller.beginSeekPreview()
+                    : null,
+                onChanged: hasDuration ? controller.previewSeekToRatio : null,
+                onChangeEnd: hasDuration
+                    ? (_) => controller.commitSeekPreview()
+                    : null,
+              ),
+            ),
+            Row(
+              children: <Widget>[
+                IconButton(
+                  tooltip: controller.isPlaying.value ? '暂停' : '播放',
+                  onPressed: controller.togglePlay,
+                  icon: Icon(
+                    controller.isPlaying.value
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    size: 28,
+                  ),
+                  color: Colors.white,
+                ),
+                IconButton(
+                  tooltip: '下一集',
+                  onPressed: controller.hasNext
+                      ? () => controller.playNext()
+                      : null,
+                  icon: const Icon(Icons.skip_next_rounded, size: 28),
+                  color: Colors.white,
+                ),
+                const Spacer(),
+                _SpeedButton(controller: controller),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: onShowEpisodes,
+                  icon: const Icon(
+                    Icons.playlist_play_rounded,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    '${controller.currentIndex.value + 1}/${controller.queue.length}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
           ],
         ),
-      );
-    });
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  final PlayerController controller;
-
-  const _ProgressBar({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final hasDuration = controller.hasKnownDuration;
-      final currentText = hasDuration
-          ? formatVideoDuration(controller.position.value)
-          : '--:--';
-      final totalText = hasDuration
-          ? formatVideoDuration(controller.duration.value)
-          : '--:--';
-
-      return Column(
-        children: <Widget>[
-          Slider(
-            value: controller.progress.value,
-            min: kPlayerMinProgress,
-            max: kPlayerMaxProgress,
-            onChangeStart: hasDuration
-                ? (_) => controller.beginSeekPreview()
-                : null,
-            onChanged: hasDuration ? controller.previewSeekToRatio : null,
-            onChangeEnd: hasDuration
-                ? (_) => controller.commitSeekPreview()
-                : null,
-          ),
-          Row(
-            children: <Widget>[
-              Text(
-                currentText,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-              ),
-              const Spacer(),
-              Text(
-                totalText,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-              ),
-            ],
-          ),
-        ],
       );
     });
   }
@@ -166,7 +148,7 @@ class _SpeedButton extends StatelessWidget {
         },
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHigh,
+            color: applyOpacity(Colors.white, 0.12),
             borderRadius: const BorderRadius.all(Radius.circular(18)),
           ),
           child: Padding(
@@ -174,9 +156,12 @@ class _SpeedButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                const Icon(Icons.speed_rounded, size: 18),
+                const Icon(Icons.speed_rounded, size: 18, color: Colors.white),
                 const SizedBox(width: 6),
-                Text('${controller.playbackSpeed.value}x'),
+                Text(
+                  '${controller.playbackSpeed.value}x',
+                  style: const TextStyle(color: Colors.white),
+                ),
               ],
             ),
           ),

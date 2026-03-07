@@ -9,9 +9,12 @@ import 'playback_position_repository.dart';
 import 'player_playback_port.dart';
 import 'player_queue_item.dart';
 
+part 'player_controller_commands.dart';
 part 'player_controller_state.dart';
 part 'player_controller_gestures.dart';
 part 'player_controller_playback.dart';
+part 'player_controller_preferences.dart';
+part 'player_controller_visibility.dart';
 
 class PlayerController extends GetxController {
   final SettingsController settingsController;
@@ -49,6 +52,8 @@ class PlayerController extends GetxController {
   Duration _lastSyncedPosition = Duration.zero;
   Duration _latestObservedPosition = Duration.zero;
   bool _isOpeningCurrentItem = false;
+  double? _speedBeforeLongPress;
+  bool _isLongPressSpeedActive = false;
 
   PlayerController({
     required this.settingsController,
@@ -104,184 +109,5 @@ class PlayerController extends GetxController {
       subscription.cancel();
     }
     super.onClose();
-  }
-
-  void handleSurfaceTap() {
-    if (controlsLocked.value) {
-      return;
-    }
-    if (controlsVisible.value) {
-      hideControls();
-      return;
-    }
-    showControls();
-  }
-
-  Future<void> togglePlay() async {
-    if (isPlaying.value) {
-      await playbackPort.pause();
-      showControls();
-      cancelControlsAutoHide();
-      return;
-    }
-
-    clearError();
-    await playbackPort.play();
-    armControlsAutoHide();
-  }
-
-  Future<void> persistProgressBeforeExit() async {
-    await persistCurrentProgress();
-  }
-
-  void toggleLock() {
-    if (controlsLocked.value) {
-      controlsLocked.value = false;
-      showControls();
-      showInfoHud('已解锁屏幕');
-      armControlsAutoHide();
-      return;
-    }
-
-    controlsLocked.value = true;
-    controlsVisible.value = false;
-    cancelControlsAutoHide();
-    showInfoHud('已锁定屏幕');
-  }
-
-  Future<void> playPrevious() async {
-    if (!hasPrevious) {
-      return;
-    }
-    await switchToIndex(currentIndex.value - 1);
-  }
-
-  Future<void> playNext() async {
-    if (!hasNext) {
-      return;
-    }
-    await switchToIndex(currentIndex.value + 1);
-  }
-
-  Future<void> handlePlaybackCompleted() async {
-    await playbackPositionRepository.clear(currentItem.value.id);
-    if (!settingsController.settings.value.autoPlayNext || !hasNext) {
-      applyPosition(duration.value);
-      showControls();
-      return;
-    }
-    await playNext();
-  }
-
-  Future<void> setPlaybackSpeed(double speed) async {
-    playbackSpeed.value = speed;
-    await playbackPort.setPlaybackSpeed(speed);
-    await settingsController.setDefaultPlaybackSpeed(speed);
-    showInfoHud('播放速度 ${speed}x');
-    armControlsAutoHide();
-  }
-
-  Future<void> cycleAspectRatio() async {
-    final current = aspectRatio.value;
-    final index = kAspectRatioCycleOrder.indexOf(current);
-    final next =
-        kAspectRatioCycleOrder[(index + 1) % kAspectRatioCycleOrder.length];
-    await setAspectRatio(next);
-  }
-
-  Future<void> setAspectRatio(PlayerAspectRatio value) async {
-    aspectRatio.value = value;
-    await settingsController.setDefaultAspectRatio(value);
-    showInfoHud(value.label);
-    armControlsAutoHide();
-  }
-
-  void beginSeekPreview() {
-    cancelControlsAutoHide();
-  }
-
-  void previewSeekToRatio(double value) {
-    if (!hasKnownDuration) {
-      return;
-    }
-
-    final safeValue = value.clamp(0.0, 1.0);
-    final nextPosition = Duration(
-      milliseconds: (duration.value.inMilliseconds * safeValue).round(),
-    );
-    previewSeekPosition(nextPosition);
-  }
-
-  Future<void> commitSeekPreview() async {
-    final pendingPosition = _pendingSeekPosition;
-    if (pendingPosition == null) {
-      armControlsAutoHide();
-      return;
-    }
-
-    await playbackPort.seek(pendingPosition);
-    _latestObservedPosition = pendingPosition;
-    _lastPositionSyncAt = DateTime.now();
-    _lastSyncedPosition = pendingPosition;
-    _pendingSeekPosition = null;
-    scheduleProgressSave();
-    armControlsAutoHide();
-  }
-
-  Future<void> resetCurrentProgress() async {
-    await playbackPositionRepository.clear(currentItem.value.id);
-    previewSeekPosition(Duration.zero);
-    await commitSeekPreview();
-    showInfoHud('已清除当前播放进度');
-  }
-
-  void showScreenshotUnavailable() {
-    showInfoHud('截图导出能力暂未接入');
-  }
-
-  void setBuffering(bool value) {
-    isBuffering.value = value;
-  }
-
-  void handlePlaybackError(String message) {
-    final cleanMessage = message.trim();
-    if (cleanMessage.isEmpty) {
-      showError(
-        currentItem.value.isRemote
-            ? kPlayerNetworkErrorMessage
-            : kPlayerDecodeErrorMessage,
-      );
-      return;
-    }
-    showError('$kPlayerPlaybackErrorPrefix$cleanMessage');
-  }
-
-  void clearError() {
-    errorMessage.value = null;
-    isBuffering.value = false;
-    showControls();
-  }
-
-  Future<void> retryCurrentItem() async {
-    clearError();
-    await openCurrentItem(restoreProgress: true, showRestoreMessage: false);
-  }
-
-  void beginSurfaceGesture({
-    required Offset localPosition,
-    required Size viewportSize,
-  }) {
-    handleSurfaceGestureStart(
-      localPosition: localPosition,
-      viewportSize: viewportSize,
-    );
-  }
-
-  void updateSurfaceGesture({required Offset localPosition}) {
-    handleSurfaceGestureUpdate(localPosition: localPosition);
-  }
-
-  void endSurfaceGesture() {
-    handleSurfaceGestureEnd();
   }
 }

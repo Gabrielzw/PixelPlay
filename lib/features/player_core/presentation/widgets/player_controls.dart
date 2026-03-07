@@ -4,28 +4,52 @@ import 'package:get/get.dart';
 import '../../domain/player_controller.dart';
 import 'player_control_actions.dart';
 import 'player_control_bottom_bar.dart';
+import 'player_episode_panel.dart';
+import 'player_more_panel.dart';
 import 'player_ui_constants.dart';
 
 class PlayerControlsOverlay extends StatelessWidget {
   final PlayerController controller;
   final VoidCallback onBack;
   final VoidCallback onOpenSettings;
+  final VoidCallback onToggleLock;
+  final VoidCallback onShowEpisodePanel;
+  final VoidCallback onShowMorePanel;
+  final VoidCallback onClosePanels;
+  final VoidCallback onToggleHorizontalFlip;
+  final VoidCallback onToggleVerticalFlip;
+  final bool showEpisodePanel;
+  final bool showMorePanel;
+  final bool flipHorizontal;
+  final bool flipVertical;
 
   const PlayerControlsOverlay({
     super.key,
     required this.controller,
     required this.onBack,
     required this.onOpenSettings,
+    required this.onToggleLock,
+    required this.onShowEpisodePanel,
+    required this.onShowMorePanel,
+    required this.onClosePanels,
+    required this.onToggleHorizontalFlip,
+    required this.onToggleVerticalFlip,
+    required this.showEpisodePanel,
+    required this.showMorePanel,
+    required this.flipHorizontal,
+    required this.flipVertical,
   });
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.controlsLocked.value) {
-        return PlayerLockedOverlay(onUnlock: controller.toggleLock);
+        return PlayerLockedOverlay(onUnlock: onToggleLock);
       }
 
       final visible = controller.controlsVisible.value;
+      final panelsOpen = showEpisodePanel || showMorePanel;
+
       return Stack(
         children: <Widget>[
           SafeArea(
@@ -39,10 +63,13 @@ class PlayerControlsOverlay extends StatelessWidget {
                     PlayerControlActions(
                       controller: controller,
                       onBack: onBack,
-                      onOpenSettings: onOpenSettings,
+                      onShowMore: onShowMorePanel,
                     ),
                     const Spacer(),
-                    PlayerControlBottomBar(controller: controller),
+                    PlayerControlBottomBar(
+                      controller: controller,
+                      onShowEpisodes: onShowEpisodePanel,
+                    ),
                   ],
                 ),
               ),
@@ -60,21 +87,34 @@ class PlayerControlsOverlay extends StatelessWidget {
                 child: Center(
                   child: PlayerSideLockButton(
                     isLocked: false,
-                    onPressed: controller.toggleLock,
+                    onPressed: onToggleLock,
                   ),
                 ),
               ),
             ),
           ),
-          Center(
-            child: AnimatedOpacity(
-              opacity: visible ? 1 : 0,
-              duration: kPlayerOverlayAnimationDuration,
-              child: IgnorePointer(
-                ignoring: !visible,
-                child: PlayerPlayPauseButton(controller: controller),
+          if (panelsOpen)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onClosePanels,
+                child: ColoredBox(color: applyOpacity(Colors.black, 0.34)),
               ),
             ),
+          PlayerEpisodePanel(
+            controller: controller,
+            visible: showEpisodePanel,
+            onClose: onClosePanels,
+          ),
+          PlayerMorePanel(
+            controller: controller,
+            visible: showMorePanel,
+            onClose: onClosePanels,
+            onOpenSettings: onOpenSettings,
+            onToggleHorizontalFlip: onToggleHorizontalFlip,
+            onToggleVerticalFlip: onToggleVerticalFlip,
+            flipHorizontal: flipHorizontal,
+            flipVertical: flipVertical,
           ),
         ],
       );

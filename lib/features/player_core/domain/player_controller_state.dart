@@ -1,6 +1,6 @@
 part of 'player_controller.dart';
 
-const double kGestureDefaultLevel = 0.6;
+const double kGestureDefaultLevel = 1.0;
 const double kGestureDecisionSlop = 12;
 
 const Duration kControlsAutoHideDelay = Duration(seconds: 3);
@@ -21,7 +21,7 @@ const List<PlayerAspectRatio> kAspectRatioCycleOrder = <PlayerAspectRatio>[
   PlayerAspectRatio.crop,
 ];
 
-enum PlayerHudKind { brightness, volume, seek, info }
+enum PlayerHudKind { brightness, volume, seek, info, speed }
 
 @immutable
 class PlayerHudState {

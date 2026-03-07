@@ -51,13 +51,13 @@ class _HudOverlay extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 20),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
-          color: applyOpacity(Colors.black, 0.62),
-          borderRadius: const BorderRadius.all(Radius.circular(18)),
+          color: applyOpacity(Colors.black, 0.7),
+          borderRadius: const BorderRadius.all(Radius.circular(999)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(_resolveHudIcon(state.kind), color: Colors.white),
+            Icon(_resolveHudIcon(state.kind), color: Colors.white, size: 18),
             const SizedBox(width: 10),
             Text(
               state.primaryText,
@@ -78,6 +78,7 @@ class _HudOverlay extends StatelessWidget {
       PlayerHudKind.volume => Icons.volume_up_rounded,
       PlayerHudKind.seek => Icons.fast_forward_rounded,
       PlayerHudKind.info => Icons.info_outline_rounded,
+      PlayerHudKind.speed => Icons.speed_rounded,
     };
   }
 }
@@ -100,7 +101,7 @@ class _BufferingOverlay extends StatelessWidget {
             children: <Widget>[
               CircularProgressIndicator(color: Colors.white),
               SizedBox(height: 12),
-              Text('缓冲中…', style: TextStyle(color: Colors.white)),
+              Text('加载中...', style: TextStyle(color: Colors.white)),
             ],
           ),
         ),

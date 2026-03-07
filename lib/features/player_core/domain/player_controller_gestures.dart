@@ -82,9 +82,13 @@ extension _PlayerGestureLogic on PlayerController {
   }
 
   void applySeekGesture(_PlayerGestureSession session, double deltaX) {
+    final settings = settingsController.settings.value;
+    final seekRangeSeconds =
+        settings.gestureSeekUsesVideoDuration && hasKnownDuration
+        ? duration.value.inSeconds.toDouble()
+        : settings.gestureSeekSecondsPerSwipe.toDouble();
     final secondsOffset =
-        (deltaX / session.viewportSize.width) *
-        settingsController.settings.value.gestureSeekSecondsPerSwipe;
+        (deltaX / session.viewportSize.width) * seekRangeSeconds;
     final nextPosition =
         session.basePosition +
         Duration(milliseconds: (secondsOffset * 1000).round());

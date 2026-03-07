@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 const int kDefaultSeedColorValue = 0xFFE7A2BA;
 const double kDefaultPlaybackSpeed = 1.0;
+const double kDefaultLongPressPlaybackSpeed = 2.0;
 const PlayerAspectRatio kDefaultAspectRatio = PlayerAspectRatio.fit;
+const PlayerPlaybackMode kDefaultPlaybackMode = PlayerPlaybackMode.loopList;
 const int kDefaultGestureSeekSecondsPerSwipe = 60;
+const bool kDefaultGestureSeekUsesVideoDuration = false;
 const bool kDefaultRememberPlaybackPosition = true;
 const bool kDefaultAutoPlayNext = true;
 
@@ -17,6 +20,8 @@ const List<double> kPlaybackSpeedOptions = <double>[
   3.0,
 ];
 
+const List<double> kLongPressSpeedOptions = <double>[2.0, 3.0, 4.0, 5.0];
+
 const int kGestureSeekMinSeconds = 10;
 const int kGestureSeekMaxSeconds = 180;
 const int kGestureSeekStepSeconds = 10;
@@ -26,13 +31,42 @@ const int kGestureSeekDivisions =
 
 enum PlayerAspectRatio { fit, fill, original, crop }
 
+enum PlayerPlaybackMode { loopList, loopSingle, noLoop }
+
 extension PlayerAspectRatioLabel on PlayerAspectRatio {
   String get label {
     return switch (this) {
-      PlayerAspectRatio.fit => '适应屏幕',
-      PlayerAspectRatio.fill => '拉伸填充',
-      PlayerAspectRatio.original => '原始比例',
-      PlayerAspectRatio.crop => '裁剪铺满',
+      PlayerAspectRatio.fit => '适应',
+      PlayerAspectRatio.fill => '拉伸',
+      PlayerAspectRatio.original => '原始',
+      PlayerAspectRatio.crop => '裁剪',
+    };
+  }
+
+  IconData get icon {
+    return switch (this) {
+      PlayerAspectRatio.fit => Icons.fit_screen_rounded,
+      PlayerAspectRatio.fill => Icons.fullscreen_rounded,
+      PlayerAspectRatio.original => Icons.crop_original_rounded,
+      PlayerAspectRatio.crop => Icons.crop_rounded,
+    };
+  }
+}
+
+extension PlayerPlaybackModeLabel on PlayerPlaybackMode {
+  String get label {
+    return switch (this) {
+      PlayerPlaybackMode.loopList => '列表循环',
+      PlayerPlaybackMode.loopSingle => '单集循环',
+      PlayerPlaybackMode.noLoop => '播完停止',
+    };
+  }
+
+  IconData get icon {
+    return switch (this) {
+      PlayerPlaybackMode.loopList => Icons.repeat_rounded,
+      PlayerPlaybackMode.loopSingle => Icons.repeat_one_rounded,
+      PlayerPlaybackMode.noLoop => Icons.stop_circle_outlined,
     };
   }
 }
@@ -42,8 +76,11 @@ class AppSettings {
   final ThemeMode themeMode;
   final int seedColorValue;
   final double defaultPlaybackSpeed;
+  final double longPressPlaybackSpeed;
   final PlayerAspectRatio defaultAspectRatio;
+  final PlayerPlaybackMode defaultPlaybackMode;
   final int gestureSeekSecondsPerSwipe;
+  final bool gestureSeekUsesVideoDuration;
   final bool rememberPlaybackPosition;
   final bool autoPlayNext;
 
@@ -51,8 +88,11 @@ class AppSettings {
     this.themeMode = ThemeMode.system,
     this.seedColorValue = kDefaultSeedColorValue,
     this.defaultPlaybackSpeed = kDefaultPlaybackSpeed,
+    this.longPressPlaybackSpeed = kDefaultLongPressPlaybackSpeed,
     this.defaultAspectRatio = kDefaultAspectRatio,
+    this.defaultPlaybackMode = kDefaultPlaybackMode,
     this.gestureSeekSecondsPerSwipe = kDefaultGestureSeekSecondsPerSwipe,
+    this.gestureSeekUsesVideoDuration = kDefaultGestureSeekUsesVideoDuration,
     this.rememberPlaybackPosition = kDefaultRememberPlaybackPosition,
     this.autoPlayNext = kDefaultAutoPlayNext,
   });
@@ -63,8 +103,11 @@ class AppSettings {
     ThemeMode? themeMode,
     int? seedColorValue,
     double? defaultPlaybackSpeed,
+    double? longPressPlaybackSpeed,
     PlayerAspectRatio? defaultAspectRatio,
+    PlayerPlaybackMode? defaultPlaybackMode,
     int? gestureSeekSecondsPerSwipe,
+    bool? gestureSeekUsesVideoDuration,
     bool? rememberPlaybackPosition,
     bool? autoPlayNext,
   }) {
@@ -72,9 +115,14 @@ class AppSettings {
       themeMode: themeMode ?? this.themeMode,
       seedColorValue: seedColorValue ?? this.seedColorValue,
       defaultPlaybackSpeed: defaultPlaybackSpeed ?? this.defaultPlaybackSpeed,
+      longPressPlaybackSpeed:
+          longPressPlaybackSpeed ?? this.longPressPlaybackSpeed,
       defaultAspectRatio: defaultAspectRatio ?? this.defaultAspectRatio,
+      defaultPlaybackMode: defaultPlaybackMode ?? this.defaultPlaybackMode,
       gestureSeekSecondsPerSwipe:
           gestureSeekSecondsPerSwipe ?? this.gestureSeekSecondsPerSwipe,
+      gestureSeekUsesVideoDuration:
+          gestureSeekUsesVideoDuration ?? this.gestureSeekUsesVideoDuration,
       rememberPlaybackPosition:
           rememberPlaybackPosition ?? this.rememberPlaybackPosition,
       autoPlayNext: autoPlayNext ?? this.autoPlayNext,

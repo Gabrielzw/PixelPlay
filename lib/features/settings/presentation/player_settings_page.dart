@@ -11,55 +11,108 @@ class PlayerSettingsPage extends GetView<SettingsController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final state = controller.settings.value;
+      final settings = controller.settings.value;
 
       return Scaffold(
-        appBar: AppBar(title: const Text('播放器默认设置')),
+        appBar: AppBar(title: const Text('播放器设置')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
-            const UiSkeletonNotice(message: '此处配置会作为播放器页的默认倍速、画面比例与手势快进参数。'),
+            const UiSkeletonNotice(message: '这里的配置会作为播放器页面的默认值，并影响手势和播放行为。'),
             const SizedBox(height: 12),
-            _PlaybackSpeedTile(
-              value: state.defaultPlaybackSpeed,
-              onChanged: (double speed) {
-                controller.setDefaultPlaybackSpeed(speed);
-              },
+            _DropdownTile<double>(
+              title: '默认倍速',
+              value: settings.defaultPlaybackSpeed,
+              items: kPlaybackSpeedOptions,
+              labelBuilder: (double speed) => '${speed}x',
+              onChanged: controller.setDefaultPlaybackSpeed,
             ),
             const SizedBox(height: 12),
-            _AspectRatioTile(
-              value: state.defaultAspectRatio,
-              onChanged: (PlayerAspectRatio aspectRatio) {
-                controller.setDefaultAspectRatio(aspectRatio);
-              },
+            _ChoiceTile<PlayerPlaybackMode>(
+              title: '默认播放方式',
+              options: PlayerPlaybackMode.values,
+              selected: settings.defaultPlaybackMode,
+              labelBuilder: (PlayerPlaybackMode mode) => mode.label,
+              iconBuilder: (PlayerPlaybackMode mode) => mode.icon,
+              onSelected: controller.setDefaultPlaybackMode,
             ),
             const SizedBox(height: 12),
-            _GestureSeekTile(
-              valueSeconds: state.gestureSeekSecondsPerSwipe,
-              onChanged: (int seconds) {
-                controller.setGestureSeekSecondsPerSwipe(seconds);
-              },
+            _ChoiceTile<PlayerAspectRatio>(
+              title: '默认画面比例',
+              options: PlayerAspectRatio.values,
+              selected: settings.defaultAspectRatio,
+              labelBuilder: (PlayerAspectRatio ratio) => ratio.label,
+              iconBuilder: (PlayerAspectRatio ratio) => ratio.icon,
+              onSelected: controller.setDefaultAspectRatio,
+            ),
+            const SizedBox(height: 12),
+            _ChoiceTile<double>(
+              title: '长按倍速',
+              options: kLongPressSpeedOptions,
+              selected: settings.longPressPlaybackSpeed,
+              labelBuilder: (double speed) => '${speed}x',
+              iconBuilder: (_) => Icons.speed_rounded,
+              onSelected: controller.setLongPressPlaybackSpeed,
             ),
             const SizedBox(height: 12),
             Card(
               child: Column(
                 children: <Widget>[
                   SwitchListTile(
-                    value: state.rememberPlaybackPosition,
-                    onChanged: (bool enabled) {
-                      controller.setRememberPlaybackPosition(enabled);
-                    },
+                    value: settings.gestureSeekUsesVideoDuration,
+                    onChanged: controller.setGestureSeekUsesVideoDuration,
+                    title: const Text('按视频总时长拖动'),
+                    subtitle: const Text('开启后，滑动距离会按视频总时长比例换算'),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          '整屏滑动对应时长：${settings.gestureSeekSecondsPerSwipe}s',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '关闭“按视频总时长拖动”后，横向滑动会按这个固定时长快进快退。',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        Slider(
+                          value: settings.gestureSeekSecondsPerSwipe.toDouble(),
+                          min: kGestureSeekMinSeconds.toDouble(),
+                          max: kGestureSeekMaxSeconds.toDouble(),
+                          divisions: kGestureSeekDivisions,
+                          label: '${settings.gestureSeekSecondsPerSwipe}s',
+                          onChanged: (double next) {
+                            controller.setGestureSeekSecondsPerSwipe(
+                              next.round(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Column(
+                children: <Widget>[
+                  SwitchListTile(
+                    value: settings.rememberPlaybackPosition,
+                    onChanged: controller.setRememberPlaybackPosition,
                     title: const Text('记忆播放进度'),
-                    subtitle: const Text('下次打开无缝续播'),
+                    subtitle: const Text('下次打开同一视频时继续播放'),
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
-                    value: state.autoPlayNext,
-                    onChanged: (bool enabled) {
-                      controller.setAutoPlayNext(enabled);
-                    },
-                    title: const Text('自动播放下一个'),
-                    subtitle: const Text('当前视频结束后自动连播'),
+                    value: settings.autoPlayNext,
+                    onChanged: controller.setAutoPlayNext,
+                    title: const Text('自动连播'),
+                    subtitle: const Text('播放完成后自动跳到下一集'),
                   ),
                 ],
               ),
@@ -71,34 +124,45 @@ class PlayerSettingsPage extends GetView<SettingsController> {
   }
 }
 
-class _PlaybackSpeedTile extends StatelessWidget {
-  final double value;
-  final ValueChanged<double> onChanged;
+class _DropdownTile<T> extends StatelessWidget {
+  final String title;
+  final T value;
+  final List<T> items;
+  final String Function(T value) labelBuilder;
+  final ValueChanged<T> onChanged;
 
-  const _PlaybackSpeedTile({required this.value, required this.onChanged});
+  const _DropdownTile({
+    required this.title,
+    required this.value,
+    required this.items,
+    required this.labelBuilder,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: DropdownButtonFormField<double>(
-          key: ValueKey<double>(value),
+        child: DropdownButtonFormField<T>(
+          key: ValueKey<T>(value),
           initialValue: value,
-          decoration: const InputDecoration(
-            labelText: '默认倍速',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: title,
+            border: const OutlineInputBorder(),
           ),
-          items: kPlaybackSpeedOptions
+          items: items
               .map(
-                (speed) => DropdownMenuItem<double>(
-                  value: speed,
-                  child: Text('${speed}x'),
+                (T item) => DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(labelBuilder(item)),
                 ),
               )
               .toList(growable: false),
-          onChanged: (next) {
-            if (next == null) return;
+          onChanged: (T? next) {
+            if (next == null) {
+              return;
+            }
             onChanged(next);
           },
         ),
@@ -107,47 +171,22 @@ class _PlaybackSpeedTile extends StatelessWidget {
   }
 }
 
-class _AspectRatioTile extends StatelessWidget {
-  final PlayerAspectRatio value;
-  final ValueChanged<PlayerAspectRatio> onChanged;
+class _ChoiceTile<T> extends StatelessWidget {
+  final String title;
+  final List<T> options;
+  final T selected;
+  final String Function(T value) labelBuilder;
+  final IconData Function(T value) iconBuilder;
+  final ValueChanged<T> onSelected;
 
-  const _AspectRatioTile({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: DropdownButtonFormField<PlayerAspectRatio>(
-          key: ValueKey<PlayerAspectRatio>(value),
-          initialValue: value,
-          decoration: const InputDecoration(
-            labelText: '默认画面比例',
-            border: OutlineInputBorder(),
-          ),
-          items: PlayerAspectRatio.values
-              .map(
-                (ratio) => DropdownMenuItem<PlayerAspectRatio>(
-                  value: ratio,
-                  child: Text(ratio.label),
-                ),
-              )
-              .toList(growable: false),
-          onChanged: (next) {
-            if (next == null) return;
-            onChanged(next);
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _GestureSeekTile extends StatelessWidget {
-  final int valueSeconds;
-  final ValueChanged<int> onChanged;
-
-  const _GestureSeekTile({required this.valueSeconds, required this.onChanged});
+  const _ChoiceTile({
+    required this.title,
+    required this.options,
+    required this.selected,
+    required this.labelBuilder,
+    required this.iconBuilder,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -157,19 +196,27 @@ class _GestureSeekTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('手势快进灵敏度', style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(height: 4),
-            Text(
-              '左右滑动一次对应 $valueSeconds 秒',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            Slider(
-              value: valueSeconds.toDouble(),
-              min: kGestureSeekMinSeconds.toDouble(),
-              max: kGestureSeekMaxSeconds.toDouble(),
-              divisions: kGestureSeekDivisions,
-              label: '${valueSeconds}s',
-              onChanged: (next) => onChanged(next.round()),
+            Text(title, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: options
+                  .map(
+                    (T option) => ChoiceChip(
+                      selected: option == selected,
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Icon(iconBuilder(option), size: 16),
+                          const SizedBox(width: 6),
+                          Text(labelBuilder(option)),
+                        ],
+                      ),
+                      onSelected: (_) => onSelected(option),
+                    ),
+                  )
+                  .toList(growable: false),
             ),
           ],
         ),

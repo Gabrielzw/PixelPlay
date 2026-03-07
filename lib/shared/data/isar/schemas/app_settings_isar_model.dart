@@ -14,8 +14,11 @@ class AppSettingsIsarModel {
   late String themeModeName;
   late int seedColorValue;
   late double defaultPlaybackSpeed;
+  double? longPressPlaybackSpeed;
   late String defaultAspectRatioName;
+  String? defaultPlaybackModeName;
   late int gestureSeekSecondsPerSwipe;
+  bool? gestureSeekUsesVideoDuration;
   late bool rememberPlaybackPosition;
   late bool autoPlayNext;
 
@@ -24,8 +27,13 @@ class AppSettingsIsarModel {
       themeMode: _resolveThemeMode(themeModeName),
       seedColorValue: seedColorValue,
       defaultPlaybackSpeed: defaultPlaybackSpeed,
+      longPressPlaybackSpeed:
+          longPressPlaybackSpeed ?? kDefaultLongPressPlaybackSpeed,
       defaultAspectRatio: _resolveAspectRatio(defaultAspectRatioName),
+      defaultPlaybackMode: _resolvePlaybackMode(defaultPlaybackModeName),
       gestureSeekSecondsPerSwipe: gestureSeekSecondsPerSwipe,
+      gestureSeekUsesVideoDuration:
+          gestureSeekUsesVideoDuration ?? kDefaultGestureSeekUsesVideoDuration,
       rememberPlaybackPosition: rememberPlaybackPosition,
       autoPlayNext: autoPlayNext,
     );
@@ -37,8 +45,11 @@ class AppSettingsIsarModel {
       ..themeModeName = settings.themeMode.name
       ..seedColorValue = settings.seedColorValue
       ..defaultPlaybackSpeed = settings.defaultPlaybackSpeed
+      ..longPressPlaybackSpeed = settings.longPressPlaybackSpeed
       ..defaultAspectRatioName = settings.defaultAspectRatio.name
+      ..defaultPlaybackModeName = settings.defaultPlaybackMode.name
       ..gestureSeekSecondsPerSwipe = settings.gestureSeekSecondsPerSwipe
+      ..gestureSeekUsesVideoDuration = settings.gestureSeekUsesVideoDuration
       ..rememberPlaybackPosition = settings.rememberPlaybackPosition
       ..autoPlayNext = settings.autoPlayNext;
   }
@@ -55,5 +66,12 @@ PlayerAspectRatio _resolveAspectRatio(String value) {
   return PlayerAspectRatio.values.firstWhere(
     (PlayerAspectRatio ratio) => ratio.name == value,
     orElse: () => kDefaultAspectRatio,
+  );
+}
+
+PlayerPlaybackMode _resolvePlaybackMode(String? value) {
+  return PlayerPlaybackMode.values.firstWhere(
+    (PlayerPlaybackMode mode) => mode.name == value,
+    orElse: () => kDefaultPlaybackMode,
   );
 }

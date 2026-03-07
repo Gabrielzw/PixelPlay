@@ -48,6 +48,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   late final PlayerPlaybackPort _playbackPort;
   late final PlayerController _controller;
   Future<void>? _persistProgressTask;
+  bool _showEpisodePanel = false;
+  bool _showMorePanel = false;
+  bool _flipHorizontal = false;
+  bool _flipVertical = false;
 
   @override
   void initState() {
@@ -89,8 +93,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: WillPopScope(
-        onWillPop: _handleWillPop,
+      child: PopScope<void>(
+        canPop: false,
+        onPopInvokedWithResult: _handlePopInvoked,
         child: Scaffold(
           backgroundColor: kPlayerBackground,
           body: PlayerLayout(
@@ -98,6 +103,17 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             playbackPort: _playbackPort,
             onBack: _handleBack,
             onOpenSettings: _openSettings,
+            onSurfaceTap: _handleSurfaceTap,
+            onToggleLock: _handleToggleLock,
+            onShowEpisodePanel: _openEpisodePanel,
+            onShowMorePanel: _openMorePanel,
+            onClosePanels: _closePanels,
+            onToggleHorizontalFlip: _toggleHorizontalFlip,
+            onToggleVerticalFlip: _toggleVerticalFlip,
+            showEpisodePanel: _showEpisodePanel,
+            showMorePanel: _showMorePanel,
+            flipHorizontal: _flipHorizontal,
+            flipVertical: _flipVertical,
           ),
         ),
       ),
@@ -109,12 +125,27 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   Future<bool> _handleWillPop() async {
+    if (_showEpisodePanel || _showMorePanel) {
+      _closePanels();
+      return false;
+    }
     if (_persistProgressTask != null) {
       return false;
     }
 
     await _persistProgressIfNeeded();
     return true;
+  }
+
+  Future<void> _handlePopInvoked(bool didPop, void _) async {
+    if (didPop) {
+      return;
+    }
+    final shouldPop = await _handleWillPop();
+    if (!shouldPop || !mounted) {
+      return;
+    }
+    Navigator.of(context).pop();
   }
 
   Future<void> _openSettings() async {
@@ -152,5 +183,57 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached;
+  }
+
+  void _handleSurfaceTap() {
+    if (_showEpisodePanel || _showMorePanel) {
+      _closePanels();
+      return;
+    }
+    _controller.handleSurfaceTap();
+  }
+
+  void _handleToggleLock() {
+    _closePanels(armAutoHide: false);
+    _controller.toggleLock();
+  }
+
+  void _openEpisodePanel() {
+    _controller.showControls();
+    _controller.cancelControlsAutoHide();
+    setState(() {
+      _showEpisodePanel = true;
+      _showMorePanel = false;
+    });
+  }
+
+  void _openMorePanel() {
+    _controller.showControls();
+    _controller.cancelControlsAutoHide();
+    setState(() {
+      _showEpisodePanel = false;
+      _showMorePanel = true;
+    });
+  }
+
+  void _closePanels({bool armAutoHide = true}) {
+    if (!_showEpisodePanel && !_showMorePanel) {
+      return;
+    }
+    setState(() {
+      _showEpisodePanel = false;
+      _showMorePanel = false;
+    });
+    if (armAutoHide) {
+      _controller.armControlsAutoHide();
+    }
+  }
+
+  void _toggleHorizontalFlip() {
+    setState(() => _flipHorizontal = !_flipHorizontal);
+  }
+
+  void _toggleVerticalFlip() {
+    setState(() => _flipVertical = !_flipVertical);
   }
 }

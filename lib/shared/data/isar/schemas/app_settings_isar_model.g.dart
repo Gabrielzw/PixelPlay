@@ -28,28 +28,43 @@ const AppSettingsIsarModelSchema = CollectionSchema(
       name: r'defaultAspectRatioName',
       type: IsarType.string,
     ),
-    r'defaultPlaybackSpeed': PropertySchema(
+    r'defaultPlaybackModeName': PropertySchema(
       id: 2,
+      name: r'defaultPlaybackModeName',
+      type: IsarType.string,
+    ),
+    r'defaultPlaybackSpeed': PropertySchema(
+      id: 3,
       name: r'defaultPlaybackSpeed',
       type: IsarType.double,
     ),
     r'gestureSeekSecondsPerSwipe': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'gestureSeekSecondsPerSwipe',
       type: IsarType.long,
     ),
+    r'gestureSeekUsesVideoDuration': PropertySchema(
+      id: 5,
+      name: r'gestureSeekUsesVideoDuration',
+      type: IsarType.bool,
+    ),
+    r'longPressPlaybackSpeed': PropertySchema(
+      id: 6,
+      name: r'longPressPlaybackSpeed',
+      type: IsarType.double,
+    ),
     r'rememberPlaybackPosition': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'rememberPlaybackPosition',
       type: IsarType.bool,
     ),
     r'seedColorValue': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'seedColorValue',
       type: IsarType.long,
     ),
     r'themeModeName': PropertySchema(
-      id: 6,
+      id: 9,
       name: r'themeModeName',
       type: IsarType.string,
     ),
@@ -77,6 +92,12 @@ int _appSettingsIsarModelEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.defaultAspectRatioName.length * 3;
+  {
+    final value = object.defaultPlaybackModeName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.themeModeName.length * 3;
   return bytesCount;
 }
@@ -89,11 +110,14 @@ void _appSettingsIsarModelSerialize(
 ) {
   writer.writeBool(offsets[0], object.autoPlayNext);
   writer.writeString(offsets[1], object.defaultAspectRatioName);
-  writer.writeDouble(offsets[2], object.defaultPlaybackSpeed);
-  writer.writeLong(offsets[3], object.gestureSeekSecondsPerSwipe);
-  writer.writeBool(offsets[4], object.rememberPlaybackPosition);
-  writer.writeLong(offsets[5], object.seedColorValue);
-  writer.writeString(offsets[6], object.themeModeName);
+  writer.writeString(offsets[2], object.defaultPlaybackModeName);
+  writer.writeDouble(offsets[3], object.defaultPlaybackSpeed);
+  writer.writeLong(offsets[4], object.gestureSeekSecondsPerSwipe);
+  writer.writeBool(offsets[5], object.gestureSeekUsesVideoDuration);
+  writer.writeDouble(offsets[6], object.longPressPlaybackSpeed);
+  writer.writeBool(offsets[7], object.rememberPlaybackPosition);
+  writer.writeLong(offsets[8], object.seedColorValue);
+  writer.writeString(offsets[9], object.themeModeName);
 }
 
 AppSettingsIsarModel _appSettingsIsarModelDeserialize(
@@ -105,12 +129,15 @@ AppSettingsIsarModel _appSettingsIsarModelDeserialize(
   final object = AppSettingsIsarModel();
   object.autoPlayNext = reader.readBool(offsets[0]);
   object.defaultAspectRatioName = reader.readString(offsets[1]);
-  object.defaultPlaybackSpeed = reader.readDouble(offsets[2]);
-  object.gestureSeekSecondsPerSwipe = reader.readLong(offsets[3]);
+  object.defaultPlaybackModeName = reader.readStringOrNull(offsets[2]);
+  object.defaultPlaybackSpeed = reader.readDouble(offsets[3]);
+  object.gestureSeekSecondsPerSwipe = reader.readLong(offsets[4]);
+  object.gestureSeekUsesVideoDuration = reader.readBoolOrNull(offsets[5]);
   object.id = id;
-  object.rememberPlaybackPosition = reader.readBool(offsets[4]);
-  object.seedColorValue = reader.readLong(offsets[5]);
-  object.themeModeName = reader.readString(offsets[6]);
+  object.longPressPlaybackSpeed = reader.readDoubleOrNull(offsets[6]);
+  object.rememberPlaybackPosition = reader.readBool(offsets[7]);
+  object.seedColorValue = reader.readLong(offsets[8]);
+  object.themeModeName = reader.readString(offsets[9]);
   return object;
 }
 
@@ -126,14 +153,20 @@ P _appSettingsIsarModelDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 4:
-      return (reader.readBool(offset)) as P;
-    case 5:
       return (reader.readLong(offset)) as P;
+    case 5:
+      return (reader.readBoolOrNull(offset)) as P;
     case 6:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 7:
+      return (reader.readBool(offset)) as P;
+    case 8:
+      return (reader.readLong(offset)) as P;
+    case 9:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -447,6 +480,219 @@ extension AppSettingsIsarModelQueryFilter
     AppSettingsIsarModel,
     QAfterFilterCondition
   >
+  defaultPlaybackModeNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'defaultPlaybackModeName'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'defaultPlaybackModeName'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'defaultPlaybackModeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'defaultPlaybackModeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'defaultPlaybackModeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'defaultPlaybackModeName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'defaultPlaybackModeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'defaultPlaybackModeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'defaultPlaybackModeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'defaultPlaybackModeName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'defaultPlaybackModeName',
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  defaultPlaybackModeNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          property: r'defaultPlaybackModeName',
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
   defaultPlaybackSpeedEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -612,6 +858,50 @@ extension AppSettingsIsarModelQueryFilter
     AppSettingsIsarModel,
     QAfterFilterCondition
   >
+  gestureSeekUsesVideoDurationIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'gestureSeekUsesVideoDuration'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  gestureSeekUsesVideoDurationIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(
+          property: r'gestureSeekUsesVideoDuration',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  gestureSeekUsesVideoDurationEqualTo(bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'gestureSeekUsesVideoDuration',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
   idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -673,6 +963,126 @@ extension AppSettingsIsarModelQueryFilter
           includeLower: includeLower,
           upper: upper,
           includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  longPressPlaybackSpeedIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'longPressPlaybackSpeed'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  longPressPlaybackSpeedIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'longPressPlaybackSpeed'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  longPressPlaybackSpeedEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'longPressPlaybackSpeed',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  longPressPlaybackSpeedGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'longPressPlaybackSpeed',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  longPressPlaybackSpeedLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'longPressPlaybackSpeed',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  longPressPlaybackSpeedBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'longPressPlaybackSpeed',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
         ),
       );
     });
@@ -994,6 +1404,20 @@ extension AppSettingsIsarModelQuerySortBy
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByDefaultPlaybackModeName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'defaultPlaybackModeName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByDefaultPlaybackModeNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'defaultPlaybackModeName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
   sortByDefaultPlaybackSpeed() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'defaultPlaybackSpeed', Sort.asc);
@@ -1018,6 +1442,34 @@ extension AppSettingsIsarModelQuerySortBy
   sortByGestureSeekSecondsPerSwipeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'gestureSeekSecondsPerSwipe', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByGestureSeekUsesVideoDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gestureSeekUsesVideoDuration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByGestureSeekUsesVideoDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gestureSeekUsesVideoDuration', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByLongPressPlaybackSpeed() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longPressPlaybackSpeed', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByLongPressPlaybackSpeedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longPressPlaybackSpeed', Sort.desc);
     });
   }
 
@@ -1095,6 +1547,20 @@ extension AppSettingsIsarModelQuerySortThenBy
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByDefaultPlaybackModeName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'defaultPlaybackModeName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByDefaultPlaybackModeNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'defaultPlaybackModeName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
   thenByDefaultPlaybackSpeed() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'defaultPlaybackSpeed', Sort.asc);
@@ -1123,6 +1589,20 @@ extension AppSettingsIsarModelQuerySortThenBy
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByGestureSeekUsesVideoDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gestureSeekUsesVideoDuration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByGestureSeekUsesVideoDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gestureSeekUsesVideoDuration', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
   thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1133,6 +1613,20 @@ extension AppSettingsIsarModelQuerySortThenBy
   thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByLongPressPlaybackSpeed() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longPressPlaybackSpeed', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByLongPressPlaybackSpeedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longPressPlaybackSpeed', Sort.desc);
     });
   }
 
@@ -1199,6 +1693,16 @@ extension AppSettingsIsarModelQueryWhereDistinct
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct>
+  distinctByDefaultPlaybackModeName({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'defaultPlaybackModeName',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct>
   distinctByDefaultPlaybackSpeed() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'defaultPlaybackSpeed');
@@ -1209,6 +1713,20 @@ extension AppSettingsIsarModelQueryWhereDistinct
   distinctByGestureSeekSecondsPerSwipe() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'gestureSeekSecondsPerSwipe');
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct>
+  distinctByGestureSeekUsesVideoDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'gestureSeekUsesVideoDuration');
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct>
+  distinctByLongPressPlaybackSpeed() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'longPressPlaybackSpeed');
     });
   }
 
@@ -1264,6 +1782,13 @@ extension AppSettingsIsarModelQueryProperty
     });
   }
 
+  QueryBuilder<AppSettingsIsarModel, String?, QQueryOperations>
+  defaultPlaybackModeNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'defaultPlaybackModeName');
+    });
+  }
+
   QueryBuilder<AppSettingsIsarModel, double, QQueryOperations>
   defaultPlaybackSpeedProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1275,6 +1800,20 @@ extension AppSettingsIsarModelQueryProperty
   gestureSeekSecondsPerSwipeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'gestureSeekSecondsPerSwipe');
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, bool?, QQueryOperations>
+  gestureSeekUsesVideoDurationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'gestureSeekUsesVideoDuration');
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, double?, QQueryOperations>
+  longPressPlaybackSpeedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'longPressPlaybackSpeed');
     });
   }
 

@@ -1,30 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../domain/player_controller.dart';
 import 'player_ui_constants.dart';
 
-enum _PlayerMenuAction { openSettings, resetProgress }
-
 class PlayerControlActions extends StatelessWidget {
   final PlayerController controller;
   final VoidCallback onBack;
-  final VoidCallback onOpenSettings;
+  final VoidCallback onShowMore;
 
   const PlayerControlActions({
     super.key,
     required this.controller,
     required this.onBack,
-    required this.onOpenSettings,
+    required this.onShowMore,
   });
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final item = controller.currentItem.value;
+      final isLandscape =
+          MediaQuery.of(context).orientation == Orientation.landscape;
+
       return Container(
-        margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -67,37 +70,19 @@ class PlayerControlActions extends StatelessWidget {
                 ],
               ),
             ),
+            if (isLandscape) const _CurrentTimeLabel(),
+            if (isLandscape) const SizedBox(width: 8),
             IconButton(
               tooltip: '截图',
               onPressed: controller.showScreenshotUnavailable,
               icon: const Icon(Icons.photo_camera_outlined),
               color: Colors.white,
             ),
-            PopupMenuButton<_PlayerMenuAction>(
+            IconButton(
               tooltip: '更多',
-              onSelected: (_PlayerMenuAction action) {
-                switch (action) {
-                  case _PlayerMenuAction.openSettings:
-                    onOpenSettings();
-                    return;
-                  case _PlayerMenuAction.resetProgress:
-                    controller.resetCurrentProgress();
-                    return;
-                }
-              },
-              itemBuilder: (BuildContext context) {
-                return const <PopupMenuEntry<_PlayerMenuAction>>[
-                  PopupMenuItem<_PlayerMenuAction>(
-                    value: _PlayerMenuAction.openSettings,
-                    child: Text('播放器默认设置'),
-                  ),
-                  PopupMenuItem<_PlayerMenuAction>(
-                    value: _PlayerMenuAction.resetProgress,
-                    child: Text('重置当前进度'),
-                  ),
-                ];
-              },
-              icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+              onPressed: onShowMore,
+              icon: const Icon(Icons.more_vert_rounded),
+              color: Colors.white,
             ),
           ],
         ),
@@ -106,30 +91,51 @@ class PlayerControlActions extends StatelessWidget {
   }
 }
 
-class PlayerPlayPauseButton extends StatelessWidget {
-  final PlayerController controller;
+class _CurrentTimeLabel extends StatefulWidget {
+  const _CurrentTimeLabel();
 
-  const PlayerPlayPauseButton({super.key, required this.controller});
+  @override
+  State<_CurrentTimeLabel> createState() => _CurrentTimeLabelState();
+}
+
+class _CurrentTimeLabelState extends State<_CurrentTimeLabel> {
+  late String _timeText;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timeText = _formatNow();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _timeText = _formatNow());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => FilledButton.tonal(
-        onPressed: controller.togglePlay,
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(72, 72),
-          backgroundColor: applyOpacity(Colors.white, 0.16),
-          foregroundColor: Colors.white,
-          shape: const CircleBorder(),
-        ),
-        child: Icon(
-          controller.isPlaying.value
-              ? Icons.pause_rounded
-              : Icons.play_arrow_rounded,
-          size: 36,
-        ),
+    return Text(
+      _timeText,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
       ),
     );
+  }
+
+  String _formatNow() {
+    final now = DateTime.now();
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 }
 
@@ -170,7 +176,7 @@ class PlayerSideLockButton extends StatelessWidget {
         borderRadius: const BorderRadius.all(Radius.circular(20)),
       ),
       child: IconButton(
-        tooltip: isLocked ? '解锁' : '锁屏',
+        tooltip: isLocked ? '解锁' : '锁定',
         onPressed: onPressed,
         icon: Icon(isLocked ? Icons.lock_rounded : Icons.lock_open_rounded),
         color: Colors.white,
