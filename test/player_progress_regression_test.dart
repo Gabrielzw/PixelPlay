@@ -46,7 +46,10 @@ class RegressionPlaybackPort implements PlayerPlaybackPort {
 
   bool? lastOpenPlayValue;
   int playCallCount = 0;
+  Duration? lastOpenStartPosition;
   Duration? lastSeekPosition;
+  Completer<void>? openCompleter;
+  bool _isDisposed = false;
 
   @override
   Stream<bool> get bufferingStream => _bufferingController.stream;
@@ -73,6 +76,7 @@ class RegressionPlaybackPort implements PlayerPlaybackPort {
 
   @override
   Future<void> disposePlayback() async {
+    _isDisposed = true;
     await _bufferingController.close();
     await _completedController.close();
     await _durationController.close();
@@ -90,8 +94,20 @@ class RegressionPlaybackPort implements PlayerPlaybackPort {
   }
 
   @override
-  Future<void> open(PlayerQueueItem item, {required bool play}) async {
+  Future<void> open(
+    PlayerQueueItem item, {
+    required bool play,
+    Duration? startPosition,
+  }) async {
     lastOpenPlayValue = play;
+    lastOpenStartPosition = startPosition;
+    final pendingOpen = openCompleter;
+    if (pendingOpen != null) {
+      await pendingOpen.future;
+    }
+    if (_isDisposed) {
+      return;
+    }
     _playingController.add(play);
   }
 
@@ -234,6 +250,72 @@ void main() {
     expect(progressRepository.savedRecord?.durationMs, 600000);
   });
 
+  testWidgets('player page keeps saved progress when exiting during restore', (
+    WidgetTester tester,
+  ) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = RecordingPlaybackPositionRepository()
+      ..savedRecord = const PlaybackPositionRecord(
+        mediaId: 'video-race',
+        positionMs: 120000,
+        durationMs: 600000,
+      );
+    final playbackPort = RegressionPlaybackPort()
+      ..openCompleter = Completer<void>();
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        navigatorKey: navigatorKey,
+        home: Builder(
+          builder: (BuildContext context) {
+            return Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PlayerPage(
+                          playbackPort: playbackPort,
+                          playlist: <PlayerQueueItem>[
+                            PlayerQueueItem(
+                              id: 'video-race',
+                              title: 'Restore Race.mp4',
+                              sourceLabel: '本地 / Camera',
+                              sourceUri: 'test://video-race',
+                              duration: const Duration(minutes: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open player'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open player'));
+    await tester.pump();
+    await tester.pump();
+
+    await navigatorKey.currentState!.maybePop();
+    await tester.pumpAndSettle();
+
+    expect(progressRepository.savedRecord?.mediaId, 'video-race');
+    expect(progressRepository.savedRecord?.positionMs, 120000);
+    expect(progressRepository.savedRecord?.durationMs, 600000);
+  });
+
   testWidgets('player page restores saved progress near the start', (
     WidgetTester tester,
   ) async {
@@ -270,13 +352,13 @@ void main() {
     await tester.pump();
 
     expect(playbackPort.lastOpenPlayValue, isFalse);
-    expect(playbackPort.playCallCount, 0);
+    expect(playbackPort.playCallCount, 1);
+    expect(playbackPort.lastOpenStartPosition, const Duration(seconds: 3));
     expect(playbackPort.lastSeekPosition, isNull);
 
     playbackPort.emitDuration(const Duration(minutes: 10));
     await tester.pump();
 
-    expect(playbackPort.lastSeekPosition, const Duration(seconds: 3));
     expect(playbackPort.playCallCount, 1);
   });
 }

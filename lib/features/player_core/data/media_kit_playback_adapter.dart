@@ -64,14 +64,21 @@ class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
   }
 
   @override
-  Future<void> open(PlayerQueueItem item, {required bool play}) async {
+  Future<void> open(
+    PlayerQueueItem item, {
+    required bool play,
+    Duration? startPosition,
+  }) async {
     final source = item.playbackUri;
     if (source == null || source.trim().isEmpty) {
       throw StateError('Missing playback source for media id: ${item.id}');
     }
 
     final headers = item.httpHeaders.isEmpty ? null : item.httpHeaders;
-    await player.open(Media(source, httpHeaders: headers), play: play);
+    await player.open(
+      Media(source, start: startPosition, httpHeaders: headers),
+      play: play,
+    );
   }
 
   @override

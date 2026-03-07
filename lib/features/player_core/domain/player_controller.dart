@@ -48,9 +48,7 @@ class PlayerController extends GetxController {
   DateTime? _lastPositionSyncAt;
   Duration _lastSyncedPosition = Duration.zero;
   Duration _latestObservedPosition = Duration.zero;
-  bool _showPendingRestoreMessage = false;
-  bool _hasObservedPlaybackDuration = false;
-  bool _isApplyingPendingRestore = false;
+  bool _isOpeningCurrentItem = false;
 
   PlayerController({
     required this.settingsController,

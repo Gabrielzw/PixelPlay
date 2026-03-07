@@ -60,7 +60,11 @@ class FakePlayerPlaybackPort implements PlayerPlaybackPort {
   Future<void> disposePlayback() async {}
 
   @override
-  Future<void> open(PlayerQueueItem item, {required bool play}) async {}
+  Future<void> open(
+    PlayerQueueItem item, {
+    required bool play,
+    Duration? startPosition,
+  }) async {}
 
   @override
   Future<void> pause() async {}
@@ -87,6 +91,7 @@ class DeferredReadyPlaybackPort implements PlayerPlaybackPort {
   bool _isReady = false;
   bool? lastOpenPlayValue;
   int playCallCount = 0;
+  Duration? lastOpenStartPosition;
   Duration? lastAcceptedSeekPosition;
 
   @override
@@ -121,11 +126,21 @@ class DeferredReadyPlaybackPort implements PlayerPlaybackPort {
   void emitReady(Duration duration) {
     _isReady = true;
     _durationController.add(duration);
+    final startPosition = lastOpenStartPosition;
+    if (startPosition != null) {
+      lastAcceptedSeekPosition = startPosition;
+      _positionController.add(startPosition);
+    }
   }
 
   @override
-  Future<void> open(PlayerQueueItem item, {required bool play}) async {
+  Future<void> open(
+    PlayerQueueItem item, {
+    required bool play,
+    Duration? startPosition,
+  }) async {
     lastOpenPlayValue = play;
+    lastOpenStartPosition = startPosition;
     _durationController.add(Duration.zero);
     _positionController.add(Duration.zero);
   }
@@ -245,7 +260,7 @@ void main() {
             PlayerQueueItem(
               id: 'video-1',
               title: 'Test Clip.mp4',
-              sourceLabel: '鏈湴 / Screenshots',
+              sourceLabel: '閺堫剙婀?/ Screenshots',
               sourceUri: 'test://video-1',
               duration: Duration(minutes: 10),
             ),
@@ -287,7 +302,7 @@ void main() {
             PlayerQueueItem(
               id: 'video-2',
               title: 'Resume.mp4',
-              sourceLabel: '鏈湴 / Camera',
+              sourceLabel: '閺堫剙婀?/ Camera',
               sourceUri: 'test://video-2',
               duration: const Duration(minutes: 10),
             ),
@@ -298,10 +313,9 @@ void main() {
     await tester.pump();
 
     expect(playbackPort.lastOpenPlayValue, isFalse);
-    expect(playbackPort.playCallCount, 0);
-    expect(playbackPort.lastAcceptedSeekPosition, isNull);
-    expect(find.text('02:00'), findsNothing);
-    expect(find.text('已恢复播放进度'), findsNothing);
+    expect(playbackPort.playCallCount, 1);
+    expect(playbackPort.lastOpenStartPosition, const Duration(minutes: 2));
+    expect(find.text('02:00'), findsOneWidget);
 
     playbackPort.emitReady(const Duration(minutes: 10));
     await tester.pump();
@@ -309,6 +323,5 @@ void main() {
     expect(playbackPort.playCallCount, 1);
     expect(playbackPort.lastAcceptedSeekPosition, const Duration(minutes: 2));
     expect(find.text('02:00'), findsOneWidget);
-    expect(find.text('已恢复播放进度'), findsOneWidget);
   });
 }

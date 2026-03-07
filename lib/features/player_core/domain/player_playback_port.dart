@@ -17,7 +17,11 @@ abstract interface class PlayerPlaybackPort {
 
   Widget buildVideoView({required BoxFit fit});
 
-  Future<void> open(PlayerQueueItem item, {required bool play});
+  Future<void> open(
+    PlayerQueueItem item, {
+    required bool play,
+    Duration? startPosition,
+  });
 
   Future<void> play();
 

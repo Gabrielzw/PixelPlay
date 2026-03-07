@@ -88,7 +88,11 @@ class ControllablePlaybackPort implements PlayerPlaybackPort {
   }
 
   @override
-  Future<void> open(PlayerQueueItem item, {required bool play}) async {
+  Future<void> open(
+    PlayerQueueItem item, {
+    required bool play,
+    Duration? startPosition,
+  }) async {
     _playingController.add(play);
   }
 
