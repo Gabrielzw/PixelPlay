@@ -29,16 +29,18 @@ class PlayerSurface extends StatelessWidget {
     return ColoredBox(
       color: kPlayerBackground,
       child: Stack(
+        alignment: Alignment.center,
         fit: StackFit.expand,
         children: <Widget>[
           Transform(
-            alignment: Alignment.center,
             transform: transformMatrix,
-            child: Transform.flip(
-              flipX: flipHorizontal,
-              flipY: flipVertical,
-              child: playbackPort.buildVideoView(
-                fit: _resolveBoxFit(aspectRatioMode),
+            child: Center(
+              child: Transform.flip(
+                flipX: flipHorizontal,
+                flipY: flipVertical,
+                child: playbackPort.buildVideoView(
+                  fit: _resolveBoxFit(aspectRatioMode),
+                ),
               ),
             ),
           ),
