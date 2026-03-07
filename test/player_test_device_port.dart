@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:pixelplay/features/player_core/domain/player_device_port.dart';
+import 'package:pixelplay/features/player_core/domain/player_video_metadata.dart';
 
 class TestPlayerDevicePort implements PlayerDevicePort {
   PlayerDeviceSnapshot snapshot;
+  PlayerVideoOrientation playbackOrientation = PlayerVideoOrientation.unknown;
   final StreamController<double> _brightnessController;
   final StreamController<double> _volumeController;
   final StreamController<String> _clockController;
@@ -31,6 +33,7 @@ class TestPlayerDevicePort implements PlayerDevicePort {
 
   @override
   Future<void> detach() async {
+    playbackOrientation = PlayerVideoOrientation.unknown;
     await _brightnessController.close();
     await _volumeController.close();
     await _clockController.close();
@@ -74,6 +77,13 @@ class TestPlayerDevicePort implements PlayerDevicePort {
   @override
   Future<void> setVolume(double volume) async {
     emitVolume(volume);
+  }
+
+  @override
+  Future<void> setPlaybackOrientation(
+    PlayerVideoOrientation orientation,
+  ) async {
+    playbackOrientation = orientation;
   }
 
   @override

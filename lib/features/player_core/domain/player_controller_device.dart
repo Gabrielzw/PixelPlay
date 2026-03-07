@@ -3,6 +3,14 @@ part of 'player_controller.dart';
 extension PlayerControllerDeviceLogic on PlayerController {
   bool get hasActiveVideoTransform => !videoTransform.value.isIdentity();
 
+  Future<void> resetPlaybackOrientation() async {
+    await _applyPlaybackOrientation(PlayerVideoOrientation.unknown);
+  }
+
+  Future<void> syncPlaybackOrientation(PlayerVideoMetadata metadata) async {
+    await _applyPlaybackOrientation(metadata.orientation);
+  }
+
   Future<void> bindDeviceFeatures() async {
     await devicePort.attach();
     await refreshDeviceSnapshot();
@@ -62,6 +70,16 @@ extension PlayerControllerDeviceLogic on PlayerController {
 
   void resetVideoTransform() {
     videoTransform.value = Matrix4.identity();
+  }
+
+  Future<void> _applyPlaybackOrientation(
+    PlayerVideoOrientation orientation,
+  ) async {
+    if (_appliedVideoOrientation == orientation) {
+      return;
+    }
+    _appliedVideoOrientation = orientation;
+    await devicePort.setPlaybackOrientation(orientation);
   }
 
   double _clampDeviceLevel(double value) {

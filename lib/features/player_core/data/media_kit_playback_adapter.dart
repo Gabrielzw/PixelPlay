@@ -4,6 +4,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import '../domain/player_playback_port.dart';
 import '../domain/player_queue_item.dart';
+import '../domain/player_video_metadata.dart';
 
 const int kPlaybackBufferBytes = 48 * 1024 * 1024;
 const String kPlaybackTitle = 'PixelPlay';
@@ -50,6 +51,10 @@ class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
 
   @override
   Stream<String> get errorStream => player.stream.error;
+
+  @override
+  Stream<PlayerVideoMetadata> get videoMetadataStream =>
+      player.stream.videoParams.map(_mapVideoMetadata).distinct();
 
   @override
   Widget buildVideoView({required BoxFit fit}) {
@@ -142,5 +147,13 @@ VideoController _buildVideoController(Player player) {
       enableHardwareAcceleration: true,
       androidAttachSurfaceAfterVideoParameters: true,
     ),
+  );
+}
+
+PlayerVideoMetadata _mapVideoMetadata(VideoParams params) {
+  return PlayerVideoMetadata(
+    width: params.dw ?? params.w,
+    height: params.dh ?? params.h,
+    rotationDegrees: params.rotate ?? 0,
   );
 }

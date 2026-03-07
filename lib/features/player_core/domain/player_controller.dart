@@ -9,6 +9,7 @@ import 'playback_position_repository.dart';
 import 'player_device_port.dart';
 import 'player_playback_port.dart';
 import 'player_queue_item.dart';
+import 'player_video_metadata.dart';
 
 part 'player_controller_commands.dart';
 part 'player_controller_state.dart';
@@ -59,6 +60,8 @@ class PlayerController extends GetxController {
   DateTime? _lastPositionSyncAt;
   Duration _lastSyncedPosition = Duration.zero;
   Duration _latestObservedPosition = Duration.zero;
+  PlayerVideoOrientation _appliedVideoOrientation =
+      PlayerVideoOrientation.unknown;
   bool _isOpeningCurrentItem = false;
   double? _speedBeforeLongPress;
   bool _isLongPressSpeedActive = false;

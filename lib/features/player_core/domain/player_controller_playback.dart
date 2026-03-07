@@ -20,6 +20,11 @@ extension PlayerControllerPlaybackLogic on PlayerController {
       playbackPort.positionStream.listen(_handlePositionChanged),
     );
     _playbackSubscriptions.add(
+      playbackPort.videoMetadataStream.listen((PlayerVideoMetadata value) {
+        unawaited(syncPlaybackOrientation(value));
+      }),
+    );
+    _playbackSubscriptions.add(
       playbackPort.completedStream.listen((bool value) {
         if (value) {
           unawaited(handlePlaybackCompleted());
@@ -98,6 +103,7 @@ extension PlayerControllerPlaybackLogic on PlayerController {
     clearError();
     _resetPlaybackTracking();
     resetVideoTransform();
+    await resetPlaybackOrientation();
     duration.value = item.duration;
     applyPosition(Duration.zero);
     isBuffering.value = true;

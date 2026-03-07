@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
 import 'package:pixelplay/features/player_core/domain/player_playback_port.dart';
 import 'package:pixelplay/features/player_core/domain/player_queue_item.dart';
+import 'package:pixelplay/features/player_core/domain/player_video_metadata.dart';
 import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
@@ -64,6 +65,10 @@ class RegressionPlaybackPort implements PlayerPlaybackPort {
 
   @override
   Stream<String> get errorStream => _errorController.stream;
+
+  @override
+  Stream<PlayerVideoMetadata> get videoMetadataStream =>
+      const Stream<PlayerVideoMetadata>.empty();
 
   @override
   Stream<bool> get playingStream => _playingController.stream;

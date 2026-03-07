@@ -13,6 +13,7 @@ import 'package:pixelplay/features/player_core/data/in_memory_playback_position_
 import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
 import 'package:pixelplay/features/player_core/domain/player_playback_port.dart';
 import 'package:pixelplay/features/player_core/domain/player_queue_item.dart';
+import 'package:pixelplay/features/player_core/domain/player_video_metadata.dart';
 import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
@@ -46,6 +47,10 @@ class FakePlayerPlaybackPort implements PlayerPlaybackPort {
 
   @override
   Stream<String> get errorStream => const Stream<String>.empty();
+
+  @override
+  Stream<PlayerVideoMetadata> get videoMetadataStream =>
+      const Stream<PlayerVideoMetadata>.empty();
 
   @override
   Stream<bool> get playingStream => const Stream<bool>.empty();
@@ -107,6 +112,10 @@ class DeferredReadyPlaybackPort implements PlayerPlaybackPort {
 
   @override
   Stream<String> get errorStream => const Stream<String>.empty();
+
+  @override
+  Stream<PlayerVideoMetadata> get videoMetadataStream =>
+      const Stream<PlayerVideoMetadata>.empty();
 
   @override
   Stream<bool> get playingStream => const Stream<bool>.empty();

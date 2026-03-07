@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import 'player_video_metadata.dart';
 import 'player_queue_item.dart';
 
 abstract interface class PlayerPlaybackPort {
@@ -14,6 +15,8 @@ abstract interface class PlayerPlaybackPort {
   Stream<bool> get completedStream;
 
   Stream<String> get errorStream;
+
+  Stream<PlayerVideoMetadata> get videoMetadataStream;
 
   Widget buildVideoView({required BoxFit fit});
 

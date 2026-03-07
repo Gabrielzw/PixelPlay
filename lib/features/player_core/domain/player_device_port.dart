@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'player_video_metadata.dart';
+
 enum PlayerNetworkStatus { wifi, mobile, ethernet, offline, unknown }
 
 @immutable
@@ -72,4 +74,6 @@ abstract interface class PlayerDevicePort {
   Future<void> setBrightness(double brightness);
 
   Future<void> setVolume(double volume);
+
+  Future<void> setPlaybackOrientation(PlayerVideoOrientation orientation);
 }
