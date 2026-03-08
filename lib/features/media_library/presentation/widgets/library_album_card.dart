@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../../../thumbnail_engine/presentation/widgets/video_thumbnail_image.dart';
+import 'media_library_card_tokens.dart';
 
 const double kLibraryAlbumCardRadius = 24;
 const double kLibraryAlbumCoverAspectRatio = 1.56;
-const double kLibraryAlbumShadowBlur = 18;
-const double kLibraryAlbumShadowOffsetY = 10;
-const double kLibraryAlbumShadowOpacity = 0.08;
 const double kLibraryAlbumOverlayOpacity = 0.14;
 const double kLibraryAlbumShapeOpacity = 0.28;
 
@@ -39,16 +37,7 @@ class LibraryAlbumCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(kLibraryAlbumCardRadius),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: kLibraryAlbumShadowOpacity),
-            blurRadius: kLibraryAlbumShadowBlur,
-            offset: const Offset(0, kLibraryAlbumShadowOffsetY),
-          ),
-        ],
-      ),
+      decoration: buildMediaLibraryCardDecoration(kLibraryAlbumCardRadius),
       child: Material(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(kLibraryAlbumCardRadius),
