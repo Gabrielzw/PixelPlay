@@ -3,6 +3,7 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 import '../features/media_library/domain/contracts/media_library_repository.dart';
+import '../features/favorites/domain/favorites_repository.dart';
 import '../features/player_core/domain/playback_position_repository.dart';
 import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
@@ -18,6 +19,7 @@ class PixelPlayApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
+  final FavoritesRepository? favoritesRepository;
   final PlaybackPositionRepository playbackPositionRepository;
   final WatchHistoryRepository watchHistoryRepository;
   final WebDavAccountRepository webDavAccountRepository;
@@ -28,6 +30,7 @@ class PixelPlayApp extends StatefulWidget {
     required this.settingsRepository,
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
+    this.favoritesRepository,
     required this.playbackPositionRepository,
     required this.watchHistoryRepository,
     required this.webDavAccountRepository,
@@ -48,6 +51,7 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       settingsRepository: widget.settingsRepository,
       mediaLibraryRepository: widget.mediaLibraryRepository,
       thumbnailQueue: widget.thumbnailQueue,
+      favoritesRepository: widget.favoritesRepository,
       playbackPositionRepository: widget.playbackPositionRepository,
       watchHistoryRepository: widget.watchHistoryRepository,
       webDavAccountRepository: widget.webDavAccountRepository,

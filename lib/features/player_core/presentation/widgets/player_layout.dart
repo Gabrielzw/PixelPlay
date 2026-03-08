@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../favorites/presentation/favorite_models.dart';
 import '../../domain/player_controller.dart';
 import '../../domain/player_playback_port.dart';
 import 'player_controls.dart';
@@ -16,11 +17,14 @@ class PlayerLayout extends StatelessWidget {
   final VoidCallback onSurfaceTap;
   final VoidCallback onToggleLock;
   final VoidCallback onShowEpisodePanel;
+  final VoidCallback onShowFavoritePanel;
   final VoidCallback onShowMorePanel;
   final VoidCallback onClosePanels;
+  final Future<FavoriteFolderEntry?> Function() onCreateFavoriteFolder;
   final VoidCallback onToggleHorizontalFlip;
   final VoidCallback onToggleVerticalFlip;
   final bool showEpisodePanel;
+  final bool showFavoritePanel;
   final bool showMorePanel;
   final bool flipHorizontal;
   final bool flipVertical;
@@ -34,11 +38,14 @@ class PlayerLayout extends StatelessWidget {
     required this.onSurfaceTap,
     required this.onToggleLock,
     required this.onShowEpisodePanel,
+    required this.onShowFavoritePanel,
     required this.onShowMorePanel,
     required this.onClosePanels,
+    required this.onCreateFavoriteFolder,
     required this.onToggleHorizontalFlip,
     required this.onToggleVerticalFlip,
     required this.showEpisodePanel,
+    required this.showFavoritePanel,
     required this.showMorePanel,
     required this.flipHorizontal,
     required this.flipVertical,
@@ -63,7 +70,8 @@ class PlayerLayout extends StatelessWidget {
           child: PlayerGestureLayer(
             controller: controller,
             onTap: onSurfaceTap,
-            interactionsEnabled: !showEpisodePanel && !showMorePanel,
+            interactionsEnabled:
+                !showEpisodePanel && !showFavoritePanel && !showMorePanel,
           ),
         ),
         Positioned.fill(
@@ -73,11 +81,14 @@ class PlayerLayout extends StatelessWidget {
             onOpenSettings: onOpenSettings,
             onToggleLock: onToggleLock,
             onShowEpisodePanel: onShowEpisodePanel,
+            onShowFavoritePanel: onShowFavoritePanel,
             onShowMorePanel: onShowMorePanel,
             onClosePanels: onClosePanels,
+            onCreateFavoriteFolder: onCreateFavoriteFolder,
             onToggleHorizontalFlip: onToggleHorizontalFlip,
             onToggleVerticalFlip: onToggleVerticalFlip,
             showEpisodePanel: showEpisodePanel,
+            showFavoritePanel: showFavoritePanel,
             showMorePanel: showMorePanel,
             flipHorizontal: flipHorizontal,
             flipVertical: flipVertical,

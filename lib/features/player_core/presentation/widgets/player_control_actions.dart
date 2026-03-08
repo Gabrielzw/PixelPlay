@@ -22,12 +22,14 @@ const double _kSideActionLoadingSize = 22;
 class PlayerControlActions extends StatelessWidget {
   final PlayerController controller;
   final VoidCallback onBack;
+  final VoidCallback onShowFavorite;
   final VoidCallback onShowMore;
 
   const PlayerControlActions({
     super.key,
     required this.controller,
     required this.onBack,
+    required this.onShowFavorite,
     required this.onShowMore,
   });
 
@@ -56,6 +58,7 @@ class PlayerControlActions extends StatelessWidget {
             _PlayerTopMainRow(
               title: item.title,
               onBack: onBack,
+              onShowFavorite: onShowFavorite,
               onShowMore: onShowMore,
             ),
           ],
@@ -86,11 +89,13 @@ class _PlayerTopStatusRow extends StatelessWidget {
 class _PlayerTopMainRow extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
+  final VoidCallback onShowFavorite;
   final VoidCallback onShowMore;
 
   const _PlayerTopMainRow({
     required this.title,
     required this.onBack,
+    required this.onShowFavorite,
     required this.onShowMore,
   });
 
@@ -114,6 +119,12 @@ class _PlayerTopMainRow extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+        ),
+        const SizedBox(width: _kTopBarActionSpacing),
+        _PlayerTopBarButton(
+          icon: Icons.favorite_border_rounded,
+          tooltip: '收藏',
+          onPressed: onShowFavorite,
         ),
         const SizedBox(width: _kTopBarActionSpacing),
         _PlayerTopBarButton(

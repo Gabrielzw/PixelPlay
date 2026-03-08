@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../favorites/presentation/controllers/favorites_controller.dart';
+import '../../../favorites/presentation/favorite_models.dart';
 import '../../domain/player_controller.dart';
 import 'player_control_actions.dart';
 import 'player_control_bottom_bar.dart';
 import 'player_episode_panel.dart';
+import 'player_favorite_panel.dart';
 import 'player_more_panel.dart';
 import 'player_ui_constants.dart';
 
@@ -14,11 +17,14 @@ class PlayerControlsOverlay extends StatelessWidget {
   final VoidCallback onOpenSettings;
   final VoidCallback onToggleLock;
   final VoidCallback onShowEpisodePanel;
+  final VoidCallback onShowFavoritePanel;
   final VoidCallback onShowMorePanel;
   final VoidCallback onClosePanels;
+  final Future<FavoriteFolderEntry?> Function() onCreateFavoriteFolder;
   final VoidCallback onToggleHorizontalFlip;
   final VoidCallback onToggleVerticalFlip;
   final bool showEpisodePanel;
+  final bool showFavoritePanel;
   final bool showMorePanel;
   final bool flipHorizontal;
   final bool flipVertical;
@@ -30,11 +36,14 @@ class PlayerControlsOverlay extends StatelessWidget {
     required this.onOpenSettings,
     required this.onToggleLock,
     required this.onShowEpisodePanel,
+    required this.onShowFavoritePanel,
     required this.onShowMorePanel,
     required this.onClosePanels,
+    required this.onCreateFavoriteFolder,
     required this.onToggleHorizontalFlip,
     required this.onToggleVerticalFlip,
     required this.showEpisodePanel,
+    required this.showFavoritePanel,
     required this.showMorePanel,
     required this.flipHorizontal,
     required this.flipVertical,
@@ -51,7 +60,8 @@ class PlayerControlsOverlay extends StatelessWidget {
 
       final visible = controller.controlsVisible.value;
       final isCapturingScreenshot = controller.isCapturingScreenshot.value;
-      final panelsOpen = showEpisodePanel || showMorePanel;
+      final currentItem = controller.currentItem.value;
+      final panelsOpen = showEpisodePanel || showFavoritePanel || showMorePanel;
 
       return Stack(
         children: <Widget>[
@@ -77,6 +87,7 @@ class PlayerControlsOverlay extends StatelessWidget {
                     PlayerControlActions(
                       controller: controller,
                       onBack: onBack,
+                      onShowFavorite: onShowFavoritePanel,
                       onShowMore: onShowMorePanel,
                     ),
                     const Spacer(),
@@ -109,6 +120,13 @@ class PlayerControlsOverlay extends StatelessWidget {
             controller: controller,
             visible: showEpisodePanel,
             onClose: onClosePanels,
+          ),
+          PlayerFavoritePanel(
+            favoritesController: Get.find<FavoritesController>(),
+            item: currentItem,
+            visible: showFavoritePanel,
+            onClose: onClosePanels,
+            onCreateFolder: onCreateFavoriteFolder,
           ),
           PlayerMorePanel(
             controller: controller,

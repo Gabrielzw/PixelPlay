@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../favorites/presentation/controllers/favorites_controller.dart';
+import '../../favorites/presentation/favorite_folder_form_page.dart';
+import '../../favorites/presentation/favorite_models.dart';
 import '../../settings/domain/settings_controller.dart';
 import '../data/media_kit_playback_adapter.dart';
 import '../data/method_channel_player_screenshot_store.dart';
@@ -62,6 +65,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   Worker? _toastWorker;
   Future<void>? _persistProgressTask;
   bool _showEpisodePanel = false;
+  bool _showFavoritePanel = false;
   bool _showMorePanel = false;
   bool _flipHorizontal = false;
   bool _flipVertical = false;
@@ -134,11 +138,14 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             onSurfaceTap: _handleSurfaceTap,
             onToggleLock: _handleToggleLock,
             onShowEpisodePanel: _openEpisodePanel,
+            onShowFavoritePanel: _openFavoritePanel,
             onShowMorePanel: _openMorePanel,
             onClosePanels: _closePanels,
+            onCreateFavoriteFolder: _openCreateFavoriteFolderPage,
             onToggleHorizontalFlip: _toggleHorizontalFlip,
             onToggleVerticalFlip: _toggleVerticalFlip,
             showEpisodePanel: _showEpisodePanel,
+            showFavoritePanel: _showFavoritePanel,
             showMorePanel: _showMorePanel,
             flipHorizontal: _flipHorizontal,
             flipVertical: _flipVertical,
@@ -153,7 +160,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   Future<bool> _handleWillPop() async {
-    if (_showEpisodePanel || _showMorePanel) {
+    if (_showEpisodePanel || _showFavoritePanel || _showMorePanel) {
       _closePanels();
       return false;
     }
@@ -214,7 +221,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   void _handleSurfaceTap() {
-    if (_showEpisodePanel || _showMorePanel) {
+    if (_showEpisodePanel || _showFavoritePanel || _showMorePanel) {
       _closePanels();
       return;
     }
@@ -231,6 +238,17 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     _controller.cancelControlsAutoHide();
     setState(() {
       _showEpisodePanel = true;
+      _showFavoritePanel = false;
+      _showMorePanel = false;
+    });
+  }
+
+  void _openFavoritePanel() {
+    _controller.showControls();
+    _controller.cancelControlsAutoHide();
+    setState(() {
+      _showEpisodePanel = false;
+      _showFavoritePanel = true;
       _showMorePanel = false;
     });
   }
@@ -240,16 +258,18 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     _controller.cancelControlsAutoHide();
     setState(() {
       _showEpisodePanel = false;
+      _showFavoritePanel = false;
       _showMorePanel = true;
     });
   }
 
   void _closePanels({bool armAutoHide = true}) {
-    if (!_showEpisodePanel && !_showMorePanel) {
+    if (!_showEpisodePanel && !_showFavoritePanel && !_showMorePanel) {
       return;
     }
     setState(() {
       _showEpisodePanel = false;
+      _showFavoritePanel = false;
       _showMorePanel = false;
     });
     if (armAutoHide) {
@@ -263,6 +283,22 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   void _toggleVerticalFlip() {
     setState(() => _flipVertical = !_flipVertical);
+  }
+
+  Future<FavoriteFolderEntry?> _openCreateFavoriteFolderPage() async {
+    final favoritesController = Get.find<FavoritesController>();
+    final title = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (_) => FavoriteFolderFormPage(
+          existingTitles: favoritesController.existingTitles(),
+        ),
+      ),
+    );
+    if (!mounted || title == null) {
+      return null;
+    }
+
+    return favoritesController.createFolder(title: title);
   }
 
   void _handleToastMessage(PlayerToastState? toast) {

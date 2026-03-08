@@ -1,104 +1,275 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
-import '../../player_core/domain/player_queue_item.dart';
-import '../../player_core/presentation/player_page.dart';
+import 'favorite_folder_form_page.dart';
+import 'favorite_folder_sort_type.dart';
+import 'favorite_models.dart';
+import 'controllers/favorites_controller.dart';
+import 'widgets/favorite_search_results.dart';
+import 'widgets/favorites_folder_list.dart';
+import 'widgets/favorites_page_app_bar.dart';
 
-@immutable
-class FavoriteItem {
-  final String title;
-  final String source;
-  final bool isRemote;
+class FavoritesPage extends StatefulWidget {
+  final List<FavoriteFolderEntry>? initialFolders;
+  final FavoritesController? favoritesController;
 
-  const FavoriteItem({
-    required this.title,
-    required this.source,
-    required this.isRemote,
+  const FavoritesPage({
+    super.key,
+    this.initialFolders,
+    this.favoritesController,
   });
-}
-
-const List<FavoriteItem> kDemoFavorites = <FavoriteItem>[
-  FavoriteItem(title: 'Local_001.mp4', source: '本地 / 相册 1', isRemote: false),
-  FavoriteItem(title: 'A.mp4', source: 'WebDAV / Movies', isRemote: true),
-  FavoriteItem(title: 'B.mp4', source: 'WebDAV / Anime', isRemote: true),
-];
-
-class FavoritesPage extends StatelessWidget {
-  const FavoritesPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _FavoritesScaffold();
+  State<FavoritesPage> createState() => _FavoritesPageState();
+}
+
+class _FavoritesPageState extends State<FavoritesPage> {
+  late final TextEditingController _searchController;
+  List<FavoriteFolderEntry> _localFolders = const <FavoriteFolderEntry>[];
+  FavoritesController? _favoritesController;
+
+  Set<String> _selectedFolderIds = <String>{};
+  String _searchQuery = '';
+  bool _isSearching = false;
+  bool _isCustomSort = false;
+  FavoriteFolderSortType _currentSort = FavoriteFolderSortType.updatedDesc;
+
+  bool get _isSelectionMode => _selectedFolderIds.isNotEmpty;
+  bool get _showsSearchResults => _searchQuery.trim().isNotEmpty;
+  bool get _usesSharedFavorites => widget.initialFolders == null;
+  List<FavoriteFolderEntry> get _folders {
+    if (_usesSharedFavorites) {
+      return _favoritesController!.folders.toList(growable: false);
+    }
+    return _localFolders;
   }
-}
 
-class _FavoritesScaffold extends StatelessWidget {
-  const _FavoritesScaffold();
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    if (_usesSharedFavorites) {
+      _favoritesController =
+          widget.favoritesController ?? Get.find<FavoritesController>();
+      return;
+    }
+    _localFolders = List<FavoriteFolderEntry>.of(widget.initialFolders!);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_usesSharedFavorites) {
+      return Obx(() => _buildScaffold());
+    }
+    return _buildScaffold();
+  }
+
+  Widget _buildScaffold() {
     return Scaffold(
-      appBar: AppBar(title: const Text('收藏')),
-      body: const _FavoritesBody(),
+      appBar: FavoritesPageAppBar(
+        isSearching: _isSearching,
+        isSelectionMode: _isSelectionMode,
+        selectedCount: _selectedFolderIds.length,
+        searchController: _searchController,
+        currentSort: _currentSort,
+        onSearchChanged: _onSearchChanged,
+        onStartSearching: _startSearching,
+        onStopSearching: _stopSearching,
+        onSortSelected: _onSortSelected,
+        onAddPressed: _openCreateFolderPage,
+        onDeletePressed: _deleteSelectedFolders,
+        onExitSelectionMode: _clearSelection,
+      ),
+      body: _buildBody(),
     );
   }
-}
 
-class _FavoritesBody extends StatelessWidget {
-  const _FavoritesBody();
+  Widget _buildBody() {
+    if (_showsSearchResults) {
+      return FavoriteSearchResults(
+        query: _searchQuery,
+        folders: _folders,
+        selectedFolderIds: _selectedFolderIds,
+        isSelectionMode: _isSelectionMode,
+        sortType: _currentSort,
+        onFolderTap: _handleFolderTap,
+        onFolderLongPress: _toggleSelection,
+      );
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        const UiSkeletonNotice(message: 'UI 骨架阶段：收藏写入、本地/网络统一索引与排序筛选尚未接入。'),
-        const SizedBox(height: 12),
-        Expanded(
-          child: ListView.separated(
-            key: const PageStorageKey<String>('favorites_list'),
-            padding: const EdgeInsets.all(16),
-            itemCount: kDemoFavorites.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final item = kDemoFavorites[index];
-              return _FavoriteTile(item: item);
-            },
-          ),
-        ),
-      ],
+    return FavoritesFolderList(
+      folders: _buildSortedFolders(),
+      selectedFolderIds: _selectedFolderIds,
+      isSelectionMode: _isSelectionMode,
+      onFolderTap: _handleFolderTap,
+      onFolderLongPress: _toggleSelection,
     );
   }
-}
 
-class _FavoriteTile extends StatelessWidget {
-  final FavoriteItem item;
+  List<FavoriteFolderEntry> _buildSortedFolders() {
+    final folders = List<FavoriteFolderEntry>.of(_folders);
+    folders.sort(_compareFolders);
+    return folders;
+  }
 
-  const _FavoriteTile({required this.item});
+  int _compareFolders(FavoriteFolderEntry left, FavoriteFolderEntry right) {
+    if (_isCustomSort) {
+      return _compareFoldersBySort(left, right);
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(item.isRemote ? Icons.cloud : Icons.phone_android),
-        title: Text(item.title),
-        subtitle: Text(item.source),
-        onTap: () {
-          Navigator.of(context, rootNavigator: true).push(
-            buildPlayerPageRoute(
-              child: PlayerPage(
-                playlist: <PlayerQueueItem>[
-                  PlayerQueueItem(
-                    id: '${item.source}:${item.title}',
-                    title: item.title,
-                    sourceLabel: item.source,
-                    isRemote: item.isRemote,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+    return compareFavoriteFoldersPinned(
+      left: left,
+      right: right,
+      fallbackCompare: _compareFoldersBySort,
+    );
+  }
+
+  int _compareFoldersBySort(
+    FavoriteFolderEntry left,
+    FavoriteFolderEntry right,
+  ) {
+    return switch (_currentSort) {
+      FavoriteFolderSortType.updatedDesc => right.updatedAt.compareTo(
+        left.updatedAt,
+      ),
+      FavoriteFolderSortType.updatedAsc => left.updatedAt.compareTo(
+        right.updatedAt,
+      ),
+      FavoriteFolderSortType.countDesc => right.videoCount.compareTo(
+        left.videoCount,
+      ),
+      FavoriteFolderSortType.countAsc => left.videoCount.compareTo(
+        right.videoCount,
+      ),
+      FavoriteFolderSortType.nameAsc => left.title.compareTo(right.title),
+      FavoriteFolderSortType.nameDesc => right.title.compareTo(left.title),
+    };
+  }
+
+  Future<void> _openCreateFolderPage() async {
+    final createdTitle = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (_) => FavoriteFolderFormPage(existingTitles: _existingTitles),
       ),
     );
+    if (!mounted || createdTitle == null) {
+      return;
+    }
+
+    _addFolder(createdTitle);
   }
+
+  Set<String> get _existingTitles {
+    return _folders
+        .map(
+          (FavoriteFolderEntry folder) =>
+              normalizeFavoriteFolderTitle(folder.title),
+        )
+        .toSet();
+  }
+
+  void _addFolder(String title) {
+    if (_usesSharedFavorites) {
+      _favoritesController!.createFolder(title: title);
+      return;
+    }
+
+    final now = DateTime.now();
+    final nextFolder = FavoriteFolderEntry(
+      id: _buildFolderId(now),
+      title: title.trim(),
+      createdAt: now,
+      videos: const <FavoriteVideoEntry>[],
+    );
+
+    setState(() {
+      _localFolders = <FavoriteFolderEntry>[..._folders, nextFolder];
+    });
+  }
+
+  void _startSearching() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearching() {
+    _searchController.clear();
+    setState(() {
+      _isSearching = false;
+      _searchQuery = '';
+    });
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value;
+    });
+  }
+
+  void _onSortSelected(FavoriteFolderSortType value) {
+    setState(() {
+      _currentSort = value;
+      _isCustomSort = value != FavoriteFolderSortType.updatedDesc;
+    });
+  }
+
+  void _handleFolderTap(String folderId) {
+    if (!_isSelectionMode) {
+      return;
+    }
+    _toggleSelection(folderId);
+  }
+
+  void _toggleSelection(String folderId) {
+    final nextSelectedFolderIds = Set<String>.of(_selectedFolderIds);
+    final isAdded = nextSelectedFolderIds.add(folderId);
+    if (!isAdded) {
+      nextSelectedFolderIds.remove(folderId);
+    }
+
+    setState(() {
+      _selectedFolderIds = nextSelectedFolderIds;
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedFolderIds = <String>{};
+    });
+  }
+
+  void _deleteSelectedFolders() {
+    if (_selectedFolderIds.isEmpty) {
+      return;
+    }
+
+    final selectedIds = Set<String>.of(_selectedFolderIds);
+    if (_usesSharedFavorites) {
+      _favoritesController!.deleteFolders(selectedIds);
+      setState(() {
+        _selectedFolderIds = <String>{};
+      });
+      return;
+    }
+
+    setState(() {
+      _localFolders = _folders
+          .where(
+            (FavoriteFolderEntry folder) => !selectedIds.contains(folder.id),
+          )
+          .toList(growable: false);
+      _selectedFolderIds = <String>{};
+    });
+  }
+}
+
+String _buildFolderId(DateTime now) {
+  return 'favorite-folder-${now.microsecondsSinceEpoch}';
 }

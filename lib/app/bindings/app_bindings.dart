@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 
+import '../../features/favorites/data/in_memory_favorites_repository.dart';
+import '../../features/favorites/domain/favorites_repository.dart';
+import '../../features/favorites/presentation/controllers/favorites_controller.dart';
 import '../../features/media_library/data/pigeon/media_store_albums_api.g.dart'
     as pigeon;
 import '../../features/media_library/domain/contracts/media_library_repository.dart';
@@ -19,6 +22,7 @@ class AppBindings extends Bindings {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
+  final FavoritesRepository? favoritesRepository;
   final PlaybackPositionRepository playbackPositionRepository;
   final WatchHistoryRepository watchHistoryRepository;
   final WebDavAccountRepository webDavAccountRepository;
@@ -28,6 +32,7 @@ class AppBindings extends Bindings {
     required this.settingsRepository,
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
+    this.favoritesRepository,
     required this.playbackPositionRepository,
     required this.watchHistoryRepository,
     required this.webDavAccountRepository,
@@ -45,6 +50,10 @@ class AppBindings extends Bindings {
     Get.put<WatchHistoryRepository>(watchHistoryRepository, permanent: true);
     Get.put<WebDavAccountRepository>(webDavAccountRepository, permanent: true);
     Get.put<WebDavBrowserRepository>(webDavBrowserRepository, permanent: true);
+    Get.put<FavoritesRepository>(
+      favoritesRepository ?? InMemoryFavoritesRepository(),
+      permanent: true,
+    );
     Get.put<ThumbnailQueue>(
       thumbnailQueue ?? _buildThumbnailQueue(),
       permanent: true,
@@ -55,6 +64,10 @@ class AppBindings extends Bindings {
     );
     Get.put<MediaLibraryController>(
       MediaLibraryController(repository: mediaLibraryRepository),
+      permanent: true,
+    );
+    Get.put<FavoritesController>(
+      FavoritesController(repository: Get.find<FavoritesRepository>()),
       permanent: true,
     );
     Get.put<WebDavAccountsController>(
