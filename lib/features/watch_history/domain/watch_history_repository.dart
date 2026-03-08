@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../shared/domain/media_source_kind.dart';
+
 @immutable
 class WatchHistoryRecord {
   final String mediaId;
@@ -8,8 +10,9 @@ class WatchHistoryRecord {
   final int watchedAtMs;
   final int positionMs;
   final int durationMs;
-  final bool isRemote;
+  final MediaSourceKind sourceKind;
   final String? mediaPath;
+  final String? sourceUri;
   final int? localVideoId;
   final int? localVideoDateModified;
   final String? webDavAccountId;
@@ -21,12 +24,22 @@ class WatchHistoryRecord {
     required this.watchedAtMs,
     required this.positionMs,
     required this.durationMs,
-    required this.isRemote,
+    MediaSourceKind? sourceKind,
+    bool? isRemote,
     this.mediaPath,
+    this.sourceUri,
     this.localVideoId,
     this.localVideoDateModified,
     this.webDavAccountId,
-  });
+  }) : sourceKind =
+           sourceKind ??
+           (webDavAccountId != null
+               ? MediaSourceKind.webDav
+               : isRemote == true
+               ? MediaSourceKind.other
+               : MediaSourceKind.local);
+
+  bool get isRemote => sourceKind != MediaSourceKind.local;
 
   double? get progressRatio {
     if (durationMs <= 0) {

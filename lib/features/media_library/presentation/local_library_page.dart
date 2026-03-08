@@ -8,6 +8,7 @@ import 'album_page.dart';
 import 'controllers/media_library_controller.dart';
 import 'local_library_album_preview_builder.dart';
 import 'local_library_sort_type.dart';
+import 'network_video_player_launcher.dart';
 import 'widgets/library_album_card.dart';
 import 'widgets/local_library_app_bar.dart';
 import 'widgets/local_library_search_results.dart';
@@ -52,6 +53,7 @@ class _LocalLibraryPageState extends State<LocalLibraryPage> {
         onStartSearching: _startSearching,
         onStopSearching: _stopSearching,
         onSortSelected: _updateSortType,
+        onPlayNetworkVideo: _playNetworkVideo,
         onOpenHistory: _openWatchHistory,
       ),
       body: Obx(
@@ -163,6 +165,10 @@ class _LocalLibraryPageState extends State<LocalLibraryPage> {
     setState(() {
       _sortType = value;
     });
+  }
+
+  Future<void> _playNetworkVideo() {
+    return showNetworkVideoUrlDialogAndPlay(context: context);
   }
 
   Future<void> _openWatchHistory() {

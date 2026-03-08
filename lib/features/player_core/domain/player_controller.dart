@@ -50,6 +50,7 @@ class PlayerController extends GetxController {
   final RxBool isCapturingScreenshot = false.obs;
   final RxBool isCharging = false.obs;
   final RxDouble progress = 0.0.obs;
+  final Rx<Duration> bufferedPosition = Duration.zero.obs;
   final RxDouble brightnessLevel = kGestureDefaultLevel.obs;
   final RxDouble volumeLevel = kGestureDefaultLevel.obs;
   final RxDouble playbackSpeed = 1.0.obs;
@@ -133,7 +134,6 @@ class PlayerController extends GetxController {
       restoreProgress: true,
       autoPlay: appSettings.autoPlayOnEnter,
     );
-    showControls();
     armControlsAutoHide();
   }
 

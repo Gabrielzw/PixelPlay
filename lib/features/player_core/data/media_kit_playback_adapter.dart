@@ -49,6 +49,9 @@ class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
   Stream<bool> get bufferingStream => player.stream.buffering;
 
   @override
+  Stream<Duration> get bufferStream => player.stream.buffer;
+
+  @override
   Stream<bool> get completedStream => player.stream.completed;
 
   @override

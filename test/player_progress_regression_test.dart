@@ -61,6 +61,9 @@ class RegressionPlaybackPort implements PlayerPlaybackPort {
   Stream<bool> get bufferingStream => _bufferingController.stream;
 
   @override
+  Stream<Duration> get bufferStream => const Stream<Duration>.empty();
+
+  @override
   Stream<bool> get completedStream => _completedController.stream;
 
   @override

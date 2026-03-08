@@ -2,8 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 
-import 'player_video_metadata.dart';
 import 'player_queue_item.dart';
+import 'player_video_metadata.dart';
 
 abstract interface class PlayerPlaybackPort {
   Stream<Duration> get positionStream;
@@ -13,6 +13,8 @@ abstract interface class PlayerPlaybackPort {
   Stream<bool> get playingStream;
 
   Stream<bool> get bufferingStream;
+
+  Stream<Duration> get bufferStream;
 
   Stream<bool> get completedStream;
 

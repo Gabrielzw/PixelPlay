@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../shared/domain/media_source_kind.dart';
+
 const double kDefaultPreviewAspectRatio = 16 / 9;
 
 @immutable
@@ -10,7 +12,7 @@ class PlayerQueueItem {
   final String? path;
   final String? sourceUri;
   final Duration duration;
-  final bool isRemote;
+  final MediaSourceKind sourceKind;
   final String? resolutionText;
   final double previewAspectRatio;
   final int? lastKnownPositionMs;
@@ -26,7 +28,8 @@ class PlayerQueueItem {
     this.path,
     this.sourceUri,
     this.duration = Duration.zero,
-    this.isRemote = false,
+    MediaSourceKind? sourceKind,
+    bool? isRemote,
     this.resolutionText,
     this.previewAspectRatio = kDefaultPreviewAspectRatio,
     this.lastKnownPositionMs,
@@ -34,9 +37,18 @@ class PlayerQueueItem {
     this.localVideoDateModified,
     this.webDavAccountId,
     Map<String, String> httpHeaders = const <String, String>{},
-  }) : httpHeaders = Map<String, String>.unmodifiable(httpHeaders);
+  }) : sourceKind =
+           sourceKind ??
+           (webDavAccountId != null
+               ? MediaSourceKind.webDav
+               : isRemote == true
+               ? MediaSourceKind.other
+               : MediaSourceKind.local),
+       httpHeaders = Map<String, String>.unmodifiable(httpHeaders);
 
   bool get hasKnownDuration => duration > Duration.zero;
+
+  bool get isRemote => sourceKind != MediaSourceKind.local;
 
   String? get playbackUri => sourceUri ?? path;
 

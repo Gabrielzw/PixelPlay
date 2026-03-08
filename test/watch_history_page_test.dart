@@ -8,6 +8,7 @@ import 'package:pixelplay/features/watch_history/domain/watch_history_repository
 import 'package:pixelplay/features/watch_history/presentation/watch_history_page.dart';
 import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_account_repository.dart';
 import 'package:pixelplay/features/webdav_client/domain/contracts/webdav_account_repository.dart';
+import 'package:pixelplay/shared/domain/media_source_kind.dart';
 
 void main() {
   setUp(() {
@@ -15,7 +16,7 @@ void main() {
     Get.reset();
   });
 
-  testWidgets('watch history page shows local and webdav records', (
+  testWidgets('watch history page shows local webdav and other records', (
     WidgetTester tester,
   ) async {
     Get.put<ThumbnailQueue>(InMemoryThumbnailQueue());
@@ -29,7 +30,7 @@ void main() {
             watchedAtMs: 1700000000000,
             positionMs: 80000,
             durationMs: 215000,
-            isRemote: false,
+            sourceKind: MediaSourceKind.local,
             mediaPath: 'content://media/external/video/media/1',
             localVideoId: 1,
             localVideoDateModified: 1699999999,
@@ -37,13 +38,23 @@ void main() {
           '/videos/trailer.mp4': const WatchHistoryRecord(
             mediaId: '/videos/trailer.mp4',
             title: 'Trailer.mp4',
-            sourceLabel: '家庭云盘 /videos',
+            sourceLabel: '\u5bb6\u5ead\u4e91\u76d8 /videos',
             watchedAtMs: 1700001000000,
             positionMs: 0,
             durationMs: 0,
-            isRemote: true,
+            sourceKind: MediaSourceKind.webDav,
             mediaPath: '/videos/trailer.mp4',
             webDavAccountId: 'webdav_1',
+          ),
+          'https://example.com/live/demo.m3u8': const WatchHistoryRecord(
+            mediaId: 'https://example.com/live/demo.m3u8',
+            title: 'demo.m3u8',
+            sourceLabel: '\u5176\u4ed6 / example.com',
+            watchedAtMs: 1700002000000,
+            positionMs: 45000,
+            durationMs: 120000,
+            sourceKind: MediaSourceKind.other,
+            sourceUri: 'https://example.com/live/demo.m3u8',
           ),
         },
       ),
@@ -53,19 +64,22 @@ void main() {
     await tester.pumpWidget(const GetMaterialApp(home: WatchHistoryPage()));
     await tester.pumpAndSettle();
 
-    expect(find.text('观看记录'), findsOneWidget);
-    expect(find.byTooltip('搜索'), findsOneWidget);
-    expect(find.byTooltip('选项'), findsOneWidget);
+    expect(find.text('\u89c2\u770b\u8bb0\u5f55'), findsOneWidget);
+    expect(find.byTooltip('\u641c\u7d22'), findsOneWidget);
+    expect(find.byTooltip('\u9009\u9879'), findsOneWidget);
     expect(find.text('Trailer.mp4'), findsOneWidget);
     expect(find.text('Beach Walk.mp4'), findsOneWidget);
-    expect(find.text('家庭云盘 /videos'), findsOneWidget);
+    expect(find.text('demo.m3u8'), findsOneWidget);
+    expect(find.text('\u5bb6\u5ead\u4e91\u76d8 /videos'), findsOneWidget);
     expect(find.text('Screenshots'), findsOneWidget);
+    expect(find.text('\u5176\u4ed6 / example.com'), findsOneWidget);
     expect(find.text('01:20/03:35'), findsOneWidget);
+    expect(find.text('00:45/02:00'), findsOneWidget);
     expect(find.text('00:00'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('选项'));
+    await tester.tap(find.byTooltip('\u9009\u9879'));
     await tester.pumpAndSettle();
 
-    expect(find.text('清空观看记录'), findsOneWidget);
+    expect(find.text('\u6e05\u7a7a\u89c2\u770b\u8bb0\u5f55'), findsOneWidget);
   });
 }

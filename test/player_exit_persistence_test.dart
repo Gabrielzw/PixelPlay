@@ -13,6 +13,7 @@ import 'package:pixelplay/features/settings/data/in_memory_settings_repository.d
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 import 'package:pixelplay/features/watch_history/data/in_memory_watch_history_repository.dart';
 import 'package:pixelplay/features/watch_history/domain/watch_history_repository.dart';
+import 'package:pixelplay/shared/domain/media_source_kind.dart';
 
 import 'player_test_device_port.dart';
 
@@ -54,6 +55,9 @@ class ControllablePlaybackPort implements PlayerPlaybackPort {
 
   @override
   Stream<bool> get bufferingStream => _bufferingController.stream;
+
+  @override
+  Stream<Duration> get bufferStream => const Stream<Duration>.empty();
 
   @override
   Stream<bool> get completedStream => _completedController.stream;
@@ -274,5 +278,79 @@ void main() {
     expect(record?.title, 'History.mp4');
     expect(record?.positionMs, 0);
     expect(record?.durationMs, 600000);
+  });
+
+  testWidgets('player page saves other source watch history with source url', (
+    WidgetTester tester,
+  ) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = DelayedPlaybackPositionRepository();
+    final historyRepository = InMemoryWatchHistoryRepository();
+    final playbackPort = ControllablePlaybackPort();
+    const sourceUrl = 'https://example.com/media/trailer.mp4';
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(historyRepository);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        navigatorKey: navigatorKey,
+        home: Builder(
+          builder: (BuildContext context) {
+            return Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PlayerPage(
+                          playbackPort: playbackPort,
+                          devicePort: TestPlayerDevicePort(),
+                          playlist: <PlayerQueueItem>[
+                            PlayerQueueItem(
+                              id: sourceUrl,
+                              title: 'trailer.mp4',
+                              sourceLabel: '\u5176\u4ed6 / example.com',
+                              sourceUri: sourceUrl,
+                              sourceKind: MediaSourceKind.other,
+                              duration: const Duration(minutes: 3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open other player'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open other player'));
+    await tester.pump();
+    await tester.pump();
+
+    playbackPort.emitDuration(const Duration(minutes: 3));
+    playbackPort.emitPosition(const Duration(seconds: 40));
+    await tester.pump();
+
+    await navigatorKey.currentState!.maybePop();
+    progressRepository.saveCompleter.complete();
+    await tester.pumpAndSettle();
+
+    final record = await historyRepository.load(sourceUrl);
+    expect(record, isNotNull);
+    expect(record?.sourceKind, MediaSourceKind.other);
+    expect(record?.sourceUri, sourceUrl);
+    expect(record?.mediaPath, isNull);
+    expect(record?.positionMs, 40000);
+    expect(record?.durationMs, 180000);
   });
 }

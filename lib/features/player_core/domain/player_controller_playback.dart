@@ -17,6 +17,9 @@ extension PlayerControllerPlaybackLogic on PlayerController {
       playbackPort.durationStream.listen(_handleDurationChanged),
     );
     _playbackSubscriptions.add(
+      playbackPort.bufferStream.listen(_handleBufferChanged),
+    );
+    _playbackSubscriptions.add(
       playbackPort.positionStream.listen(_handlePositionChanged),
     );
     _playbackSubscriptions.add(
@@ -47,6 +50,7 @@ extension PlayerControllerPlaybackLogic on PlayerController {
       _lastSyncedPosition = clampedRestorePosition;
     }
     applyPosition(position.value);
+    _syncBufferedPosition();
   }
 
   void _handlePositionChanged(Duration value) {
@@ -66,8 +70,13 @@ extension PlayerControllerPlaybackLogic on PlayerController {
       return;
     }
     applyPosition(nextPosition);
+    _syncBufferedPosition();
     _lastPositionSyncAt = DateTime.now();
     _lastSyncedPosition = nextPosition;
+  }
+
+  void _handleBufferChanged(Duration value) {
+    bufferedPosition.value = _resolveBufferedPosition(value);
   }
 
   Future<void> _syncPlaybackPreferences() async {
@@ -203,8 +212,9 @@ extension PlayerControllerPlaybackLogic on PlayerController {
         watchedAtMs: DateTime.now().millisecondsSinceEpoch,
         positionMs: positionMs,
         durationMs: durationMs,
-        isRemote: item.isRemote,
+        sourceKind: item.sourceKind,
         mediaPath: item.path,
+        sourceUri: item.sourceUri,
         localVideoId: item.localVideoId,
         localVideoDateModified: item.localVideoDateModified,
         webDavAccountId: item.webDavAccountId,
@@ -251,6 +261,23 @@ extension PlayerControllerPlaybackLogic on PlayerController {
         .clamp(0, duration.value.inMilliseconds)
         .toInt();
     return Duration(milliseconds: clampedMs);
+  }
+
+  void _syncBufferedPosition() {
+    bufferedPosition.value = _resolveBufferedPosition(bufferedPosition.value);
+  }
+
+  Duration _resolveBufferedPosition(Duration value) {
+    final safeValue = value.isNegative ? Duration.zero : value;
+    if (!hasKnownDuration) {
+      return safeValue;
+    }
+
+    final clampedBuffer = _clampToDuration(safeValue);
+    if (clampedBuffer < position.value) {
+      return position.value;
+    }
+    return clampedBuffer;
   }
 
   bool _shouldSyncPosition(Duration nextPosition) {
@@ -302,6 +329,7 @@ extension PlayerControllerPlaybackLogic on PlayerController {
     _lastPositionSyncAt = null;
     _lastSyncedPosition = Duration.zero;
     _latestObservedPosition = Duration.zero;
+    bufferedPosition.value = Duration.zero;
     _isOpeningCurrentItem = false;
   }
 }

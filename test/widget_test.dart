@@ -45,6 +45,9 @@ class FakePlayerPlaybackPort implements PlayerPlaybackPort {
   Stream<bool> get bufferingStream => const Stream<bool>.empty();
 
   @override
+  Stream<Duration> get bufferStream => const Stream<Duration>.empty();
+
+  @override
   Stream<bool> get completedStream => const Stream<bool>.empty();
 
   @override
@@ -111,6 +114,9 @@ class DeferredReadyPlaybackPort implements PlayerPlaybackPort {
 
   @override
   Stream<bool> get bufferingStream => const Stream<bool>.empty();
+
+  @override
+  Stream<Duration> get bufferStream => const Stream<Duration>.empty();
 
   @override
   Stream<bool> get completedStream => const Stream<bool>.empty();
@@ -293,6 +299,9 @@ void main() {
       ),
     );
     await tester.pump();
+
+    await tester.tapAt(tester.getCenter(find.byType(PlayerPage)));
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
     expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);

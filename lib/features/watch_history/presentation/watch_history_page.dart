@@ -171,10 +171,10 @@ VideoThumbnailRequest? _buildThumbnailRequest(WatchHistoryRecord record) {
   final videoId = record.localVideoId;
   final videoPath = record.mediaPath;
   final dateModified = record.localVideoDateModified;
-  if (record.isRemote ||
-      videoId == null ||
+  if (videoId == null ||
       videoPath == null ||
-      dateModified == null) {
+      dateModified == null ||
+      record.isRemote) {
     return null;
   }
 

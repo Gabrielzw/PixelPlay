@@ -12,6 +12,7 @@ class LocalLibraryAppBar extends StatelessWidget
   final VoidCallback onStartSearching;
   final VoidCallback onStopSearching;
   final ValueChanged<LocalLibrarySortType> onSortSelected;
+  final VoidCallback onPlayNetworkVideo;
   final VoidCallback onOpenHistory;
 
   const LocalLibraryAppBar({
@@ -24,6 +25,7 @@ class LocalLibraryAppBar extends StatelessWidget
     required this.onStartSearching,
     required this.onStopSearching,
     required this.onSortSelected,
+    required this.onPlayNetworkVideo,
     required this.onOpenHistory,
   });
 
@@ -44,7 +46,7 @@ class LocalLibraryAppBar extends StatelessWidget
               autofocus: true,
               style: TextStyle(color: colorScheme.onSurface),
               decoration: InputDecoration(
-                hintText: '搜索相册或视频...',
+                hintText: '\u641c\u7d22\u76f8\u518c\u6216\u89c6\u9891...',
                 hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 border: InputBorder.none,
               ),
@@ -52,20 +54,25 @@ class LocalLibraryAppBar extends StatelessWidget
             )
           : Text(title, style: titleStyle),
       actions: <Widget>[
+        IconButton(
+          tooltip: '\u64ad\u653e\u7f51\u7edc\u89c6\u9891',
+          onPressed: onPlayNetworkVideo,
+          icon: const Icon(Icons.play_circle_outline_rounded),
+        ),
         if (isSearching)
           IconButton(
-            tooltip: '关闭搜索',
+            tooltip: '\u5173\u95ed\u641c\u7d22',
             onPressed: onStopSearching,
             icon: const Icon(Icons.close),
           )
         else
           IconButton(
-            tooltip: '搜索',
+            tooltip: '\u641c\u7d22',
             onPressed: onStartSearching,
             icon: const Icon(Icons.search),
           ),
         PopupMenuButton<LocalLibrarySortType>(
-          tooltip: '排序',
+          tooltip: '\u6392\u5e8f',
           icon: const Icon(Icons.sort),
           onSelected: onSortSelected,
           itemBuilder: (BuildContext context) =>
@@ -94,7 +101,7 @@ class LocalLibraryAppBar extends StatelessWidget
               ],
         ),
         IconButton(
-          tooltip: '观看记录',
+          tooltip: '\u89c2\u770b\u8bb0\u5f55',
           onPressed: onOpenHistory,
           icon: const Icon(Icons.history_rounded),
         ),

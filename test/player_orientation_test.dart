@@ -27,6 +27,9 @@ class OrientationPlaybackPort implements PlayerPlaybackPort {
   Stream<bool> get bufferingStream => const Stream<bool>.empty();
 
   @override
+  Stream<Duration> get bufferStream => const Stream<Duration>.empty();
+
+  @override
   Stream<bool> get completedStream => const Stream<bool>.empty();
 
   @override

@@ -1,3 +1,4 @@
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -20,6 +21,7 @@ class PlayerControlBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final hasDuration = controller.hasKnownDuration;
+      final colorScheme = Theme.of(context).colorScheme;
       final currentText = hasDuration
           ? formatVideoDuration(controller.position.value)
           : '--:--';
@@ -51,29 +53,31 @@ class PlayerControlBottomBar extends StatelessWidget {
                 ),
               ],
             ),
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 3,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-              ),
-              child: Slider(
-                value: controller.progress.value,
-                min: kPlayerMinProgress,
-                max: kPlayerMaxProgress,
-                onChangeStart: hasDuration
-                    ? (_) => controller.beginSeekPreview()
-                    : null,
-                onChanged: hasDuration ? controller.previewSeekToRatio : null,
-                onChangeEnd: hasDuration
-                    ? (_) => controller.commitSeekPreview()
-                    : null,
-              ),
+            ProgressBar(
+              progress: hasDuration ? controller.position.value : Duration.zero,
+              buffered: _resolveBufferedDuration(controller, hasDuration),
+              total: hasDuration ? controller.duration.value : Duration.zero,
+              timeLabelLocation: TimeLabelLocation.none,
+              barHeight: 3,
+              thumbRadius: 6,
+              thumbGlowRadius: 14,
+              baseBarColor: Colors.white24,
+              bufferedBarColor: Colors.white38,
+              progressBarColor: colorScheme.primary,
+              thumbColor: colorScheme.primary,
+              onDragStart: hasDuration
+                  ? (_) => controller.beginSeekPreview()
+                  : null,
+              onDragUpdate: hasDuration
+                  ? (ThumbDragDetails details) =>
+                        controller.previewSeekPosition(details.timeStamp)
+                  : null,
+              onSeek: hasDuration ? controller.seekToPosition : null,
             ),
             Row(
               children: <Widget>[
                 IconButton(
-                  tooltip: controller.isPlaying.value ? '暂停' : '播放',
+                  tooltip: controller.isPlaying.value ? '??' : '??',
                   onPressed: controller.togglePlay,
                   icon: Icon(
                     controller.isPlaying.value
@@ -84,7 +88,7 @@ class PlayerControlBottomBar extends StatelessWidget {
                   color: Colors.white,
                 ),
                 IconButton(
-                  tooltip: '下一集',
+                  tooltip: '???',
                   onPressed: controller.hasNext
                       ? () => controller.playNext()
                       : null,
@@ -112,6 +116,16 @@ class PlayerControlBottomBar extends StatelessWidget {
       );
     });
   }
+
+  Duration? _resolveBufferedDuration(
+    PlayerController controller,
+    bool hasDuration,
+  ) {
+    if (!hasDuration || !controller.currentItem.value.isRemote) {
+      return null;
+    }
+    return controller.bufferedPosition.value;
+  }
 }
 
 class _SpeedButton extends StatelessWidget {
@@ -123,7 +137,7 @@ class _SpeedButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => PopupMenuButton<double>(
-        tooltip: '倍速',
+        tooltip: '??',
         onSelected: controller.setPlaybackSpeed,
         itemBuilder: (BuildContext context) {
           return kPlaybackSpeedOptions

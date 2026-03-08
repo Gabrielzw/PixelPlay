@@ -118,6 +118,15 @@ extension PlayerControllerCommands on PlayerController {
     previewSeekPosition(nextPosition);
   }
 
+  Future<void> seekToPosition(Duration value) async {
+    if (!hasKnownDuration) {
+      return;
+    }
+
+    previewSeekPosition(value);
+    await commitSeekPreview();
+  }
+
   Future<void> commitSeekPreview() async {
     final pendingPosition = _pendingSeekPosition;
     if (pendingPosition == null) {

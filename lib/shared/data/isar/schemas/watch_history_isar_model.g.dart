@@ -45,19 +45,29 @@ const WatchHistoryIsarModelSchema = CollectionSchema(
       name: r'positionMs',
       type: IsarType.long,
     ),
-    r'sourceLabel': PropertySchema(
+    r'sourceKindKey': PropertySchema(
       id: 7,
+      name: r'sourceKindKey',
+      type: IsarType.string,
+    ),
+    r'sourceLabel': PropertySchema(
+      id: 8,
       name: r'sourceLabel',
       type: IsarType.string,
     ),
-    r'title': PropertySchema(id: 8, name: r'title', type: IsarType.string),
-    r'watchedAtMs': PropertySchema(
+    r'sourceUri': PropertySchema(
       id: 9,
+      name: r'sourceUri',
+      type: IsarType.string,
+    ),
+    r'title': PropertySchema(id: 10, name: r'title', type: IsarType.string),
+    r'watchedAtMs': PropertySchema(
+      id: 11,
       name: r'watchedAtMs',
       type: IsarType.long,
     ),
     r'webDavAccountId': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'webDavAccountId',
       type: IsarType.string,
     ),
@@ -105,7 +115,19 @@ int _watchHistoryIsarModelEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.sourceKindKey;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.sourceLabel.length * 3;
+  {
+    final value = object.sourceUri;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.title.length * 3;
   {
     final value = object.webDavAccountId;
@@ -129,10 +151,12 @@ void _watchHistoryIsarModelSerialize(
   writer.writeString(offsets[4], object.mediaId);
   writer.writeString(offsets[5], object.mediaPath);
   writer.writeLong(offsets[6], object.positionMs);
-  writer.writeString(offsets[7], object.sourceLabel);
-  writer.writeString(offsets[8], object.title);
-  writer.writeLong(offsets[9], object.watchedAtMs);
-  writer.writeString(offsets[10], object.webDavAccountId);
+  writer.writeString(offsets[7], object.sourceKindKey);
+  writer.writeString(offsets[8], object.sourceLabel);
+  writer.writeString(offsets[9], object.sourceUri);
+  writer.writeString(offsets[10], object.title);
+  writer.writeLong(offsets[11], object.watchedAtMs);
+  writer.writeString(offsets[12], object.webDavAccountId);
 }
 
 WatchHistoryIsarModel _watchHistoryIsarModelDeserialize(
@@ -150,10 +174,12 @@ WatchHistoryIsarModel _watchHistoryIsarModelDeserialize(
   object.mediaId = reader.readString(offsets[4]);
   object.mediaPath = reader.readStringOrNull(offsets[5]);
   object.positionMs = reader.readLong(offsets[6]);
-  object.sourceLabel = reader.readString(offsets[7]);
-  object.title = reader.readString(offsets[8]);
-  object.watchedAtMs = reader.readLong(offsets[9]);
-  object.webDavAccountId = reader.readStringOrNull(offsets[10]);
+  object.sourceKindKey = reader.readStringOrNull(offsets[7]);
+  object.sourceLabel = reader.readString(offsets[8]);
+  object.sourceUri = reader.readStringOrNull(offsets[9]);
+  object.title = reader.readString(offsets[10]);
+  object.watchedAtMs = reader.readLong(offsets[11]);
+  object.webDavAccountId = reader.readStringOrNull(offsets[12]);
   return object;
 }
 
@@ -179,12 +205,16 @@ P _watchHistoryIsarModelDeserializeProp<P>(
     case 6:
       return (reader.readLong(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 10:
+      return (reader.readString(offset)) as P;
+    case 11:
+      return (reader.readLong(offset)) as P;
+    case 12:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1229,6 +1259,213 @@ extension WatchHistoryIsarModelQueryFilter
     WatchHistoryIsarModel,
     QAfterFilterCondition
   >
+  sourceKindKeyIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'sourceKindKey'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'sourceKindKey'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'sourceKindKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'sourceKindKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'sourceKindKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'sourceKindKey',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'sourceKindKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'sourceKindKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'sourceKindKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'sourceKindKey',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'sourceKindKey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceKindKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'sourceKindKey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
   sourceLabelEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1401,6 +1638,213 @@ extension WatchHistoryIsarModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'sourceLabel', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'sourceUri'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'sourceUri'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'sourceUri',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'sourceUri',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'sourceUri',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'sourceUri',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'sourceUri',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'sourceUri',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'sourceUri',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'sourceUri',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'sourceUri', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    WatchHistoryIsarModel,
+    WatchHistoryIsarModel,
+    QAfterFilterCondition
+  >
+  sourceUriIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'sourceUri', value: ''),
       );
     });
   }
@@ -1982,6 +2426,20 @@ extension WatchHistoryIsarModelQuerySortBy
   }
 
   QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  sortBySourceKindKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceKindKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  sortBySourceKindKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceKindKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
   sortBySourceLabel() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sourceLabel', Sort.asc);
@@ -1992,6 +2450,20 @@ extension WatchHistoryIsarModelQuerySortBy
   sortBySourceLabelDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sourceLabel', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  sortBySourceUri() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUri', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  sortBySourceUriDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUri', Sort.desc);
     });
   }
 
@@ -2153,6 +2625,20 @@ extension WatchHistoryIsarModelQuerySortThenBy
   }
 
   QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  thenBySourceKindKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceKindKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  thenBySourceKindKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceKindKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
   thenBySourceLabel() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sourceLabel', Sort.asc);
@@ -2163,6 +2649,20 @@ extension WatchHistoryIsarModelQuerySortThenBy
   thenBySourceLabelDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sourceLabel', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  thenBySourceUri() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUri', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QAfterSortBy>
+  thenBySourceUriDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceUri', Sort.desc);
     });
   }
 
@@ -2261,9 +2761,26 @@ extension WatchHistoryIsarModelQueryWhereDistinct
   }
 
   QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QDistinct>
+  distinctBySourceKindKey({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'sourceKindKey',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QDistinct>
   distinctBySourceLabel({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sourceLabel', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, WatchHistoryIsarModel, QDistinct>
+  distinctBySourceUri({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sourceUri', caseSensitive: caseSensitive);
     });
   }
 
@@ -2354,10 +2871,24 @@ extension WatchHistoryIsarModelQueryProperty
     });
   }
 
+  QueryBuilder<WatchHistoryIsarModel, String?, QQueryOperations>
+  sourceKindKeyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sourceKindKey');
+    });
+  }
+
   QueryBuilder<WatchHistoryIsarModel, String, QQueryOperations>
   sourceLabelProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'sourceLabel');
+    });
+  }
+
+  QueryBuilder<WatchHistoryIsarModel, String?, QQueryOperations>
+  sourceUriProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sourceUri');
     });
   }
 

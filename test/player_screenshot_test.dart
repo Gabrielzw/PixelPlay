@@ -26,6 +26,9 @@ class ScreenshotPlaybackPort implements PlayerPlaybackPort {
   Stream<bool> get bufferingStream => const Stream<bool>.empty();
 
   @override
+  Stream<Duration> get bufferStream => const Stream<Duration>.empty();
+
+  @override
   Stream<bool> get completedStream => const Stream<bool>.empty();
 
   @override
@@ -129,6 +132,9 @@ void main() {
 
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tapAt(tester.getCenter(find.byType(PlayerPage)));
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
 
