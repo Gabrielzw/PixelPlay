@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../domain/player_controller.dart';
 import 'player_ui_constants.dart';
+
+const double _kBufferingOverlayOpacity = 0.58;
+const double _kBufferingOverlayRadius = 18;
+const double _kBufferingOverlayPadding = 20;
+const double _kBufferingIndicatorSize = 42;
+const double _kBufferingTextSpacing = 12;
 
 class PlayerFeedbackLayer extends StatelessWidget {
   final PlayerController controller;
@@ -38,7 +45,7 @@ class PlayerFeedbackLayer extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: controller.resetVideoTransform,
                       icon: const Icon(Icons.refresh_rounded, size: 16),
-                      label: const Text('还原画面'),
+                      label: const Text('\u8fd8\u539f\u753b\u9762'),
                     ),
                   ),
                 ),
@@ -109,20 +116,30 @@ class _BufferingOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = Theme.of(context).colorScheme.primary;
+
     return Center(
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: applyOpacity(Colors.black, 0.58),
-          borderRadius: const BorderRadius.all(Radius.circular(18)),
+          color: applyOpacity(Colors.black, _kBufferingOverlayOpacity),
+          borderRadius: const BorderRadius.all(
+            Radius.circular(_kBufferingOverlayRadius),
+          ),
         ),
-        child: const Padding(
-          padding: EdgeInsets.all(20),
+        child: Padding(
+          padding: const EdgeInsets.all(_kBufferingOverlayPadding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              CircularProgressIndicator(color: Colors.white),
-              SizedBox(height: 12),
-              Text('加载中...', style: TextStyle(color: Colors.white)),
+              LoadingAnimationWidget.progressiveDots(
+                color: primaryColor,
+                size: _kBufferingIndicatorSize,
+              ),
+              const SizedBox(height: _kBufferingTextSpacing),
+              const Text(
+                '\u52a0\u8f7d\u4e2d...',
+                style: TextStyle(color: Colors.white),
+              ),
             ],
           ),
         ),
@@ -175,9 +192,15 @@ class _ErrorOverlay extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     if (canRetry)
-                      FilledButton(onPressed: onRetry, child: const Text('重试')),
+                      FilledButton(
+                        onPressed: onRetry,
+                        child: const Text('\u91cd\u8bd5'),
+                      ),
                     if (canRetry) const SizedBox(width: 12),
-                    OutlinedButton(onPressed: onBack, child: const Text('退出')),
+                    OutlinedButton(
+                      onPressed: onBack,
+                      child: const Text('\u9000\u51fa'),
+                    ),
                   ],
                 ),
               ],
