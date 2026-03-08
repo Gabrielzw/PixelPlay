@@ -45,23 +45,68 @@ void main() {
     );
 
     final material = tester.widget<Material>(
-      find.descendant(
-        of: find.byType(AlbumVideoTile),
-        matching: find.byType(Material),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(AlbumVideoTile),
+            matching: find.byType(Material),
+          )
+          .first,
     );
     expect(material.color, theme.colorScheme.surface);
 
     final decoratedBox = tester.widget<DecoratedBox>(
-      find.descendant(
-        of: find.byType(AlbumVideoTile),
-        matching: find.byType(DecoratedBox),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(AlbumVideoTile),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
     );
     final decoration = decoratedBox.decoration as BoxDecoration;
 
     expect(decoration.boxShadow, isNotEmpty);
     expect(decoration.boxShadow!.first.blurRadius, 18);
     expect(decoration.boxShadow!.first.offset, const Offset(0, 10));
+  });
+
+  testWidgets('album video tile shows playback progress on preview', (
+    WidgetTester tester,
+  ) async {
+    final theme = ThemeData(useMaterial3: true, colorSchemeSeed: Colors.teal);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        theme: theme,
+        home: Scaffold(
+          body: AlbumVideoTile(
+            data: AlbumVideoTileData(
+              id: '2',
+              title: 'Resume Video.mp4',
+              durationText: '01:20/02:40',
+              resolutionText: '1920脳1080',
+              sizeText: '220 MB',
+              modifiedTimeText: '2025-01-01 13:00',
+              progressRatio: 0.5,
+              previewSeed: 2,
+              thumbnailRequest: VideoThumbnailRequest.tile(
+                videoId: 2,
+                videoPath: 'content://test/video/2',
+                dateModified: 2,
+              ),
+            ),
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('01:20/02:40'), findsOneWidget);
+
+    final indicator = tester.widget<LinearProgressIndicator>(
+      find.byType(LinearProgressIndicator),
+    );
+
+    expect(indicator.value, 0.5);
+    expect(indicator.color, theme.colorScheme.primary);
   });
 }

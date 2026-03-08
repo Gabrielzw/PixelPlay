@@ -20,6 +20,7 @@ class AlbumVideoTileData {
   final String resolutionText;
   final String sizeText;
   final String modifiedTimeText;
+  final double? progressRatio;
   final int previewSeed;
   final VideoThumbnailRequest thumbnailRequest;
 
@@ -30,6 +31,7 @@ class AlbumVideoTileData {
     required this.resolutionText,
     required this.sizeText,
     required this.modifiedTimeText,
+    this.progressRatio,
     required this.previewSeed,
     required this.thumbnailRequest,
   });
@@ -64,6 +66,7 @@ class AlbumVideoTile extends StatelessWidget {
               children: <Widget>[
                 AlbumVideoPreview(
                   durationText: data.durationText,
+                  progressRatio: data.progressRatio,
                   previewSeed: data.previewSeed,
                   thumbnailRequest: data.thumbnailRequest,
                 ),

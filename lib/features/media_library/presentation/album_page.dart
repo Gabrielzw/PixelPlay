@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../shared/utils/media_formatters.dart';
@@ -97,17 +99,30 @@ class _AlbumPageState extends State<AlbumPage> {
 
   _AlbumVideoEntry _mapVideoEntry(LocalVideo video) {
     final title = video.title.trim().isEmpty ? kUnknownVideoTitle : video.title;
-    final duration = Duration(milliseconds: video.durationMs);
+    final totalDurationMs = math.max(video.durationMs, 0);
+    final duration = Duration(milliseconds: totalDurationMs);
+    final totalDurationText = formatVideoDuration(duration);
     final resolutionText = _formatVideoResolution(video);
+    final storedPositionMs = video.lastPlayPositionMs;
+    final playbackPositionMs = storedPositionMs == null
+        ? null
+        : math.max(0, math.min(storedPositionMs, totalDurationMs));
+    final progressRatio = playbackPositionMs == null || totalDurationMs == 0
+        ? null
+        : playbackPositionMs / totalDurationMs;
+    final durationText = playbackPositionMs == null
+        ? totalDurationText
+        : '${formatVideoDuration(Duration(milliseconds: playbackPositionMs))}/$totalDurationText';
 
     return _AlbumVideoEntry(
       tileData: AlbumVideoTileData(
         id: video.id.toString(),
         title: title,
-        durationText: formatVideoDuration(duration),
+        durationText: durationText,
         resolutionText: resolutionText,
         sizeText: formatFileSize(video.size),
         modifiedTimeText: _formatModifiedTime(video.dateModified),
+        progressRatio: progressRatio,
         previewSeed: video.id,
         thumbnailRequest: VideoThumbnailRequest.tile(
           videoId: video.id,
@@ -125,7 +140,7 @@ class _AlbumPageState extends State<AlbumPage> {
             ? null
             : resolutionText,
         previewAspectRatio: _resolvePreviewAspectRatio(video),
-        lastKnownPositionMs: video.lastPlayPositionMs,
+        lastKnownPositionMs: playbackPositionMs,
       ),
     );
   }
