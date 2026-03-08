@@ -5,6 +5,7 @@ import '../../domain/entities/local_album.dart';
 import '../../domain/entities/local_video.dart';
 import '../album_page.dart';
 import '../local_library_album_preview_builder.dart';
+import '../local_library_player_launcher.dart';
 import '../local_library_sort_type.dart';
 import 'library_album_card.dart';
 import 'local_library_search_video_tile.dart';
@@ -56,7 +57,6 @@ class LocalLibrarySearchResults extends StatelessWidget {
           _VideoResultList(
             videos: matchedVideos,
             albumById: albumById,
-            repository: repository,
           ),
         ],
         if (_showEmptyState(
@@ -194,12 +194,10 @@ class _AlbumResultGrid extends StatelessWidget {
 class _VideoResultList extends StatelessWidget {
   final List<LocalVideo> videos;
   final Map<String, LocalAlbum> albumById;
-  final MediaLibraryRepository repository;
 
   const _VideoResultList({
     required this.videos,
     required this.albumById,
-    required this.repository,
   });
 
   @override
@@ -217,11 +215,7 @@ class _VideoResultList extends StatelessWidget {
           return LocalLibrarySearchVideoTile(
             video: video,
             albumTitle: resolveLocalLibraryAlbumTitle(album.bucketName),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => AlbumPage(album: album, repository: repository),
-              ),
-            ),
+            onTap: () => openLocalVideoPlayer(context: context, video: video),
           );
         },
         separatorBuilder: (_, _) => const SizedBox(height: kSearchVideoTileSpacing),

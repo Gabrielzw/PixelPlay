@@ -51,11 +51,6 @@ class LocalLibraryAppBar extends StatelessWidget
             )
           : Text(title, style: titleStyle),
       actions: <Widget>[
-        IconButton(
-          tooltip: '历史记录',
-          onPressed: () => showNotImplementedSnackBar(context, '历史记录功能尚未接入'),
-          icon: const Icon(Icons.history_rounded),
-        ),
         if (isSearching)
           IconButton(
             tooltip: '关闭搜索',
@@ -96,7 +91,11 @@ class LocalLibraryAppBar extends StatelessWidget
             ),
           ],
         ),
-        const SizedBox(width: 8),
+        IconButton(
+          tooltip: '历史记录',
+          onPressed: () => showNotImplementedSnackBar(context, '历史记录功能尚未接入'),
+          icon: const Icon(Icons.history_rounded),
+        ),
       ],
     );
   }
