@@ -1,115 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import '../../domain/player_controller.dart';
+import '../../domain/player_playback_port.dart';
 import 'player_controls.dart';
-import 'player_ui_constants.dart';
+import 'player_feedback.dart';
+import 'player_gesture_layer.dart';
+import 'player_surface.dart';
 
 class PlayerLayout extends StatelessWidget {
-  final String title;
-  final bool isPlaying;
-  final bool controlsLocked;
-  final double progress;
+  final PlayerController controller;
+  final PlayerPlaybackPort playbackPort;
   final VoidCallback onBack;
-  final VoidCallback onTogglePlay;
+  final VoidCallback onOpenSettings;
+  final VoidCallback onSurfaceTap;
   final VoidCallback onToggleLock;
-  final ValueChanged<double> onSeek;
+  final VoidCallback onShowEpisodePanel;
+  final VoidCallback onShowMorePanel;
+  final VoidCallback onClosePanels;
+  final VoidCallback onToggleHorizontalFlip;
+  final VoidCallback onToggleVerticalFlip;
+  final bool showEpisodePanel;
+  final bool showMorePanel;
+  final bool flipHorizontal;
+  final bool flipVertical;
 
   const PlayerLayout({
     super.key,
-    required this.title,
-    required this.isPlaying,
-    required this.controlsLocked,
-    required this.progress,
+    required this.controller,
+    required this.playbackPort,
     required this.onBack,
-    required this.onTogglePlay,
+    required this.onOpenSettings,
+    required this.onSurfaceTap,
     required this.onToggleLock,
-    required this.onSeek,
+    required this.onShowEpisodePanel,
+    required this.onShowMorePanel,
+    required this.onClosePanels,
+    required this.onToggleHorizontalFlip,
+    required this.onToggleVerticalFlip,
+    required this.showEpisodePanel,
+    required this.showMorePanel,
+    required this.flipHorizontal,
+    required this.flipVertical,
   });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        const Positioned.fill(child: VideoSurfacePlaceholder()),
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: PlayerTopBar(
-            title: title,
-            controlsLocked: controlsLocked,
+        Positioned.fill(
+          child: Obx(
+            () => PlayerSurface(
+              playbackPort: playbackPort,
+              aspectRatioMode: controller.aspectRatio.value,
+              transformMatrix: controller.videoTransform.value,
+              flipHorizontal: flipHorizontal,
+              flipVertical: flipVertical,
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: PlayerGestureLayer(
+            controller: controller,
+            onTap: onSurfaceTap,
+            interactionsEnabled: !showEpisodePanel && !showMorePanel,
+          ),
+        ),
+        Positioned.fill(
+          child: PlayerControlsOverlay(
+            controller: controller,
             onBack: onBack,
+            onOpenSettings: onOpenSettings,
             onToggleLock: onToggleLock,
+            onShowEpisodePanel: onShowEpisodePanel,
+            onShowMorePanel: onShowMorePanel,
+            onClosePanels: onClosePanels,
+            onToggleHorizontalFlip: onToggleHorizontalFlip,
+            onToggleVerticalFlip: onToggleVerticalFlip,
+            showEpisodePanel: showEpisodePanel,
+            showMorePanel: showMorePanel,
+            flipHorizontal: flipHorizontal,
+            flipVertical: flipVertical,
           ),
         ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: PlayerBottomControls(
-            enabled: !controlsLocked,
-            isPlaying: isPlaying,
-            progress: progress,
-            onTogglePlay: onTogglePlay,
-            onSeek: onSeek,
-          ),
+        Positioned.fill(
+          child: PlayerFeedbackLayer(controller: controller, onBack: onBack),
         ),
-        if (controlsLocked) const Positioned.fill(child: PlayerLockedHint()),
       ],
     );
   }
 }
-
-class VideoSurfacePlaceholder extends StatelessWidget {
-  const VideoSurfacePlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final tint = Theme.of(context).colorScheme.primary;
-
-    return ColoredBox(
-      color: kPlayerBackground,
-      child: Center(
-        child: Icon(
-          Icons.ondemand_video,
-          size: 84,
-          color: applyOpacity(tint, kPlayerIconOpacity),
-        ),
-      ),
-    );
-  }
-}
-
-class PlayerLockedHint extends StatelessWidget {
-  const PlayerLockedHint({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: applyOpacity(Colors.black, kPlayerLockedHintOpacity),
-            borderRadius: const BorderRadius.all(Radius.circular(16)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(Icons.lock, color: Colors.white),
-                const SizedBox(width: 10),
-                Text(
-                  '已锁定（UI 骨架）',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-

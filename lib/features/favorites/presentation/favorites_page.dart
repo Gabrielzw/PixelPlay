@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
+import '../../player_core/domain/player_queue_item.dart';
 import '../../player_core/presentation/player_page.dart';
 
 @immutable
@@ -83,8 +84,17 @@ class _FavoriteTile extends StatelessWidget {
         subtitle: Text(item.source),
         onTap: () {
           Navigator.of(context, rootNavigator: true).push(
-            MaterialPageRoute<void>(
-              builder: (_) => PlayerPage(title: item.title),
+            buildPlayerPageRoute(
+              child: PlayerPage(
+                playlist: <PlayerQueueItem>[
+                  PlayerQueueItem(
+                    id: '${item.source}:${item.title}',
+                    title: item.title,
+                    sourceLabel: item.source,
+                    isRemote: item.isRemote,
+                  ),
+                ],
+              ),
             ),
           );
         },

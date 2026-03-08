@@ -25,15 +25,29 @@ class SettingsController extends GetxController {
     await _saveSettings(settings.value.copyWith(defaultPlaybackSpeed: speed));
   }
 
+  Future<void> setLongPressPlaybackSpeed(double speed) async {
+    await _saveSettings(settings.value.copyWith(longPressPlaybackSpeed: speed));
+  }
+
   Future<void> setDefaultAspectRatio(PlayerAspectRatio aspectRatio) async {
     await _saveSettings(
       settings.value.copyWith(defaultAspectRatio: aspectRatio),
     );
   }
 
+  Future<void> setDefaultPlaybackMode(PlayerPlaybackMode mode) async {
+    await _saveSettings(settings.value.copyWith(defaultPlaybackMode: mode));
+  }
+
   Future<void> setGestureSeekSecondsPerSwipe(int seconds) async {
     await _saveSettings(
       settings.value.copyWith(gestureSeekSecondsPerSwipe: seconds),
+    );
+  }
+
+  Future<void> setGestureSeekUsesVideoDuration(bool enabled) async {
+    await _saveSettings(
+      settings.value.copyWith(gestureSeekUsesVideoDuration: enabled),
     );
   }
 
@@ -43,8 +57,8 @@ class SettingsController extends GetxController {
     );
   }
 
-  Future<void> setAutoPlayNext(bool enabled) async {
-    await _saveSettings(settings.value.copyWith(autoPlayNext: enabled));
+  Future<void> setAutoPlayOnEnter(bool enabled) async {
+    await _saveSettings(settings.value.copyWith(autoPlayOnEnter: enabled));
   }
 
   Future<void> _saveSettings(AppSettings nextSettings) async {

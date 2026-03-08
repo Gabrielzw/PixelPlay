@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../../../thumbnail_engine/presentation/widgets/video_thumbnail_image.dart';
+import 'media_library_card_tokens.dart';
 
 const double kLibraryAlbumCardRadius = 24;
 const double kLibraryAlbumCoverAspectRatio = 1.56;
-const double kLibraryAlbumShadowBlur = 18;
-const double kLibraryAlbumShadowOffsetY = 10;
-const double kLibraryAlbumShadowOpacity = 0.08;
 const double kLibraryAlbumOverlayOpacity = 0.14;
 const double kLibraryAlbumShapeOpacity = 0.28;
 
@@ -15,7 +13,6 @@ const double kLibraryAlbumShapeOpacity = 0.28;
 class LibraryAlbumPreview {
   final String title;
   final String subtitle;
-  final IconData icon;
   final Color startColor;
   final Color endColor;
   final VideoThumbnailRequest? thumbnailRequest;
@@ -23,7 +20,6 @@ class LibraryAlbumPreview {
   const LibraryAlbumPreview({
     required this.title,
     required this.subtitle,
-    required this.icon,
     required this.startColor,
     required this.endColor,
     this.thumbnailRequest,
@@ -41,16 +37,7 @@ class LibraryAlbumCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(kLibraryAlbumCardRadius),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: kLibraryAlbumShadowOpacity),
-            blurRadius: kLibraryAlbumShadowBlur,
-            offset: const Offset(0, kLibraryAlbumShadowOffsetY),
-          ),
-        ],
-      ),
+      decoration: buildMediaLibraryCardDecoration(kLibraryAlbumCardRadius),
       child: Material(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(kLibraryAlbumCardRadius),
@@ -150,23 +137,6 @@ class _LibraryAlbumCover extends StatelessWidget {
               ),
             ),
             Positioned.fill(child: _AlbumCoverThumbnail(album: album)),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(album.icon, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
           ],
         ),
       ),

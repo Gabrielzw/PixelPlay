@@ -24,6 +24,22 @@ Uri normalizeWebDavUrl(String rawUrl) {
   return parsedUrl.replace(path: normalizedPath, query: null, fragment: null);
 }
 
+Uri buildWebDavResourceUrl({required Uri baseUrl, required String path}) {
+  final normalizedBaseUrl = normalizeWebDavUrl(baseUrl.toString());
+  final relativePath = resolveRelativeWebDavPath(
+    baseUrl: normalizedBaseUrl,
+    path: path,
+  );
+  final resourceSegments = <String>[
+    ...normalizedBaseUrl.pathSegments.where((String value) => value.isNotEmpty),
+    ...normalizeWebDavPath(relativePath)
+        .split('/')
+        .where((String value) => value.isNotEmpty),
+  ];
+
+  return normalizedBaseUrl.replace(pathSegments: resourceSegments);
+}
+
 String resolveRelativeWebDavPath({required Uri baseUrl, required String path}) {
   final normalizedBasePath = normalizeWebDavPath(baseUrl.path);
   final normalizedPath = normalizeWebDavPath(path);

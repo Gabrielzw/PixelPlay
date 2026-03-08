@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../player_core/domain/player_queue_item.dart';
+import '../../player_core/presentation/player_page.dart';
 import '../domain/contracts/webdav_browser_repository.dart';
 import '../domain/entities/webdav_entry.dart';
 import '../domain/webdav_paths.dart';
@@ -71,7 +75,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            tooltip: '返回',
+            tooltip: '杩斿洖',
             onPressed: _handleBackPressed,
             icon: const Icon(Icons.arrow_back),
           ),
@@ -83,7 +87,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
           ),
           actions: <Widget>[
             IconButton(
-              tooltip: '刷新',
+              tooltip: '鍒锋柊',
               onPressed: _loadEntries,
               icon: const Icon(Icons.refresh),
             ),
@@ -253,19 +257,63 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     return resolveRelativeWebDavPath(baseUrl: account.url, path: sourcePath);
   }
 
-  void _handleEntryTap(BuildContext context, WebDavEntry entry) {
+  Future<void> _handleEntryTap(BuildContext context, WebDavEntry entry) async {
     switch (entry.type) {
       case WebDavEntryType.directory:
-        _openPath(entry.path);
+        await _openPath(entry.path);
         break;
       case WebDavEntryType.video:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已识别视频文件：${entry.name}，播放功能暂未接入。')),
+        final password = await _accountsController.requirePassword(
+          widget.account.id,
+        );
+        if (!context.mounted) {
+          return;
+        }
+        final playlist = _entries
+            .where((WebDavEntry item) => item.type == WebDavEntryType.video)
+            .map(
+              (WebDavEntry item) =>
+                  _mapPlayerItem(entry: item, password: password),
+            )
+            .toList(growable: false);
+        final initialIndex = playlist.indexWhere(
+          (PlayerQueueItem item) => item.id == entry.path,
+        );
+        Navigator.of(context, rootNavigator: true).push(
+          buildPlayerPageRoute(
+            child: PlayerPage(
+              playlist: playlist,
+              initialIndex: initialIndex < 0 ? 0 : initialIndex,
+            ),
+          ),
         );
         break;
       case WebDavEntryType.other:
         break;
     }
+  }
+
+  PlayerQueueItem _mapPlayerItem({
+    required WebDavEntry entry,
+    required String password,
+  }) {
+    final authorization = base64Encode(
+      utf8.encode('${widget.account.username}:$password'),
+    );
+
+    return PlayerQueueItem(
+      id: entry.path,
+      title: entry.name,
+      sourceLabel: '${widget.account.alias}$_currentPath',
+      path: entry.path,
+      sourceUri: buildWebDavResourceUrl(
+        baseUrl: widget.account.url,
+        path: entry.path,
+      ).toString(),
+      isRemote: true,
+      webDavAccountId: widget.account.id,
+      httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
+    );
   }
 }
 

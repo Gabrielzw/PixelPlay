@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 import '../features/media_library/domain/contracts/media_library_repository.dart';
+import '../features/player_core/domain/playback_position_repository.dart';
 import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
 import '../features/shell/presentation/pixelplay_shell.dart';
 import '../features/thumbnail_engine/domain/thumbnail_queue.dart';
+import '../features/watch_history/domain/watch_history_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_account_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_browser_repository.dart';
 import 'bindings/app_bindings.dart';
@@ -15,6 +18,8 @@ class PixelPlayApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
+  final PlaybackPositionRepository playbackPositionRepository;
+  final WatchHistoryRepository watchHistoryRepository;
   final WebDavAccountRepository webDavAccountRepository;
   final WebDavBrowserRepository webDavBrowserRepository;
 
@@ -23,6 +28,8 @@ class PixelPlayApp extends StatefulWidget {
     required this.settingsRepository,
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
+    required this.playbackPositionRepository,
+    required this.watchHistoryRepository,
     required this.webDavAccountRepository,
     required this.webDavBrowserRepository,
   });
@@ -41,6 +48,8 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       settingsRepository: widget.settingsRepository,
       mediaLibraryRepository: widget.mediaLibraryRepository,
       thumbnailQueue: widget.thumbnailQueue,
+      playbackPositionRepository: widget.playbackPositionRepository,
+      watchHistoryRepository: widget.watchHistoryRepository,
       webDavAccountRepository: widget.webDavAccountRepository,
       webDavBrowserRepository: widget.webDavBrowserRepository,
     ).dependencies();
@@ -55,24 +64,27 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       home: const PixelPlayShell(),
-      builder: (BuildContext context, Widget? child) {
-        return Obx(() {
-          final settings = _settingsController.settings.value;
-          final brightness = _resolveBrightness(
-            context: context,
-            themeMode: settings.themeMode,
-          );
-          final theme = brightness == Brightness.dark
-              ? AppTheme.dark(seedColor: settings.seedColor)
-              : AppTheme.light(seedColor: settings.seedColor);
+      navigatorObservers: <NavigatorObserver>[FlutterSmartDialog.observer],
+      builder: FlutterSmartDialog.init(
+        builder: (BuildContext context, Widget? child) {
+          return Obx(() {
+            final settings = _settingsController.settings.value;
+            final brightness = _resolveBrightness(
+              context: context,
+              themeMode: settings.themeMode,
+            );
+            final theme = brightness == Brightness.dark
+                ? AppTheme.dark(seedColor: settings.seedColor)
+                : AppTheme.light(seedColor: settings.seedColor);
 
-          return AnimatedTheme(
-            data: theme,
-            duration: const Duration(milliseconds: kThemeAnimationDurationMs),
-            child: child ?? const SizedBox.shrink(),
-          );
-        });
-      },
+            return AnimatedTheme(
+              data: theme,
+              duration: const Duration(milliseconds: kThemeAnimationDurationMs),
+              child: child ?? const SizedBox.shrink(),
+            );
+          });
+        },
+      ),
     );
   }
 

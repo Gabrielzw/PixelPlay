@@ -10,18 +10,23 @@ export 'album_video_preview_tokens.dart'
 
 class AlbumVideoPreview extends StatelessWidget {
   final String durationText;
+  final double? progressRatio;
   final int previewSeed;
   final VideoThumbnailRequest? thumbnailRequest;
 
   const AlbumVideoPreview({
     super.key,
     required this.durationText,
+    this.progressRatio,
     required this.previewSeed,
     this.thumbnailRequest,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return SizedBox(
       width: kVideoTilePreviewWidth,
       child: AspectRatio(
@@ -33,6 +38,20 @@ class AlbumVideoPreview extends StatelessWidget {
           child: Stack(
             children: <Widget>[
               Positioned.fill(child: _buildPreview()),
+              if (progressRatio != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: LinearProgressIndicator(
+                    value: progressRatio,
+                    minHeight: kPlaybackProgressBarHeight,
+                    color: colorScheme.primary,
+                    backgroundColor: colorScheme.primary.withValues(
+                      alpha: kPlaybackProgressTrackOpacity,
+                    ),
+                  ),
+                ),
               Positioned(
                 right: kVideoTilePreviewInnerPadding,
                 bottom: kVideoTilePreviewInnerPadding,
@@ -52,7 +71,7 @@ class AlbumVideoPreview extends StatelessWidget {
                     ),
                     child: Text(
                       durationText,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      style: theme.textTheme.labelLarge?.copyWith(
                         color: Colors.white,
                         fontSize: kDurationBadgeFontSize,
                         fontWeight: FontWeight.w600,

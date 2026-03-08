@@ -1,103 +1,180 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../shared/utils/not_implemented.dart';
-import '../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../domain/contracts/media_library_repository.dart';
 import '../domain/entities/local_album.dart';
+import '../domain/entities/local_video.dart';
 import 'album_page.dart';
 import 'controllers/media_library_controller.dart';
+import 'local_library_album_preview_builder.dart';
+import 'local_library_sort_type.dart';
+import 'network_video_player_launcher.dart';
 import 'widgets/library_album_card.dart';
+import 'widgets/local_library_app_bar.dart';
+import 'widgets/local_library_search_results.dart';
+import '../../watch_history/presentation/watch_history_page.dart';
 
 const double kLibraryPageHorizontalPadding = 22;
 const double kLibraryGridSpacing = 18;
 const double kLibraryGridChildAspectRatio = 0.92;
 const int kAlbumSkeletonCount = 8;
-const String kUnnamedAlbumLabel = '未命名相册';
-const String kVideoCountSuffix = ' 个视频';
 
-const int kFnvOffsetBasis = 2166136261;
-const int kFnvPrime = 16777619;
-const int kFnvHashMask = 0xFFFFFFFF;
-
-@immutable
-class _AlbumPalette {
-  final Color start;
-  final Color end;
-
-  const _AlbumPalette({required this.start, required this.end});
-}
-
-const List<_AlbumPalette> _kAlbumPalettes = <_AlbumPalette>[
-  _AlbumPalette(start: Color(0xFFD6C8D0), end: Color(0xFFA3939B)),
-  _AlbumPalette(start: Color(0xFFD9DAD5), end: Color(0xFFA5B0A8)),
-  _AlbumPalette(start: Color(0xFFCDBDAF), end: Color(0xFF9C8A7A)),
-  _AlbumPalette(start: Color(0xFFD8C6C4), end: Color(0xFFA78682)),
-  _AlbumPalette(start: Color(0xFFB8BBC2), end: Color(0xFF747986)),
-  _AlbumPalette(start: Color(0xFF8E84D8), end: Color(0xFF4C4086)),
-  _AlbumPalette(start: Color(0xFFD8C1B0), end: Color(0xFF9E7767)),
-  _AlbumPalette(start: Color(0xFFE0C3CB), end: Color(0xFFB98997)),
-];
-
-class LocalLibraryPage extends StatelessWidget {
+class LocalLibraryPage extends StatefulWidget {
   const LocalLibraryPage({super.key});
 
   @override
+  State<LocalLibraryPage> createState() => _LocalLibraryPageState();
+}
+
+class _LocalLibraryPageState extends State<LocalLibraryPage> {
+  final TextEditingController _searchController = TextEditingController();
+  var _isSearching = false;
+  var _searchQuery = '';
+  var _sortType = LocalLibrarySortType.latest;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final titleStyle = Theme.of(
-      context,
-    ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700);
     final controller = Get.find<MediaLibraryController>();
     final repository = Get.find<MediaLibraryRepository>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('本地媒体', style: titleStyle),
-        actions: <Widget>[
-          IconButton(
-            tooltip: '搜索',
-            onPressed: () => showNotImplementedSnackBar(context, '搜索功能尚未接入'),
-            icon: const Icon(Icons.search),
-          ),
-          IconButton(
-            tooltip: '排序',
-            onPressed: () => showNotImplementedSnackBar(context, '排序功能尚未接入'),
-            icon: const Icon(Icons.sort),
-          ),
-        ],
+      appBar: LocalLibraryAppBar(
+        title: 'Pixel Play',
+        isSearching: _isSearching,
+        searchController: _searchController,
+        currentSort: _sortType,
+        onSearchChanged: _updateSearchQuery,
+        onStartSearching: _startSearching,
+        onStopSearching: _stopSearching,
+        onSortSelected: _updateSortType,
+        onPlayNetworkVideo: _playNetworkVideo,
+        onOpenHistory: _openWatchHistory,
       ),
-      body: Obx(() {
-        final state = controller.state.value;
-        return CustomScrollView(
-          key: const PageStorageKey<String>('local_album_grid'),
-          slivers: <Widget>[
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                kLibraryPageHorizontalPadding,
-                12,
-                kLibraryPageHorizontalPadding,
-                24,
-              ),
-              sliver: switch (state) {
-                MediaLibraryLoadingState() => const _LibraryAlbumSkeletonGrid(),
-                MediaLibraryPermissionRequiredState() =>
-                  _LibraryPermissionNotice(
-                    onGrant: () => controller.requestPermissionAndRefresh(),
-                  ),
-                MediaLibraryFailureState(:final error) => _LibraryErrorNotice(
-                  message: error.toString(),
-                  onRetry: () => controller.refreshAlbums(),
-                ),
-                MediaLibraryReadyState(:final albums) => _LibraryAlbumGrid(
-                  albums: albums,
-                  repository: repository,
-                ),
-              },
-            ),
-          ],
-        );
-      }),
+      body: Obx(
+        () => _buildBody(controller: controller, repository: repository),
+      ),
     );
+  }
+
+  Widget _buildBody({
+    required MediaLibraryController controller,
+    required MediaLibraryRepository repository,
+  }) {
+    final state = controller.state.value;
+
+    return switch (state) {
+      MediaLibraryLoadingState() => _buildSliverBody(
+        sliver: const _LibraryAlbumSkeletonGrid(),
+      ),
+      MediaLibraryPermissionRequiredState() => _buildSliverBody(
+        sliver: _LibraryPermissionNotice(
+          onGrant: controller.requestPermissionAndRefresh,
+        ),
+      ),
+      MediaLibraryFailureState(:final error) => _buildSliverBody(
+        sliver: _LibraryErrorNotice(
+          message: error.toString(),
+          onRetry: controller.refreshAlbums,
+        ),
+      ),
+      MediaLibraryReadyState(:final albums) => _buildReadyBody(
+        albums: albums,
+        controller: controller,
+        repository: repository,
+      ),
+    };
+  }
+
+  Widget _buildReadyBody({
+    required List<LocalAlbum> albums,
+    required MediaLibraryController controller,
+    required MediaLibraryRepository repository,
+  }) {
+    final sortedAlbums = sortLocalAlbums(albums, _sortType);
+    final normalizedQuery = _searchQuery.trim();
+
+    if (normalizedQuery.isEmpty) {
+      return _buildSliverBody(
+        sliver: _LibraryAlbumGrid(albums: sortedAlbums, repository: repository),
+      );
+    }
+
+    return FutureBuilder<List<LocalVideo>>(
+      future: controller.loadSearchableVideos(albums),
+      builder:
+          (BuildContext context, AsyncSnapshot<List<LocalVideo>> snapshot) {
+            return LocalLibrarySearchResults(
+              query: normalizedQuery,
+              albums: sortedAlbums,
+              videos: snapshot.data,
+              videoLoadingError: snapshot.hasError ? snapshot.error : null,
+              isLoadingVideos:
+                  snapshot.connectionState != ConnectionState.done &&
+                  !snapshot.hasError,
+              sortType: _sortType,
+              repository: repository,
+            );
+          },
+    );
+  }
+
+  Widget _buildSliverBody({required Widget sliver}) {
+    return CustomScrollView(
+      key: const PageStorageKey<String>('local_album_grid'),
+      slivers: <Widget>[
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            kLibraryPageHorizontalPadding,
+            12,
+            kLibraryPageHorizontalPadding,
+            24,
+          ),
+          sliver: sliver,
+        ),
+      ],
+    );
+  }
+
+  void _startSearching() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _stopSearching() {
+    _searchController.clear();
+    setState(() {
+      _isSearching = false;
+      _searchQuery = '';
+    });
+  }
+
+  void _updateSearchQuery(String value) {
+    setState(() {
+      _searchQuery = value;
+    });
+  }
+
+  void _updateSortType(LocalLibrarySortType value) {
+    setState(() {
+      _sortType = value;
+    });
+  }
+
+  Future<void> _playNetworkVideo() {
+    return showNetworkVideoUrlDialogAndPlay(context: context);
+  }
+
+  Future<void> _openWatchHistory() {
+    return Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const WatchHistoryPage()));
   }
 }
 
@@ -112,22 +189,8 @@ class _LibraryAlbumGrid extends StatelessWidget {
     return SliverGrid(
       delegate: SliverChildBuilderDelegate((BuildContext context, int index) {
         final album = albums[index];
-        final title = _resolveAlbumTitle(album.bucketName);
-        final palette = _resolveAlbumPalette(album.bucketId);
-
         return LibraryAlbumCard(
-          album: LibraryAlbumPreview(
-            title: title,
-            subtitle: '${album.videoCount}$kVideoCountSuffix',
-            icon: _resolveAlbumIcon(title),
-            startColor: palette.start,
-            endColor: palette.end,
-            thumbnailRequest: VideoThumbnailRequest.album(
-              videoId: album.latestVideoId,
-              videoPath: album.latestVideoPath,
-              dateModified: album.latestVideoDateModified,
-            ),
-          ),
+          album: buildLibraryAlbumPreview(album),
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => AlbumPage(album: album, repository: repository),
@@ -171,7 +234,6 @@ class _AlbumSkeletonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fill = Theme.of(context).colorScheme.surfaceContainerHighest;
-
     return DecoratedBox(
       decoration: BoxDecoration(
         color: fill,
@@ -197,10 +259,7 @@ class _LibraryPermissionNotice extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                '需要授予“视频访问权限”才能读取本地相册信息。',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              Text('需要授予“视频访问权限”后才能读取本地相册信息。'),
               const SizedBox(height: 12),
               FilledButton(onPressed: onGrant, child: const Text('授予权限')),
             ],
@@ -235,46 +294,4 @@ class _LibraryErrorNotice extends StatelessWidget {
       ),
     );
   }
-}
-
-String _resolveAlbumTitle(String bucketName) {
-  if (bucketName.trim().isEmpty) {
-    return kUnnamedAlbumLabel;
-  }
-  return bucketName;
-}
-
-_AlbumPalette _resolveAlbumPalette(String bucketId) {
-  final hash = _fnv1aHash(bucketId);
-  final index = hash % _kAlbumPalettes.length;
-  return _kAlbumPalettes[index];
-}
-
-int _fnv1aHash(String value) {
-  var hash = kFnvOffsetBasis;
-  for (final unit in value.codeUnits) {
-    hash ^= unit;
-    hash = (hash * kFnvPrime) & kFnvHashMask;
-  }
-  return hash;
-}
-
-IconData _resolveAlbumIcon(String title) {
-  final lower = title.toLowerCase();
-  if (lower.contains('camera') || lower.contains('dcim')) {
-    return Icons.videocam_rounded;
-  }
-  if (lower.contains('download')) {
-    return Icons.download_rounded;
-  }
-  if (lower.contains('screenshot')) {
-    return Icons.photo_library_rounded;
-  }
-  if (lower.contains('telegram')) {
-    return Icons.send_rounded;
-  }
-  if (lower.contains('weixin') || lower.contains('wechat')) {
-    return Icons.chat_bubble_rounded;
-  }
-  return Icons.folder_rounded;
 }

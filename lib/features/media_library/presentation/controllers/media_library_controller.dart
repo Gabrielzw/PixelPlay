@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../domain/contracts/media_library_repository.dart';
 import '../../domain/entities/local_album.dart';
+import '../../domain/entities/local_video.dart';
 
 sealed class MediaLibraryViewState {
   const MediaLibraryViewState();
@@ -35,6 +36,7 @@ class MediaLibraryController extends GetxController {
   final MediaLibraryRepository repository;
   final Rx<MediaLibraryViewState> state =
       Rx<MediaLibraryViewState>(const MediaLibraryLoadingState());
+  Future<List<LocalVideo>>? _searchableVideosFuture;
 
   MediaLibraryController({required this.repository});
 
@@ -54,6 +56,7 @@ class MediaLibraryController extends GetxController {
 
   Future<void> _loadAlbums({required bool requestPermissionIfMissing}) async {
     state.value = const MediaLibraryLoadingState();
+    _searchableVideosFuture = null;
 
     try {
       final hasPermission = requestPermissionIfMissing
@@ -71,6 +74,33 @@ class MediaLibraryController extends GetxController {
         error: error,
         stackTrace: stackTrace,
       );
+    }
+  }
+
+  Future<List<LocalVideo>> loadSearchableVideos(List<LocalAlbum> albums) {
+    final cachedFuture = _searchableVideosFuture;
+    if (cachedFuture != null) {
+      return cachedFuture;
+    }
+
+    final future = _loadSearchableVideos(albums);
+    _searchableVideosFuture = future;
+    return future;
+  }
+
+  Future<List<LocalVideo>> _loadSearchableVideos(List<LocalAlbum> albums) async {
+    try {
+      final bucketVideos = await Future.wait(
+        albums.map(
+          (LocalAlbum album) => repository.loadAlbumVideos(album.bucketId),
+        ),
+      );
+      return List<LocalVideo>.unmodifiable(
+        bucketVideos.expand((List<LocalVideo> videos) => videos),
+      );
+    } catch (_) {
+      _searchableVideosFuture = null;
+      rethrow;
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import 'album_video_preview.dart';
+import 'media_library_card_tokens.dart';
 
 const double kAlbumVideoTileHeight = 118;
 const double kAlbumVideoTileRadius = 20;
@@ -19,6 +20,7 @@ class AlbumVideoTileData {
   final String resolutionText;
   final String sizeText;
   final String modifiedTimeText;
+  final double? progressRatio;
   final int previewSeed;
   final VideoThumbnailRequest thumbnailRequest;
 
@@ -29,6 +31,7 @@ class AlbumVideoTileData {
     required this.resolutionText,
     required this.sizeText,
     required this.modifiedTimeText,
+    this.progressRatio,
     required this.previewSeed,
     required this.thumbnailRequest,
   });
@@ -44,29 +47,33 @@ class AlbumVideoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Material(
-      color: colorScheme.surfaceContainerLow,
-      borderRadius: const BorderRadius.all(
-        Radius.circular(kAlbumVideoTileRadius),
-      ),
-      child: InkWell(
-        onTap: onTap,
+    return DecoratedBox(
+      decoration: buildMediaLibraryCardDecoration(kAlbumVideoTileRadius),
+      child: Material(
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.all(
           Radius.circular(kAlbumVideoTileRadius),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(kAlbumVideoTilePadding),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              AlbumVideoPreview(
-                durationText: data.durationText,
-                previewSeed: data.previewSeed,
-                thumbnailRequest: data.thumbnailRequest,
-              ),
-              const SizedBox(width: kAlbumVideoTileGap),
-              Expanded(child: _AlbumVideoInfo(data: data)),
-            ],
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: const BorderRadius.all(
+            Radius.circular(kAlbumVideoTileRadius),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(kAlbumVideoTilePadding),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                AlbumVideoPreview(
+                  durationText: data.durationText,
+                  progressRatio: data.progressRatio,
+                  previewSeed: data.previewSeed,
+                  thumbnailRequest: data.thumbnailRequest,
+                ),
+                const SizedBox(width: kAlbumVideoTileGap),
+                Expanded(child: _AlbumVideoInfo(data: data)),
+              ],
+            ),
           ),
         ),
       ),
