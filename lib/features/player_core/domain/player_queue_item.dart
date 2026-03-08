@@ -14,6 +14,9 @@ class PlayerQueueItem {
   final String? resolutionText;
   final double previewAspectRatio;
   final int? lastKnownPositionMs;
+  final int? localVideoId;
+  final int? localVideoDateModified;
+  final String? webDavAccountId;
   final Map<String, String> httpHeaders;
 
   PlayerQueueItem({
@@ -27,6 +30,9 @@ class PlayerQueueItem {
     this.resolutionText,
     this.previewAspectRatio = kDefaultPreviewAspectRatio,
     this.lastKnownPositionMs,
+    this.localVideoId,
+    this.localVideoDateModified,
+    this.webDavAccountId,
     Map<String, String> httpHeaders = const <String, String>{},
   }) : httpHeaders = Map<String, String>.unmodifiable(httpHeaders);
 

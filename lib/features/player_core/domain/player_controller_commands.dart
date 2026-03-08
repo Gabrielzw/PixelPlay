@@ -25,7 +25,7 @@ extension PlayerControllerCommands on PlayerController {
   }
 
   Future<void> persistProgressBeforeExit() async {
-    await persistCurrentProgress();
+    await persistCurrentPlaybackState();
   }
 
   void toggleLock() {

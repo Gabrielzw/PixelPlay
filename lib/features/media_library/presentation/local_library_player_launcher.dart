@@ -20,6 +20,8 @@ PlayerQueueItem buildLocalVideoPlayerItem(LocalVideo video) {
     resolutionText: _resolveVideoResolutionText(video),
     previewAspectRatio: _resolvePreviewAspectRatio(video),
     lastKnownPositionMs: video.lastPlayPositionMs,
+    localVideoId: video.id,
+    localVideoDateModified: video.dateModified,
   );
 }
 
@@ -29,7 +31,9 @@ Future<void> openLocalVideoPlayer({
 }) {
   return Navigator.of(context, rootNavigator: true).push(
     buildPlayerPageRoute(
-      child: PlayerPage(playlist: <PlayerQueueItem>[buildLocalVideoPlayerItem(video)]),
+      child: PlayerPage(
+        playlist: <PlayerQueueItem>[buildLocalVideoPlayerItem(video)],
+      ),
     ),
   );
 }

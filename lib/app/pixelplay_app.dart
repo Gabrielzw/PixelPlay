@@ -8,6 +8,7 @@ import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
 import '../features/shell/presentation/pixelplay_shell.dart';
 import '../features/thumbnail_engine/domain/thumbnail_queue.dart';
+import '../features/watch_history/domain/watch_history_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_account_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_browser_repository.dart';
 import 'bindings/app_bindings.dart';
@@ -18,6 +19,7 @@ class PixelPlayApp extends StatefulWidget {
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
   final PlaybackPositionRepository playbackPositionRepository;
+  final WatchHistoryRepository watchHistoryRepository;
   final WebDavAccountRepository webDavAccountRepository;
   final WebDavBrowserRepository webDavBrowserRepository;
 
@@ -27,6 +29,7 @@ class PixelPlayApp extends StatefulWidget {
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
     required this.playbackPositionRepository,
+    required this.watchHistoryRepository,
     required this.webDavAccountRepository,
     required this.webDavBrowserRepository,
   });
@@ -46,6 +49,7 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       mediaLibraryRepository: widget.mediaLibraryRepository,
       thumbnailQueue: widget.thumbnailQueue,
       playbackPositionRepository: widget.playbackPositionRepository,
+      watchHistoryRepository: widget.watchHistoryRepository,
       webDavAccountRepository: widget.webDavAccountRepository,
       webDavBrowserRepository: widget.webDavBrowserRepository,
     ).dependencies();

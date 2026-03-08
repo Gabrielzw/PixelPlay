@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/utils/not_implemented.dart';
 import '../local_library_sort_type.dart';
 
 class LocalLibraryAppBar extends StatelessWidget
@@ -13,6 +12,7 @@ class LocalLibraryAppBar extends StatelessWidget
   final VoidCallback onStartSearching;
   final VoidCallback onStopSearching;
   final ValueChanged<LocalLibrarySortType> onSortSelected;
+  final VoidCallback onOpenHistory;
 
   const LocalLibraryAppBar({
     super.key,
@@ -24,6 +24,7 @@ class LocalLibraryAppBar extends StatelessWidget
     required this.onStartSearching,
     required this.onStopSearching,
     required this.onSortSelected,
+    required this.onOpenHistory,
   });
 
   @override
@@ -67,33 +68,34 @@ class LocalLibraryAppBar extends StatelessWidget
           tooltip: '排序',
           icon: const Icon(Icons.sort),
           onSelected: onSortSelected,
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<LocalLibrarySortType>>[
-            _buildSortItem(
-              colorScheme: colorScheme,
-              currentSort: currentSort,
-              sortType: LocalLibrarySortType.latest,
-            ),
-            _buildSortItem(
-              colorScheme: colorScheme,
-              currentSort: currentSort,
-              sortType: LocalLibrarySortType.oldest,
-            ),
-            const PopupMenuDivider(),
-            _buildSortItem(
-              colorScheme: colorScheme,
-              currentSort: currentSort,
-              sortType: LocalLibrarySortType.nameAsc,
-            ),
-            _buildSortItem(
-              colorScheme: colorScheme,
-              currentSort: currentSort,
-              sortType: LocalLibrarySortType.nameDesc,
-            ),
-          ],
+          itemBuilder: (BuildContext context) =>
+              <PopupMenuEntry<LocalLibrarySortType>>[
+                _buildSortItem(
+                  colorScheme: colorScheme,
+                  currentSort: currentSort,
+                  sortType: LocalLibrarySortType.latest,
+                ),
+                _buildSortItem(
+                  colorScheme: colorScheme,
+                  currentSort: currentSort,
+                  sortType: LocalLibrarySortType.oldest,
+                ),
+                const PopupMenuDivider(),
+                _buildSortItem(
+                  colorScheme: colorScheme,
+                  currentSort: currentSort,
+                  sortType: LocalLibrarySortType.nameAsc,
+                ),
+                _buildSortItem(
+                  colorScheme: colorScheme,
+                  currentSort: currentSort,
+                  sortType: LocalLibrarySortType.nameDesc,
+                ),
+              ],
         ),
         IconButton(
-          tooltip: '历史记录',
-          onPressed: () => showNotImplementedSnackBar(context, '历史记录功能尚未接入'),
+          tooltip: '观看记录',
+          onPressed: onOpenHistory,
           icon: const Icon(Icons.history_rounded),
         ),
       ],

@@ -11,6 +11,7 @@ import 'local_library_sort_type.dart';
 import 'widgets/library_album_card.dart';
 import 'widgets/local_library_app_bar.dart';
 import 'widgets/local_library_search_results.dart';
+import '../../watch_history/presentation/watch_history_page.dart';
 
 const double kLibraryPageHorizontalPadding = 22;
 const double kLibraryGridSpacing = 18;
@@ -51,6 +52,7 @@ class _LocalLibraryPageState extends State<LocalLibraryPage> {
         onStartSearching: _startSearching,
         onStopSearching: _stopSearching,
         onSortSelected: _updateSortType,
+        onOpenHistory: _openWatchHistory,
       ),
       body: Obx(
         () => _buildBody(controller: controller, repository: repository),
@@ -103,18 +105,20 @@ class _LocalLibraryPageState extends State<LocalLibraryPage> {
 
     return FutureBuilder<List<LocalVideo>>(
       future: controller.loadSearchableVideos(albums),
-      builder: (BuildContext context, AsyncSnapshot<List<LocalVideo>> snapshot) {
-        return LocalLibrarySearchResults(
-          query: normalizedQuery,
-          albums: sortedAlbums,
-          videos: snapshot.data,
-          videoLoadingError: snapshot.hasError ? snapshot.error : null,
-          isLoadingVideos: snapshot.connectionState != ConnectionState.done &&
-              !snapshot.hasError,
-          sortType: _sortType,
-          repository: repository,
-        );
-      },
+      builder:
+          (BuildContext context, AsyncSnapshot<List<LocalVideo>> snapshot) {
+            return LocalLibrarySearchResults(
+              query: normalizedQuery,
+              albums: sortedAlbums,
+              videos: snapshot.data,
+              videoLoadingError: snapshot.hasError ? snapshot.error : null,
+              isLoadingVideos:
+                  snapshot.connectionState != ConnectionState.done &&
+                  !snapshot.hasError,
+              sortType: _sortType,
+              repository: repository,
+            );
+          },
     );
   }
 
@@ -159,6 +163,12 @@ class _LocalLibraryPageState extends State<LocalLibraryPage> {
     setState(() {
       _sortType = value;
     });
+  }
+
+  Future<void> _openWatchHistory() {
+    return Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const WatchHistoryPage()));
   }
 }
 

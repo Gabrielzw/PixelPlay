@@ -8,6 +8,7 @@ import 'package:pixelplay/features/media_library/presentation/widgets/library_al
 import 'package:pixelplay/features/player_core/data/in_memory_playback_position_repository.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/thumbnail_engine/data/in_memory_thumbnail_queue.dart';
+import 'package:pixelplay/features/watch_history/data/in_memory_watch_history_repository.dart';
 import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_account_repository.dart';
 import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_browser_repository.dart';
 
@@ -17,6 +18,7 @@ PixelPlayApp _buildTestApp() {
     mediaLibraryRepository: const InMemoryMediaLibraryRepository(),
     thumbnailQueue: InMemoryThumbnailQueue(),
     playbackPositionRepository: InMemoryPlaybackPositionRepository(),
+    watchHistoryRepository: InMemoryWatchHistoryRepository(),
     webDavAccountRepository: InMemoryWebDavAccountRepository(),
     webDavBrowserRepository: const InMemoryWebDavBrowserRepository(),
   );
@@ -41,9 +43,23 @@ void main() {
     await tester.pumpWidget(_buildTestApp());
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('历史记录'), findsOneWidget);
+    expect(find.byTooltip('观看记录'), findsOneWidget);
     expect(find.byTooltip('搜索'), findsOneWidget);
     expect(find.byTooltip('排序'), findsOneWidget);
+  });
+
+  testWidgets('opens watch history page from library app bar', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_buildTestApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('观看记录'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('观看记录'), findsOneWidget);
+    expect(find.byTooltip('搜索'), findsOneWidget);
+    expect(find.byTooltip('选项'), findsOneWidget);
   });
 
   testWidgets('search finds album results and video results separately', (

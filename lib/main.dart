@@ -6,6 +6,7 @@ import 'app/pixelplay_app.dart';
 import 'features/media_library/data/android_media_library_repository.dart';
 import 'features/player_core/data/isar_playback_position_repository.dart';
 import 'features/settings/data/isar_settings_repository.dart';
+import 'features/watch_history/data/isar_watch_history_repository.dart';
 import 'features/webdav_client/data/isar_webdav_account_repository.dart';
 import 'features/webdav_client/data/secure_storage_webdav_password_store.dart';
 import 'features/webdav_client/data/webdav_client_browser_repository.dart';
@@ -18,6 +19,7 @@ Future<void> main() async {
   final isar = await openPixelPlayIsar();
   final settingsRepository = IsarSettingsRepository(isar: isar);
   final playbackPositionRepository = IsarPlaybackPositionRepository(isar: isar);
+  final watchHistoryRepository = IsarWatchHistoryRepository(isar: isar);
   final mediaLibraryRepository = AndroidMediaLibraryRepository(isar: isar);
   const secureStorage = FlutterSecureStorage();
   final webDavAccountRepository = IsarWebDavAccountRepository(
@@ -33,6 +35,7 @@ Future<void> main() async {
       settingsRepository: settingsRepository,
       mediaLibraryRepository: mediaLibraryRepository,
       playbackPositionRepository: playbackPositionRepository,
+      watchHistoryRepository: watchHistoryRepository,
       webDavAccountRepository: webDavAccountRepository,
       webDavBrowserRepository: webDavBrowserRepository,
     ),

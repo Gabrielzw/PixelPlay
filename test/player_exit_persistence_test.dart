@@ -11,6 +11,8 @@ import 'package:pixelplay/features/player_core/domain/player_video_metadata.dart
 import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
+import 'package:pixelplay/features/watch_history/data/in_memory_watch_history_repository.dart';
+import 'package:pixelplay/features/watch_history/domain/watch_history_repository.dart';
 
 import 'player_test_device_port.dart';
 
@@ -147,6 +149,7 @@ void main() {
       SettingsController(repository: settingsRepository),
     );
     Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(
@@ -206,5 +209,70 @@ void main() {
 
     expect(find.byType(PlayerPage), findsNothing);
     expect(find.text('open player'), findsOneWidget);
+  });
+
+  testWidgets('player page leaves watch history when exited immediately', (
+    WidgetTester tester,
+  ) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final settingsRepository = InMemorySettingsRepository();
+    final progressRepository = DelayedPlaybackPositionRepository();
+    final historyRepository = InMemoryWatchHistoryRepository();
+    final playbackPort = ControllablePlaybackPort();
+
+    Get.put<SettingsController>(
+      SettingsController(repository: settingsRepository),
+    );
+    Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(historyRepository);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        navigatorKey: navigatorKey,
+        home: Builder(
+          builder: (BuildContext context) {
+            return Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PlayerPage(
+                          playbackPort: playbackPort,
+                          devicePort: TestPlayerDevicePort(),
+                          playlist: <PlayerQueueItem>[
+                            PlayerQueueItem(
+                              id: 'video-history',
+                              title: 'History.mp4',
+                              sourceLabel: '本地 / Camera',
+                              sourceUri: 'test://video-history',
+                              duration: const Duration(minutes: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('open player'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open player'));
+    await tester.pump();
+    await tester.pump();
+
+    await navigatorKey.currentState!.maybePop();
+    await tester.pumpAndSettle();
+
+    final record = await historyRepository.load('video-history');
+    expect(record, isNotNull);
+    expect(record?.title, 'History.mp4');
+    expect(record?.positionMs, 0);
+    expect(record?.durationMs, 600000);
   });
 }

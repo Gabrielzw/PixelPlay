@@ -15,6 +15,7 @@ import '../domain/player_device_port.dart';
 import '../domain/player_playback_port.dart';
 import '../domain/player_queue_item.dart';
 import '../domain/player_screenshot_store_port.dart';
+import '../../watch_history/domain/watch_history_repository.dart';
 import '../../../shared/widgets/pp_toast.dart';
 import 'widgets/player_layout.dart';
 import 'widgets/player_ui_constants.dart';
@@ -78,6 +79,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       PlayerController(
         settingsController: Get.find<SettingsController>(),
         playbackPositionRepository: Get.find<PlaybackPositionRepository>(),
+        watchHistoryRepository: Get.find<WatchHistoryRepository>(),
         playbackPort: _playbackPort,
         devicePort: _devicePort,
         screenshotStore: _screenshotStore,

@@ -11,6 +11,8 @@ import 'package:pixelplay/features/player_core/domain/player_video_metadata.dart
 import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
+import 'package:pixelplay/features/watch_history/data/in_memory_watch_history_repository.dart';
+import 'package:pixelplay/features/watch_history/domain/watch_history_repository.dart';
 
 import 'player_test_device_port.dart';
 
@@ -164,6 +166,7 @@ void main() {
       SettingsController(repository: settingsRepository),
     );
     Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(
@@ -231,6 +234,7 @@ void main() {
       SettingsController(repository: settingsRepository),
     );
     Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(
@@ -281,6 +285,7 @@ void main() {
       SettingsController(repository: settingsRepository),
     );
     Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(
@@ -346,6 +351,7 @@ void main() {
       SettingsController(repository: settingsRepository),
     );
     Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:pixelplay/features/player_core/data/in_memory_playback_position_repository.dart';
 import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
@@ -13,6 +14,8 @@ import 'package:pixelplay/features/player_core/domain/player_video_metadata.dart
 import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
+import 'package:pixelplay/features/watch_history/data/in_memory_watch_history_repository.dart';
+import 'package:pixelplay/features/watch_history/domain/watch_history_repository.dart';
 
 import 'player_test_device_port.dart';
 
@@ -102,9 +105,12 @@ void main() {
       SettingsController(repository: InMemorySettingsRepository()),
     );
     Get.put<PlaybackPositionRepository>(InMemoryPlaybackPositionRepository());
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(
+        navigatorObservers: <NavigatorObserver>[FlutterSmartDialog.observer],
+        builder: FlutterSmartDialog.init(),
         home: PlayerPage(
           playbackPort: playbackPort,
           devicePort: TestPlayerDevicePort(),
@@ -145,5 +151,8 @@ void main() {
 
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
     expect(find.text('截图成功，已保存到 Pictures/PixelPlay'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 200));
   });
 }

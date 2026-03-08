@@ -304,13 +304,14 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     return PlayerQueueItem(
       id: entry.path,
       title: entry.name,
-      sourceLabel: '${widget.account.alias} 路 $_currentPath',
+      sourceLabel: '${widget.account.alias}$_currentPath',
       path: entry.path,
       sourceUri: buildWebDavResourceUrl(
         baseUrl: widget.account.url,
         path: entry.path,
       ).toString(),
       isRemote: true,
+      webDavAccountId: widget.account.id,
       httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
     );
   }

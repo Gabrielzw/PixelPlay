@@ -20,6 +20,8 @@ import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
 import 'package:pixelplay/features/thumbnail_engine/data/in_memory_thumbnail_queue.dart';
+import 'package:pixelplay/features/watch_history/data/in_memory_watch_history_repository.dart';
+import 'package:pixelplay/features/watch_history/domain/watch_history_repository.dart';
 import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_account_repository.dart';
 import 'package:pixelplay/features/webdav_client/data/in_memory_webdav_browser_repository.dart';
 import 'package:pixelplay/shared/utils/media_formatters.dart';
@@ -32,6 +34,7 @@ PixelPlayApp buildTestApp() {
     mediaLibraryRepository: const InMemoryMediaLibraryRepository(),
     thumbnailQueue: InMemoryThumbnailQueue(),
     playbackPositionRepository: InMemoryPlaybackPositionRepository(),
+    watchHistoryRepository: InMemoryWatchHistoryRepository(),
     webDavAccountRepository: InMemoryWebDavAccountRepository(),
     webDavBrowserRepository: const InMemoryWebDavBrowserRepository(),
   );
@@ -270,6 +273,7 @@ void main() {
       SettingsController(repository: settingsRepository),
     );
     Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(
@@ -291,7 +295,7 @@ void main() {
     await tester.pump();
 
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.more_vert_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
     expect(find.textContaining('Anime4K'), findsNothing);
   });
 
@@ -313,6 +317,7 @@ void main() {
       SettingsController(repository: settingsRepository),
     );
     Get.put<PlaybackPositionRepository>(progressRepository);
+    Get.put<WatchHistoryRepository>(InMemoryWatchHistoryRepository());
 
     await tester.pumpWidget(
       GetMaterialApp(

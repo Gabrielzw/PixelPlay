@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../settings/domain/app_settings.dart';
 import '../../settings/domain/settings_controller.dart';
+import '../../watch_history/domain/watch_history_repository.dart';
 import 'playback_position_repository.dart';
 import 'player_device_port.dart';
 import 'player_playback_port.dart';
@@ -36,6 +37,7 @@ class PlayerToastState {
 class PlayerController extends GetxController {
   final SettingsController settingsController;
   final PlaybackPositionRepository playbackPositionRepository;
+  final WatchHistoryRepository watchHistoryRepository;
   final PlayerPlaybackPort playbackPort;
   final PlayerDevicePort devicePort;
   final PlayerScreenshotStorePort screenshotStore;
@@ -86,6 +88,7 @@ class PlayerController extends GetxController {
   PlayerController({
     required this.settingsController,
     required this.playbackPositionRepository,
+    required this.watchHistoryRepository,
     required this.playbackPort,
     required this.devicePort,
     required this.screenshotStore,
@@ -130,12 +133,13 @@ class PlayerController extends GetxController {
       restoreProgress: true,
       autoPlay: appSettings.autoPlayOnEnter,
     );
+    showControls();
     armControlsAutoHide();
   }
 
   @override
   void onClose() {
-    unawaited(persistCurrentProgress());
+    unawaited(persistCurrentPlaybackState());
     unawaited(devicePort.detach());
     _controlsTimer?.cancel();
     _hudTimer?.cancel();

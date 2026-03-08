@@ -182,6 +182,8 @@ class _AlbumPageState extends State<AlbumPage> {
             : resolutionText,
         previewAspectRatio: _resolvePreviewAspectRatio(video),
         lastKnownPositionMs: playbackPositionMs,
+        localVideoId: video.id,
+        localVideoDateModified: video.dateModified,
       ),
     );
   }

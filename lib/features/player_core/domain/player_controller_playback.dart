@@ -76,7 +76,7 @@ extension PlayerControllerPlaybackLogic on PlayerController {
   }
 
   Future<void> switchToIndex(int index) async {
-    await persistCurrentProgress();
+    await persistCurrentPlaybackState();
     _resetPlaybackTracking();
 
     final nextItem = queue[index];
@@ -176,6 +176,42 @@ extension PlayerControllerPlaybackLogic on PlayerController {
     );
   }
 
+  Future<void> persistCurrentPlaybackState() async {
+    final currentPosition = await _resolvePersistablePosition();
+    await _persistWatchHistory(currentPosition);
+    await persistCurrentProgress();
+  }
+
+  Future<void> _persistWatchHistory(Duration currentPosition) async {
+    final item = currentItem.value;
+    final persistedDuration = duration.value > Duration.zero
+        ? duration.value
+        : item.duration;
+    final durationMs = persistedDuration.inMilliseconds;
+    final maxPositionMs = durationMs > 0
+        ? durationMs
+        : currentPosition.inMilliseconds;
+    final positionMs = currentPosition.inMilliseconds
+        .clamp(0, maxPositionMs)
+        .toInt();
+
+    await watchHistoryRepository.save(
+      WatchHistoryRecord(
+        mediaId: item.id,
+        title: item.title,
+        sourceLabel: item.sourceLabel,
+        watchedAtMs: DateTime.now().millisecondsSinceEpoch,
+        positionMs: positionMs,
+        durationMs: durationMs,
+        isRemote: item.isRemote,
+        mediaPath: item.path,
+        localVideoId: item.localVideoId,
+        localVideoDateModified: item.localVideoDateModified,
+        webDavAccountId: item.webDavAccountId,
+      ),
+    );
+  }
+
   Future<Duration> _resolvePersistablePosition() async {
     final currentPosition = _resolvePersistedPosition();
     if (currentPosition > Duration.zero || !_isOpeningCurrentItem) {
@@ -211,10 +247,9 @@ extension PlayerControllerPlaybackLogic on PlayerController {
       return value.isNegative ? Duration.zero : value;
     }
 
-    final clampedMs = value.inMilliseconds.clamp(
-      0,
-      duration.value.inMilliseconds,
-    );
+    final clampedMs = value.inMilliseconds
+        .clamp(0, duration.value.inMilliseconds)
+        .toInt();
     return Duration(milliseconds: clampedMs);
   }
 
