@@ -15,7 +15,6 @@ extension PlayerControllerCommands on PlayerController {
   Future<void> togglePlay() async {
     if (isPlaying.value) {
       await playbackPort.pause();
-      showControls();
       cancelControlsAutoHide();
       return;
     }
@@ -166,7 +165,6 @@ extension PlayerControllerCommands on PlayerController {
   void clearError() {
     errorMessage.value = null;
     isBuffering.value = false;
-    showControls();
   }
 
   Future<void> retryCurrentItem() async {

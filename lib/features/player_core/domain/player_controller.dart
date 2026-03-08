@@ -30,7 +30,7 @@ class PlayerController extends GetxController {
   final List<PlayerQueueItem> queue;
 
   final RxBool isPlaying = true.obs;
-  final RxBool controlsVisible = true.obs;
+  final RxBool controlsVisible = false.obs;
   final RxBool controlsLocked = false.obs;
   final RxBool isBuffering = false.obs;
   final RxBool isCapturingScreenshot = false.obs;
