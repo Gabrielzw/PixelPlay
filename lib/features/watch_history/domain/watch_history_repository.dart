@@ -57,5 +57,7 @@ abstract interface class WatchHistoryRepository {
 
   Future<void> save(WatchHistoryRecord record);
 
+  Future<void> removeAll(Iterable<String> mediaIds);
+
   Future<void> clearAll();
 }

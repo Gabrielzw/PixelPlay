@@ -34,6 +34,29 @@ class IsarWatchHistoryRepository implements WatchHistoryRepository {
   }
 
   @override
+  Future<void> removeAll(Iterable<String> mediaIds) async {
+    final targetIds = mediaIds.toSet();
+    if (targetIds.isEmpty) {
+      return;
+    }
+
+    final storedRecords = await isar.watchHistoryIsarModels.where().findAll();
+    final databaseIds = storedRecords
+        .where(
+          (WatchHistoryIsarModel record) => targetIds.contains(record.mediaId),
+        )
+        .map((WatchHistoryIsarModel record) => record.id)
+        .toList(growable: false);
+    if (databaseIds.isEmpty) {
+      return;
+    }
+
+    await isar.writeTxn(() async {
+      await isar.watchHistoryIsarModels.deleteAll(databaseIds);
+    });
+  }
+
+  @override
   Future<void> save(WatchHistoryRecord record) async {
     final storedRecord = await _findRecord(record.mediaId);
     final nextRecord = WatchHistoryIsarModel.fromDomain(

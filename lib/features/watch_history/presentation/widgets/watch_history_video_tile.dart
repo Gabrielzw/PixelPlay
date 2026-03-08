@@ -30,43 +30,73 @@ class WatchHistoryVideoTileData {
 
 class WatchHistoryVideoTile extends StatelessWidget {
   final WatchHistoryVideoTileData data;
+  final bool selected;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const WatchHistoryVideoTile({
     super.key,
     required this.data,
+    required this.selected,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final decoration = buildMediaLibraryCardDecoration(kAlbumVideoTileRadius)
+        .copyWith(
+          border: selected
+              ? Border.all(color: colorScheme.primary, width: 1.5)
+              : null,
+        );
+    final backgroundColor = selected
+        ? Color.alphaBlend(
+            colorScheme.primary.withValues(alpha: 0.08),
+            colorScheme.surface,
+          )
+        : colorScheme.surface;
 
-    return DecoratedBox(
-      decoration: buildMediaLibraryCardDecoration(kAlbumVideoTileRadius),
-      child: Material(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.all(
-          Radius.circular(kAlbumVideoTileRadius),
-        ),
-        child: InkWell(
-          onTap: onTap,
+    return Semantics(
+      selected: selected,
+      child: DecoratedBox(
+        decoration: decoration,
+        child: Material(
+          color: backgroundColor,
           borderRadius: const BorderRadius.all(
             Radius.circular(kAlbumVideoTileRadius),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(kAlbumVideoTilePadding),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            borderRadius: const BorderRadius.all(
+              Radius.circular(kAlbumVideoTileRadius),
+            ),
+            child: Stack(
               children: <Widget>[
-                AlbumVideoPreview(
-                  durationText: data.durationText,
-                  progressRatio: data.progressRatio,
-                  previewSeed: data.previewSeed,
-                  thumbnailRequest: data.thumbnailRequest,
+                Padding(
+                  padding: const EdgeInsets.all(kAlbumVideoTilePadding),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      AlbumVideoPreview(
+                        durationText: data.durationText,
+                        progressRatio: data.progressRatio,
+                        previewSeed: data.previewSeed,
+                        thumbnailRequest: data.thumbnailRequest,
+                      ),
+                      const SizedBox(width: kAlbumVideoTileGap),
+                      Expanded(child: _WatchHistoryTileInfo(data: data)),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: kAlbumVideoTileGap),
-                Expanded(child: _WatchHistoryTileInfo(data: data)),
+                if (selected)
+                  PositionedDirectional(
+                    top: 10,
+                    end: 10,
+                    child: _SelectedBadge(colorScheme: colorScheme),
+                  ),
               ],
             ),
           ),
@@ -127,6 +157,30 @@ class _WatchHistoryTileInfo extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SelectedBadge extends StatelessWidget {
+  final ColorScheme colorScheme;
+
+  const _SelectedBadge({required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        shape: BoxShape.circle,
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Icon(Icons.check_circle, color: colorScheme.primary, size: 22),
     );
   }
 }
