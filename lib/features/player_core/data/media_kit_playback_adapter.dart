@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -108,6 +110,11 @@ class MediaKitPlaybackAdapter implements PlayerPlaybackPort {
 
   @override
   Future<void> setVolume(double volume) => player.setVolume(volume * 100);
+
+  @override
+  Future<Uint8List?> captureScreenshot() {
+    return player.screenshot(format: 'image/png');
+  }
 
   @override
   Future<void> disposePlayback() => player.dispose();

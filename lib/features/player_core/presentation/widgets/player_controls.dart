@@ -50,6 +50,7 @@ class PlayerControlsOverlay extends StatelessWidget {
       }
 
       final visible = controller.controlsVisible.value;
+      final isCapturingScreenshot = controller.isCapturingScreenshot.value;
       final panelsOpen = showEpisodePanel || showMorePanel;
 
       return Stack(
@@ -91,7 +92,8 @@ class PlayerControlsOverlay extends StatelessWidget {
           Positioned.fill(
             child: _PlayerSideActionsOverlay(
               visible: visible,
-              onScreenshot: controller.showScreenshotUnavailable,
+              isCapturingScreenshot: isCapturingScreenshot,
+              onScreenshot: controller.captureScreenshot,
               onToggleLock: onToggleLock,
             ),
           ),
@@ -126,11 +128,13 @@ class PlayerControlsOverlay extends StatelessWidget {
 
 class _PlayerSideActionsOverlay extends StatelessWidget {
   final bool visible;
+  final bool isCapturingScreenshot;
   final VoidCallback onScreenshot;
   final VoidCallback onToggleLock;
 
   const _PlayerSideActionsOverlay({
     required this.visible,
+    required this.isCapturingScreenshot,
     required this.onScreenshot,
     required this.onToggleLock,
   });
@@ -148,7 +152,10 @@ class _PlayerSideActionsOverlay extends StatelessWidget {
               Expanded(
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: PlayerSideScreenshotButton(onPressed: onScreenshot),
+                  child: PlayerSideScreenshotButton(
+                    isLoading: isCapturingScreenshot,
+                    onPressed: onScreenshot,
+                  ),
                 ),
               ),
               Expanded(

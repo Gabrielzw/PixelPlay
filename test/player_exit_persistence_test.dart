@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -123,6 +124,9 @@ class ControllablePlaybackPort implements PlayerPlaybackPort {
 
   @override
   Future<void> setVolume(double volume) async {}
+
+  @override
+  Future<Uint8List?> captureScreenshot() async => null;
 }
 
 void main() {

@@ -9,6 +9,7 @@ import 'playback_position_repository.dart';
 import 'player_device_port.dart';
 import 'player_playback_port.dart';
 import 'player_queue_item.dart';
+import 'player_screenshot_store_port.dart';
 import 'player_video_metadata.dart';
 
 part 'player_controller_commands.dart';
@@ -17,6 +18,7 @@ part 'player_controller_gestures.dart';
 part 'player_controller_device.dart';
 part 'player_controller_playback.dart';
 part 'player_controller_preferences.dart';
+part 'player_controller_screenshot.dart';
 part 'player_controller_visibility.dart';
 
 class PlayerController extends GetxController {
@@ -24,12 +26,14 @@ class PlayerController extends GetxController {
   final PlaybackPositionRepository playbackPositionRepository;
   final PlayerPlaybackPort playbackPort;
   final PlayerDevicePort devicePort;
+  final PlayerScreenshotStorePort screenshotStore;
   final List<PlayerQueueItem> queue;
 
   final RxBool isPlaying = true.obs;
   final RxBool controlsVisible = true.obs;
   final RxBool controlsLocked = false.obs;
   final RxBool isBuffering = false.obs;
+  final RxBool isCapturingScreenshot = false.obs;
   final RxBool isCharging = false.obs;
   final RxDouble progress = 0.0.obs;
   final RxDouble brightnessLevel = kGestureDefaultLevel.obs;
@@ -40,6 +44,7 @@ class PlayerController extends GetxController {
   final RxString currentTimeText = '--:--'.obs;
   final Rxn<PlayerHudState> hudState = Rxn<PlayerHudState>();
   final RxnString errorMessage = RxnString();
+  final RxnString toastMessage = RxnString();
   final Rx<PlayerNetworkStatus> networkStatus = PlayerNetworkStatus.unknown.obs;
   final Rx<Matrix4> videoTransform = Matrix4.identity().obs;
 
@@ -71,6 +76,7 @@ class PlayerController extends GetxController {
     required this.playbackPositionRepository,
     required this.playbackPort,
     required this.devicePort,
+    required this.screenshotStore,
     required List<PlayerQueueItem> queue,
     int initialIndex = 0,
   }) : queue = List<PlayerQueueItem>.unmodifiable(queue) {

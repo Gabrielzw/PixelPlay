@@ -8,6 +8,7 @@ import 'package:pixelplay/features/player_core/data/in_memory_playback_position_
 import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
 import 'package:pixelplay/features/player_core/domain/player_playback_port.dart';
 import 'package:pixelplay/features/player_core/domain/player_queue_item.dart';
+import 'package:pixelplay/features/player_core/domain/player_screenshot_store_port.dart';
 import 'package:pixelplay/features/player_core/domain/player_video_metadata.dart';
 import 'package:pixelplay/features/player_core/presentation/player_page.dart';
 import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
@@ -15,11 +16,8 @@ import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 
 import 'player_test_device_port.dart';
 
-class OrientationPlaybackPort implements PlayerPlaybackPort {
-  final StreamController<bool> _playingController =
-      StreamController<bool>.broadcast();
-  final StreamController<PlayerVideoMetadata> _videoMetadataController =
-      StreamController<PlayerVideoMetadata>.broadcast();
+class ScreenshotPlaybackPort implements PlayerPlaybackPort {
+  final Uint8List screenshotBytes = Uint8List.fromList(<int>[1, 2, 3]);
 
   @override
   Stream<bool> get bufferingStream => const Stream<bool>.empty();
@@ -34,14 +32,14 @@ class OrientationPlaybackPort implements PlayerPlaybackPort {
   Stream<String> get errorStream => const Stream<String>.empty();
 
   @override
-  Stream<bool> get playingStream => _playingController.stream;
+  Stream<bool> get playingStream => Stream<bool>.value(true);
 
   @override
   Stream<Duration> get positionStream => const Stream<Duration>.empty();
 
   @override
   Stream<PlayerVideoMetadata> get videoMetadataStream =>
-      _videoMetadataController.stream;
+      const Stream<PlayerVideoMetadata>.empty();
 
   @override
   Widget buildVideoView({required BoxFit fit}) {
@@ -49,33 +47,23 @@ class OrientationPlaybackPort implements PlayerPlaybackPort {
   }
 
   @override
-  Future<void> disposePlayback() async {
-    await _playingController.close();
-    await _videoMetadataController.close();
-  }
+  Future<Uint8List?> captureScreenshot() async => screenshotBytes;
 
-  void emitVideoMetadata(PlayerVideoMetadata value) {
-    _videoMetadataController.add(value);
-  }
+  @override
+  Future<void> disposePlayback() async {}
 
   @override
   Future<void> open(
     PlayerQueueItem item, {
     required bool play,
     Duration? startPosition,
-  }) async {
-    _playingController.add(play);
-  }
+  }) async {}
 
   @override
-  Future<void> pause() async {
-    _playingController.add(false);
-  }
+  Future<void> pause() async {}
 
   @override
-  Future<void> play() async {
-    _playingController.add(true);
-  }
+  Future<void> play() async {}
 
   @override
   Future<void> seek(Duration position) async {}
@@ -85,9 +73,19 @@ class OrientationPlaybackPort implements PlayerPlaybackPort {
 
   @override
   Future<void> setVolume(double volume) async {}
+}
+
+class FakePlayerScreenshotStore implements PlayerScreenshotStorePort {
+  final Completer<String> completer = Completer<String>();
+  Uint8List? savedBytes;
+  int saveCallCount = 0;
 
   @override
-  Future<Uint8List?> captureScreenshot() async => null;
+  Future<String> saveScreenshot(Uint8List bytes) {
+    saveCallCount += 1;
+    savedBytes = bytes;
+    return completer.future;
+  }
 }
 
 void main() {
@@ -96,11 +94,9 @@ void main() {
     Get.reset();
   });
 
-  testWidgets('player locks orientation from rotated video metadata', (
-    WidgetTester tester,
-  ) async {
-    final playbackPort = OrientationPlaybackPort();
-    final devicePort = TestPlayerDevicePort();
+  testWidgets('截图进行中显示加载动画并在完成后提示成功', (WidgetTester tester) async {
+    final playbackPort = ScreenshotPlaybackPort();
+    final screenshotStore = FakePlayerScreenshotStore();
 
     Get.put<SettingsController>(
       SettingsController(repository: InMemorySettingsRepository()),
@@ -111,13 +107,14 @@ void main() {
       GetMaterialApp(
         home: PlayerPage(
           playbackPort: playbackPort,
-          devicePort: devicePort,
+          devicePort: TestPlayerDevicePort(),
+          screenshotStore: screenshotStore,
           playlist: <PlayerQueueItem>[
             PlayerQueueItem(
-              id: 'video-rotation',
-              title: 'Rotation Video.mp4',
+              id: 'video-screenshot',
+              title: 'Screenshot Video.mp4',
               sourceLabel: 'WebDAV / Test',
-              sourceUri: 'test://video-rotation',
+              sourceUri: 'test://video-screenshot',
             ),
           ],
         ),
@@ -125,22 +122,28 @@ void main() {
     );
 
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.photo_camera_outlined));
     await tester.pump();
 
-    expect(devicePort.playbackOrientation, PlayerVideoOrientation.unknown);
-
-    playbackPort.emitVideoMetadata(
-      const PlayerVideoMetadata(width: 1920, height: 1080, rotationDegrees: 90),
+    expect(screenshotStore.saveCallCount, 1);
+    expect(screenshotStore.savedBytes, playbackPort.screenshotBytes);
+    expect(find.byIcon(Icons.photo_camera_outlined), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (Widget widget) => widget.runtimeType.toString() == 'ThreeArchedCircle',
+      ),
+      findsOneWidget,
     );
+
+    screenshotStore.completer.complete('content://pixelplay/screenshot/1');
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
 
-    expect(devicePort.playbackOrientation, PlayerVideoOrientation.portrait);
-
-    playbackPort.emitVideoMetadata(
-      const PlayerVideoMetadata(width: 1080, height: 1920, rotationDegrees: 90),
-    );
-    await tester.pump();
-
-    expect(devicePort.playbackOrientation, PlayerVideoOrientation.landscape);
+    expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
+    expect(find.text('截图成功，已保存到 Pictures/PixelPlay'), findsOneWidget);
   });
 }

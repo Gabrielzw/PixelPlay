@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import '../../domain/player_controller.dart';
 import 'player_device_status_strip.dart';
@@ -16,6 +17,7 @@ const double _kTopBarActionSpacing = 6;
 const double kPlayerSideActionHorizontalPadding = 12;
 const double _kSideActionBackgroundOpacity = 0.42;
 const double _kSideActionBorderRadius = 20;
+const double _kSideActionLoadingSize = 22;
 
 class PlayerControlActions extends StatelessWidget {
   final PlayerController controller;
@@ -190,28 +192,38 @@ class PlayerSideSafeArea extends StatelessWidget {
 }
 
 class PlayerSideScreenshotButton extends StatelessWidget {
+  final bool isLoading;
   final VoidCallback onPressed;
 
-  const PlayerSideScreenshotButton({super.key, required this.onPressed});
+  const PlayerSideScreenshotButton({
+    super.key,
+    required this.isLoading,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return _PlayerSideActionButton(
       tooltip: '\u622a\u56fe',
-      icon: Icons.photo_camera_outlined,
-      onPressed: onPressed,
+      onPressed: isLoading ? null : onPressed,
+      child: isLoading
+          ? LoadingAnimationWidget.threeArchedCircle(
+              color: Theme.of(context).colorScheme.primary,
+              size: _kSideActionLoadingSize,
+            )
+          : const Icon(Icons.photo_camera_outlined),
     );
   }
 }
 
 class _PlayerSideActionButton extends StatelessWidget {
   final String tooltip;
-  final IconData icon;
-  final VoidCallback onPressed;
+  final Widget child;
+  final VoidCallback? onPressed;
 
   const _PlayerSideActionButton({
     required this.tooltip,
-    required this.icon,
+    required this.child,
     required this.onPressed,
   });
 
@@ -227,7 +239,7 @@ class _PlayerSideActionButton extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: Icon(icon),
+        icon: child,
         color: Colors.white,
       ),
     );
@@ -248,8 +260,8 @@ class PlayerSideLockButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return _PlayerSideActionButton(
       tooltip: isLocked ? '\u89e3\u9501' : '\u9501\u5b9a',
-      icon: isLocked ? Icons.lock_rounded : Icons.lock_open_rounded,
       onPressed: onPressed,
+      child: Icon(isLocked ? Icons.lock_rounded : Icons.lock_open_rounded),
     );
   }
 }

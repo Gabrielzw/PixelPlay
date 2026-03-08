@@ -3,16 +3,21 @@ package media.gabriel.pixelplay
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import media.gabriel.pixelplay.mediastore.MediaStoreAlbumsApiImpl
+import media.gabriel.pixelplay.mediastore.PlayerScreenshotStoreMethodCallHandler
 import media.gabriel.pixelplay.pigeon.MediaStoreAlbumsApi
 
 class MainActivity : FlutterActivity() {
   private var mediaStoreAlbumsApiImpl: MediaStoreAlbumsApiImpl? = null
+  private var playerScreenshotStoreHandler: PlayerScreenshotStoreMethodCallHandler? = null
 
   override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
     super.configureFlutterEngine(flutterEngine)
     val apiImpl = MediaStoreAlbumsApiImpl(activity = this)
     mediaStoreAlbumsApiImpl = apiImpl
     MediaStoreAlbumsApi.setUp(flutterEngine.dartExecutor.binaryMessenger, apiImpl)
+    val screenshotHandler = PlayerScreenshotStoreMethodCallHandler(activity = this)
+    playerScreenshotStoreHandler = screenshotHandler
+    screenshotHandler.bind(flutterEngine.dartExecutor.binaryMessenger)
   }
 
   override fun onRequestPermissionsResult(
@@ -21,6 +26,10 @@ class MainActivity : FlutterActivity() {
     grantResults: IntArray,
   ) {
     mediaStoreAlbumsApiImpl?.onRequestPermissionsResult(requestCode, grantResults)
+    playerScreenshotStoreHandler?.onRequestPermissionsResult(
+      requestCode,
+      grantResults,
+    )
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
   }
 }

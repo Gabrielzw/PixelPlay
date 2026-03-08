@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 
 import '../../settings/domain/settings_controller.dart';
 import '../data/media_kit_playback_adapter.dart';
+import '../data/method_channel_player_screenshot_store.dart';
 import '../data/player_device_adapter.dart';
 import '../../settings/presentation/player_settings_page.dart';
 import '../domain/playback_position_repository.dart';
@@ -13,6 +14,7 @@ import '../domain/player_controller.dart';
 import '../domain/player_device_port.dart';
 import '../domain/player_playback_port.dart';
 import '../domain/player_queue_item.dart';
+import '../domain/player_screenshot_store_port.dart';
 import 'widgets/player_layout.dart';
 import 'widgets/player_ui_constants.dart';
 
@@ -34,6 +36,7 @@ class PlayerPage extends StatefulWidget {
   final int initialIndex;
   final PlayerPlaybackPort? playbackPort;
   final PlayerDevicePort? devicePort;
+  final PlayerScreenshotStorePort? screenshotStore;
 
   const PlayerPage({
     super.key,
@@ -41,6 +44,7 @@ class PlayerPage extends StatefulWidget {
     this.initialIndex = 0,
     this.playbackPort,
     this.devicePort,
+    this.screenshotStore,
   });
 
   @override
@@ -51,7 +55,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   late final String _controllerTag;
   late final PlayerPlaybackPort _playbackPort;
   late final PlayerDevicePort _devicePort;
+  late final PlayerScreenshotStorePort _screenshotStore;
   late final PlayerController _controller;
+  Worker? _toastWorker;
   Future<void>? _persistProgressTask;
   bool _showEpisodePanel = false;
   bool _showMorePanel = false;
@@ -65,23 +71,28 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     _controllerTag = 'player_${identityHashCode(this)}';
     _playbackPort = widget.playbackPort ?? MediaKitPlaybackAdapter();
     _devicePort = widget.devicePort ?? PlayerDeviceAdapter();
+    _screenshotStore =
+        widget.screenshotStore ?? MethodChannelPlayerScreenshotStore();
     _controller = Get.put<PlayerController>(
       PlayerController(
         settingsController: Get.find<SettingsController>(),
         playbackPositionRepository: Get.find<PlaybackPositionRepository>(),
         playbackPort: _playbackPort,
         devicePort: _devicePort,
+        screenshotStore: _screenshotStore,
         queue: widget.playlist,
         initialIndex: widget.initialIndex,
       ),
       tag: _controllerTag,
     );
+    _toastWorker = ever<String?>(_controller.toastMessage, _handleToastMessage);
     _enterImmersiveMode();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _toastWorker?.dispose();
     Get.delete<PlayerController>(tag: _controllerTag, force: true);
     _playbackPort.disposePlayback();
     _restoreSystemUi();
@@ -246,5 +257,16 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   void _toggleVerticalFlip() {
     setState(() => _flipVertical = !_flipVertical);
+  }
+
+  void _handleToastMessage(String? message) {
+    if (!mounted || message == null || message.isEmpty) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+    _controller.clearToastMessage();
   }
 }

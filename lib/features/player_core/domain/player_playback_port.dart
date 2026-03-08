@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 
 import 'player_video_metadata.dart';
@@ -35,6 +37,8 @@ abstract interface class PlayerPlaybackPort {
   Future<void> setPlaybackSpeed(double speed);
 
   Future<void> setVolume(double volume);
+
+  Future<Uint8List?> captureScreenshot();
 
   Future<void> disposePlayback();
 }
