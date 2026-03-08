@@ -15,6 +15,7 @@ import '../domain/player_device_port.dart';
 import '../domain/player_playback_port.dart';
 import '../domain/player_queue_item.dart';
 import '../domain/player_screenshot_store_port.dart';
+import '../../../shared/widgets/pp_toast.dart';
 import 'widgets/player_layout.dart';
 import 'widgets/player_ui_constants.dart';
 
@@ -85,7 +86,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       ),
       tag: _controllerTag,
     );
-    _toastWorker = ever<String?>(_controller.toastMessage, _handleToastMessage);
+    _toastWorker = ever<PlayerToastState?>(
+      _controller.toastMessage,
+      _handleToastMessage,
+    );
     _enterImmersiveMode();
   }
 
@@ -259,14 +263,21 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     setState(() => _flipVertical = !_flipVertical);
   }
 
-  void _handleToastMessage(String? message) {
-    if (!mounted || message == null || message.isEmpty) {
+  void _handleToastMessage(PlayerToastState? toast) {
+    if (!mounted || toast == null || toast.message.isEmpty) {
       return;
     }
 
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    switch (toast.kind) {
+      case PlayerToastKind.neutral:
+        PPToast.show(toast.message);
+      case PlayerToastKind.success:
+        PPToast.success(toast.message);
+      case PlayerToastKind.error:
+        PPToast.error(toast.message);
+      case PlayerToastKind.warning:
+        PPToast.warning(toast.message);
+    }
     _controller.clearToastMessage();
   }
 }

@@ -86,17 +86,12 @@ extension PlayerControllerPlaybackLogic on PlayerController {
     clearError();
     applyPosition(Duration.zero);
     showControls();
-    await openCurrentItem(
-      restoreProgress: true,
-      showRestoreMessage: true,
-      autoPlay: true,
-    );
+    await openCurrentItem(restoreProgress: true, autoPlay: true);
     armControlsAutoHide();
   }
 
   Future<void> openCurrentItem({
     required bool restoreProgress,
-    required bool showRestoreMessage,
     required bool autoPlay,
   }) async {
     final item = currentItem.value;
@@ -125,10 +120,7 @@ extension PlayerControllerPlaybackLogic on PlayerController {
       );
       await _syncPlaybackPreferences();
       if (restoredPosition != null) {
-        _applyRestoredProgress(
-          restoredPosition: restoredPosition,
-          showMessage: showRestoreMessage,
-        );
+        _applyRestoredProgress(restoredPosition: restoredPosition);
       }
       if (!autoPlay) {
         return;
@@ -153,19 +145,13 @@ extension PlayerControllerPlaybackLogic on PlayerController {
     return Duration(milliseconds: restoredPositionMs);
   }
 
-  void _applyRestoredProgress({
-    required Duration restoredPosition,
-    required bool showMessage,
-  }) {
+  void _applyRestoredProgress({required Duration restoredPosition}) {
     final clampedRestorePosition = _clampToDuration(restoredPosition);
     _pendingRestorePosition = clampedRestorePosition;
     applyPosition(clampedRestorePosition);
     _latestObservedPosition = clampedRestorePosition;
     _lastPositionSyncAt = DateTime.now();
     _lastSyncedPosition = clampedRestorePosition;
-    if (showMessage) {
-      showInfoHud('已恢复播放进度');
-    }
   }
 
   Future<void> persistCurrentProgress() async {

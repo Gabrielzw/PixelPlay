@@ -398,6 +398,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.1.0"
+  flutter_smart_dialog:
+    dependency: "direct main"
+    description:
+      name: flutter_smart_dialog
+      sha256: "72762b20c25f8e12d490332004c9cca327f39dfc1fcba66124c6b7c108b68850"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "4.9.8+10"
   flutter_test:
     dependency: "direct dev"
     description: flutter

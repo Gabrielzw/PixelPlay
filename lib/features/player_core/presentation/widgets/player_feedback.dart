@@ -5,6 +5,12 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../domain/player_controller.dart';
 import 'player_ui_constants.dart';
 
+const double _kHudHorizontalMargin = 16;
+const double _kHudHorizontalPadding = 14;
+const double _kHudVerticalPadding = 10;
+const double _kHudIconSize = 16;
+const double _kHudIconSpacing = 8;
+const double _kHudTextMaxWidth = 240;
 const double _kBufferingOverlayOpacity = 0.58;
 const double _kBufferingOverlayRadius = 18;
 const double _kBufferingOverlayPadding = 20;
@@ -74,30 +80,62 @@ class _HudOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: state.alignment,
+      alignment: _resolveHudAlignment(state),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        margin: const EdgeInsets.symmetric(horizontal: _kHudHorizontalMargin),
+        padding: const EdgeInsets.symmetric(
+          horizontal: _kHudHorizontalPadding,
+          vertical: _kHudVerticalPadding,
+        ),
         decoration: BoxDecoration(
           color: applyOpacity(Colors.black, 0.7),
           borderRadius: const BorderRadius.all(Radius.circular(999)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(_resolveHudIcon(state.kind), color: Colors.white, size: 18),
-            const SizedBox(width: 10),
-            Text(
-              state.primaryText,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _kHudTextMaxWidth),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                _resolveHudIcon(state.kind),
                 color: Colors.white,
-                fontWeight: FontWeight.w700,
+                size: _kHudIconSize,
               ),
-            ),
-          ],
+              const SizedBox(width: _kHudIconSpacing),
+              Flexible(
+                child: Text(
+                  state.primaryText,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Alignment _resolveHudAlignment(PlayerHudState state) {
+    return switch (state.kind) {
+      PlayerHudKind.brightness => const Alignment(
+        0,
+        kPlayerInteractionHudAlignmentY,
+      ),
+      PlayerHudKind.volume => const Alignment(
+        0,
+        kPlayerInteractionHudAlignmentY,
+      ),
+      PlayerHudKind.seek => const Alignment(0, kPlayerInteractionHudAlignmentY),
+      PlayerHudKind.speed => const Alignment(
+        0,
+        kPlayerInteractionHudAlignmentY,
+      ),
+      PlayerHudKind.info => state.alignment,
+    };
   }
 
   IconData _resolveHudIcon(PlayerHudKind kind) {

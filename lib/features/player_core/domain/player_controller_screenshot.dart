@@ -22,7 +22,10 @@ extension PlayerControllerScreenshot on PlayerController {
       }
 
       await screenshotStore.saveScreenshot(screenshotBytes);
-      toastMessage.value = kPlayerScreenshotSuccessMessage;
+      toastMessage.value = const PlayerToastState(
+        message: kPlayerScreenshotSuccessMessage,
+        kind: PlayerToastKind.success,
+      );
     } catch (error) {
       showInfoHud(_formatScreenshotError(error));
     } finally {

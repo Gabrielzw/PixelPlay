@@ -21,6 +21,18 @@ part 'player_controller_preferences.dart';
 part 'player_controller_screenshot.dart';
 part 'player_controller_visibility.dart';
 
+enum PlayerToastKind { neutral, success, error, warning }
+
+class PlayerToastState {
+  final String message;
+  final PlayerToastKind kind;
+
+  const PlayerToastState({
+    required this.message,
+    this.kind = PlayerToastKind.neutral,
+  });
+}
+
 class PlayerController extends GetxController {
   final SettingsController settingsController;
   final PlaybackPositionRepository playbackPositionRepository;
@@ -44,7 +56,7 @@ class PlayerController extends GetxController {
   final RxString currentTimeText = '--:--'.obs;
   final Rxn<PlayerHudState> hudState = Rxn<PlayerHudState>();
   final RxnString errorMessage = RxnString();
-  final RxnString toastMessage = RxnString();
+  final Rxn<PlayerToastState> toastMessage = Rxn<PlayerToastState>();
   final Rx<PlayerNetworkStatus> networkStatus = PlayerNetworkStatus.unknown.obs;
   final Rx<Matrix4> videoTransform = Matrix4.identity().obs;
 
@@ -116,7 +128,6 @@ class PlayerController extends GetxController {
     await _syncPlaybackPreferences();
     await openCurrentItem(
       restoreProgress: true,
-      showRestoreMessage: true,
       autoPlay: appSettings.autoPlayOnEnter,
     );
     armControlsAutoHide();

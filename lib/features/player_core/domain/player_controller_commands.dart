@@ -83,7 +83,7 @@ extension PlayerControllerCommands on PlayerController {
     playbackSpeed.value = speed;
     await playbackPort.setPlaybackSpeed(speed);
     await settingsController.setDefaultPlaybackSpeed(speed);
-    showInfoHud('播放速度 ${speed}x');
+    showSpeedHud('播放速度 ${speed}x');
     armControlsAutoHide();
   }
 
@@ -169,11 +169,7 @@ extension PlayerControllerCommands on PlayerController {
 
   Future<void> retryCurrentItem() async {
     clearError();
-    await openCurrentItem(
-      restoreProgress: true,
-      showRestoreMessage: false,
-      autoPlay: true,
-    );
+    await openCurrentItem(restoreProgress: true, autoPlay: true);
   }
 
   void beginSurfaceGesture({

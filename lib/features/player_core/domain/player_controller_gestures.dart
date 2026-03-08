@@ -213,6 +213,11 @@ extension _PlayerGestureLogic on PlayerController {
     scheduleHudHide();
   }
 
+  void showSpeedHud(String message) {
+    showHud(PlayerHudState(kind: PlayerHudKind.speed, primaryText: message));
+    scheduleHudHide();
+  }
+
   void scheduleHudHide() {
     _hudTimer?.cancel();
     _hudTimer = Timer(kGestureHudHideDelay, () => hudState.value = null);

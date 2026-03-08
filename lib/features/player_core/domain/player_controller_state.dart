@@ -8,6 +8,7 @@ const Duration kGestureHudHideDelay = Duration(seconds: 1);
 const Duration kProgressSaveDebounce = Duration(milliseconds: 400);
 const Duration kPlaybackPositionSyncInterval = Duration(milliseconds: 250);
 const Duration kPlaybackPositionJumpThreshold = Duration(seconds: 1);
+const double kPlayerInteractionHudAlignmentY = -0.6;
 
 const String kPlayerDecodeErrorMessage = '视频解码失败，格式可能不受支持。';
 const String kPlayerNetworkErrorMessage = '网络连接异常，请检查网络或 WebDAV 服务状态。';

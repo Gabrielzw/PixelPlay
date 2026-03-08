@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 import '../features/media_library/domain/contracts/media_library_repository.dart';
@@ -59,24 +60,27 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       home: const PixelPlayShell(),
-      builder: (BuildContext context, Widget? child) {
-        return Obx(() {
-          final settings = _settingsController.settings.value;
-          final brightness = _resolveBrightness(
-            context: context,
-            themeMode: settings.themeMode,
-          );
-          final theme = brightness == Brightness.dark
-              ? AppTheme.dark(seedColor: settings.seedColor)
-              : AppTheme.light(seedColor: settings.seedColor);
+      navigatorObservers: <NavigatorObserver>[FlutterSmartDialog.observer],
+      builder: FlutterSmartDialog.init(
+        builder: (BuildContext context, Widget? child) {
+          return Obx(() {
+            final settings = _settingsController.settings.value;
+            final brightness = _resolveBrightness(
+              context: context,
+              themeMode: settings.themeMode,
+            );
+            final theme = brightness == Brightness.dark
+                ? AppTheme.dark(seedColor: settings.seedColor)
+                : AppTheme.light(seedColor: settings.seedColor);
 
-          return AnimatedTheme(
-            data: theme,
-            duration: const Duration(milliseconds: kThemeAnimationDurationMs),
-            child: child ?? const SizedBox.shrink(),
-          );
-        });
-      },
+            return AnimatedTheme(
+              data: theme,
+              duration: const Duration(milliseconds: kThemeAnimationDurationMs),
+              child: child ?? const SizedBox.shrink(),
+            );
+          });
+        },
+      ),
     );
   }
 
