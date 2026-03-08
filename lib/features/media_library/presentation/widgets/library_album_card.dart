@@ -15,7 +15,6 @@ const double kLibraryAlbumShapeOpacity = 0.28;
 class LibraryAlbumPreview {
   final String title;
   final String subtitle;
-  final IconData icon;
   final Color startColor;
   final Color endColor;
   final VideoThumbnailRequest? thumbnailRequest;
@@ -23,7 +22,6 @@ class LibraryAlbumPreview {
   const LibraryAlbumPreview({
     required this.title,
     required this.subtitle,
-    required this.icon,
     required this.startColor,
     required this.endColor,
     this.thumbnailRequest,
@@ -150,23 +148,6 @@ class _LibraryAlbumCover extends StatelessWidget {
               ),
             ),
             Positioned.fill(child: _AlbumCoverThumbnail(album: album)),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(album.icon, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
           ],
         ),
       ),
