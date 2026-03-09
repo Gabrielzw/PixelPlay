@@ -67,7 +67,7 @@ class WebDavAccountsPage extends GetView<WebDavAccountsController> {
       return;
     }
 
-    PPToast.success(account == null ? '已添加 WebDAV 账户。' : '已更新 WebDAV 账户。');
+    PPToast.success(account == null ? '已添加 WebDAV 账户' : '已更新 WebDAV 账户');
   }
 
   void _openBrowser(BuildContext context, WebDavServerConfig account) {
@@ -106,16 +106,12 @@ class WebDavAccountsPage extends GetView<WebDavAccountsController> {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('已删除 WebDAV 账户。')));
+      PPToast.success('已删除 WebDAV 账户');
     } catch (error) {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_formatError(error))));
+      PPToast.error(error.toString());
     }
   }
 }
