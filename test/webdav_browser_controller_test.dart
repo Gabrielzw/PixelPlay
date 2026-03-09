@@ -83,4 +83,30 @@ void main() {
 
     expect(restoredController.state.value.sortOption, WebDavSortOption.newest);
   });
+
+  test('allows credential-free accounts to initialize', () async {
+    final accountRepository = InMemoryWebDavAccountRepository();
+    final sortPreferenceStore = InMemoryWebDavSortPreferenceStore();
+    final account = WebDavServerConfig(
+      id: 'webdav-3',
+      alias: '公开目录',
+      url: Uri.parse('https://example.com/dav/'),
+      username: '',
+      rootPath: '/',
+    );
+    await accountRepository.saveAccount(account, password: '');
+
+    final controller = WebDavBrowserController(
+      browserRepository: const InMemoryWebDavBrowserRepository(
+        entriesByPath: <String, List<WebDavEntry>>{'/': <WebDavEntry>[]},
+      ),
+      accountRepository: accountRepository,
+      sortPreferenceStore: sortPreferenceStore,
+      account: account,
+    );
+    await controller.initialize();
+
+    expect(controller.state.value.error, isNull);
+    expect(controller.state.value.isLoading, isFalse);
+  });
 }

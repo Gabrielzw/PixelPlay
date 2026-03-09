@@ -157,15 +157,11 @@ class WebDavBrowserController extends GetxController {
 
   Future<String> requirePassword() async {
     final cachedPassword = _password;
-    if (cachedPassword != null && cachedPassword.isNotEmpty) {
+    if (cachedPassword != null) {
       return cachedPassword;
     }
 
-    final password = await accountRepository.loadPassword(account.id);
-    if (password == null || password.isEmpty) {
-      throw StateError('未找到该 WebDAV 账户的密码，请重新编辑并保存。');
-    }
-
+    final password = await accountRepository.loadPassword(account.id) ?? '';
     _password = password;
     return password;
   }

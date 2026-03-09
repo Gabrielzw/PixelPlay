@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../../shared/domain/media_source_kind.dart';
@@ -8,6 +6,7 @@ import '../../../shared/utils/not_implemented.dart';
 import '../../player_core/domain/player_queue_item.dart';
 import '../../player_core/presentation/player_page.dart';
 import '../../webdav_client/domain/contracts/webdav_account_repository.dart';
+import '../../webdav_client/domain/webdav_auth_headers.dart';
 import '../../webdav_client/domain/webdav_server_config.dart';
 import 'favorite_models.dart';
 
@@ -149,19 +148,13 @@ class _FavoritePlayerItemBuilder {
     }
 
     final account = await _loadWebDavAccount(accountId);
-    final password = await _loadPassword(accountId);
-    if (password == null || password.isEmpty) {
-      throw StateError('未找到该 WebDAV 账号的密码，请重新保存账号后再试。');
-    }
+    final password = await _loadPassword(accountId) ?? '';
 
     final sourceUri = video.sourceUri;
     if (sourceUri == null || sourceUri.trim().isEmpty) {
       throw StateError('WebDAV 收藏视频缺少播放地址，无法播放。');
     }
 
-    final authorization = base64Encode(
-      utf8.encode('${account.username}:$password'),
-    );
     return PlayerQueueItem(
       id: video.id,
       title: video.title,
@@ -177,7 +170,7 @@ class _FavoritePlayerItemBuilder {
       localVideoId: video.resolvedLocalVideoId,
       localVideoDateModified: video.resolvedLocalVideoDateModified,
       webDavAccountId: account.id,
-      httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
+      httpHeaders: buildWebDavAuthHeaders(account: account, password: password),
     );
   }
 

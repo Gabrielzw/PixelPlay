@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../../shared/domain/media_source_kind.dart';
@@ -7,6 +5,7 @@ import '../../../shared/utils/not_implemented.dart';
 import '../../player_core/domain/player_queue_item.dart';
 import '../../player_core/presentation/player_page.dart';
 import '../../webdav_client/domain/contracts/webdav_account_repository.dart';
+import '../../webdav_client/domain/webdav_auth_headers.dart';
 import '../../webdav_client/domain/webdav_paths.dart';
 import '../../webdav_client/domain/webdav_server_config.dart';
 import '../domain/watch_history_repository.dart';
@@ -94,16 +93,7 @@ Future<PlayerQueueItem> _buildWebDavPlayerItem(
   }
 
   final account = await _loadWebDavAccount(repository, accountId);
-  final password = await repository.loadPassword(account.id);
-  if (password == null || password.isEmpty) {
-    throw StateError(
-      '\u672a\u627e\u5230\u8be5 WebDAV \u8d26\u53f7\u7684\u5bc6\u7801\uff0c\u8bf7\u91cd\u65b0\u4fdd\u5b58\u8d26\u53f7\u540e\u518d\u8bd5\u3002',
-    );
-  }
-
-  final authorization = base64Encode(
-    utf8.encode('${account.username}:$password'),
-  );
+  final password = await repository.loadPassword(account.id) ?? '';
 
   return PlayerQueueItem(
     id: record.mediaId,
@@ -118,7 +108,7 @@ Future<PlayerQueueItem> _buildWebDavPlayerItem(
     sourceKind: MediaSourceKind.webDav,
     lastKnownPositionMs: record.positionMs,
     webDavAccountId: account.id,
-    httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
+    httpHeaders: buildWebDavAuthHeaders(account: account, password: password),
   );
 }
 

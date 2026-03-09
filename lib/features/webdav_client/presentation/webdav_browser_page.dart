@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,6 +8,7 @@ import '../domain/contracts/webdav_account_repository.dart';
 import '../domain/contracts/webdav_browser_repository.dart';
 import '../domain/contracts/webdav_sort_preference_store.dart';
 import '../domain/entities/webdav_entry.dart';
+import '../domain/webdav_auth_headers.dart';
 import '../domain/webdav_paths.dart';
 import '../domain/webdav_server_config.dart';
 import '../domain/webdav_sort_option.dart';
@@ -264,9 +263,6 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     required String password,
     required String currentPath,
   }) {
-    final authorization = base64Encode(
-      utf8.encode('${widget.account.username}:$password'),
-    );
     return PlayerQueueItem(
       id: entry.path,
       title: entry.name,
@@ -278,7 +274,10 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       ).toString(),
       isRemote: true,
       webDavAccountId: widget.account.id,
-      httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
+      httpHeaders: buildWebDavAuthHeaders(
+        account: widget.account,
+        password: password,
+      ),
     );
   }
 }
