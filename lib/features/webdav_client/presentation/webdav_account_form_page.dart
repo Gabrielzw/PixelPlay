@@ -112,11 +112,6 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: 8),
-            Text(
-              '目录直接取自你填写的链接路径，例如 /dav；密码使用系统安全存储保存。',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
           ],
         ),
       ),
