@@ -17,7 +17,7 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
   final VoidCallback onStartSearching;
   final VoidCallback onStopSearching;
   final ValueChanged<FavoriteFolderVideoSortType> onSortSelected;
-  final VoidCallback onMorePressed;
+  final VoidCallback onEditInfoPressed;
 
   const FavoriteFolderDetailAppBar({
     super.key,
@@ -34,7 +34,7 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
     required this.onStartSearching,
     required this.onStopSearching,
     required this.onSortSelected,
-    required this.onMorePressed,
+    required this.onEditInfoPressed,
   });
 
   @override
@@ -115,10 +115,23 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
               .toList(growable: false);
         },
       ),
-      IconButton(
+      PopupMenuButton<_FavoriteFolderDetailMenuAction>(
         tooltip: '\u66f4\u591a',
-        onPressed: onMorePressed,
+        onSelected: (_FavoriteFolderDetailMenuAction action) {
+          switch (action) {
+            case _FavoriteFolderDetailMenuAction.editInfo:
+              onEditInfoPressed();
+          }
+        },
         icon: const Icon(Icons.more_vert_rounded),
+        itemBuilder: (BuildContext context) {
+          return const <PopupMenuEntry<_FavoriteFolderDetailMenuAction>>[
+            PopupMenuItem<_FavoriteFolderDetailMenuAction>(
+              value: _FavoriteFolderDetailMenuAction.editInfo,
+              child: Text('\u7f16\u8f91\u4fe1\u606f'),
+            ),
+          ];
+        },
       ),
     ];
   }
@@ -154,3 +167,5 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
     );
   }
 }
+
+enum _FavoriteFolderDetailMenuAction { editInfo }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:pixelplay/features/favorites/data/in_memory_favorites_repository.dart';
+import 'package:pixelplay/features/favorites/presentation/controllers/favorites_controller.dart';
 import 'package:pixelplay/features/favorites/presentation/favorite_models.dart';
 import 'package:pixelplay/features/favorites/presentation/favorites_page.dart';
 import 'package:pixelplay/features/favorites/presentation/widgets/favorite_folder_card.dart';
@@ -162,6 +164,49 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Gamma'), findsNothing);
+  });
+
+  testWidgets('favorite folder detail edits folder name from more menu', (
+    WidgetTester tester,
+  ) async {
+    final favoritesController = FavoritesController(
+      repository: InMemoryFavoritesRepository(
+        initialFolders: _buildSortFolders(),
+      ),
+    );
+    favoritesController.refreshFolders();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FavoritesPage(favoritesController: favoritesController),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Gamma'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('\u66f4\u591a'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('\u7f16\u8f91\u4fe1\u606f'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('\u7f16\u8f91\u6536\u85cf\u5939'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField), 'Gamma Prime');
+    await tester.tap(find.text('\u4fdd\u5b58'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gamma Prime'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('\u8fd4\u56de'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gamma Prime'), findsOneWidget);
+    expect(
+      favoritesController.folderById('gamma-folder')?.title,
+      'Gamma Prime',
+    );
   });
 
   testWidgets('default folder cannot enter selection mode', (

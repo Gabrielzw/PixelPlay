@@ -5,6 +5,11 @@ abstract interface class FavoritesRepository {
 
   FavoriteFolderEntry createFolder({required String title, DateTime? now});
 
+  FavoriteFolderEntry renameFolder({
+    required String folderId,
+    required String title,
+  });
+
   void deleteFolders(Set<String> folderIds);
 
   void addVideoToFolders({

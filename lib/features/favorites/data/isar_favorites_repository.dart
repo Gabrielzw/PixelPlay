@@ -39,6 +39,25 @@ class IsarFavoritesRepository implements FavoritesRepository {
   }
 
   @override
+  FavoriteFolderEntry renameFolder({
+    required String folderId,
+    required String title,
+  }) {
+    late final FavoriteFolderEntry nextFolder;
+    isar.writeTxnSync(() {
+      final folder = _findFolderById(folderId);
+      if (folder == null) {
+        throw StateError('Favorite folder not found: $folderId');
+      }
+
+      folder.title = title.trim();
+      isar.favoriteFolderIsarModels.putSync(folder);
+      nextFolder = folder.toDomain();
+    });
+    return nextFolder;
+  }
+
+  @override
   void deleteFolders(Set<String> folderIds) {
     if (folderIds.isEmpty) {
       return;
@@ -112,6 +131,13 @@ class IsarFavoritesRepository implements FavoritesRepository {
           return folderIds.contains(folder.folderId);
         })
         .toList(growable: false);
+  }
+
+  FavoriteFolderIsarModel? _findFolderById(String folderId) {
+    return isar.favoriteFolderIsarModels
+        .filter()
+        .folderIdEqualTo(folderId)
+        .findFirstSync();
   }
 
   List<FavoriteVideoIsarModel> _mergeVideo(

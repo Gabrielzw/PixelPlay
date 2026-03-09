@@ -28,6 +28,29 @@ class InMemoryFavoritesRepository implements FavoritesRepository {
   }
 
   @override
+  FavoriteFolderEntry renameFolder({
+    required String folderId,
+    required String title,
+  }) {
+    final folderIndex = _folders.indexWhere(
+      (FavoriteFolderEntry folder) => folder.id == folderId,
+    );
+    if (folderIndex < 0) {
+      throw StateError('Favorite folder not found: $folderId');
+    }
+
+    final folder = _folders[folderIndex];
+    final nextFolder = FavoriteFolderEntry(
+      id: folder.id,
+      title: title.trim(),
+      createdAt: folder.createdAt,
+      videos: folder.videos,
+    );
+    _folders[folderIndex] = nextFolder;
+    return nextFolder;
+  }
+
+  @override
   void deleteFolders(Set<String> folderIds) {
     _folders.removeWhere(
       (FavoriteFolderEntry folder) => folderIds.contains(folder.id),

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../webdav_client/domain/contracts/webdav_account_repository.dart';
 import 'controllers/favorites_controller.dart';
+import 'favorite_folder_edit_info_flow.dart';
 import 'favorite_folder_detail_utils.dart';
 import 'favorite_folder_player_launcher.dart';
 import 'favorite_folder_video_sort_type.dart';
@@ -92,7 +93,7 @@ class _FavoriteFolderDetailPageState extends State<FavoriteFolderDetailPage> {
         onStartSearching: _startSearching,
         onStopSearching: _stopSearching,
         onSortSelected: _updateSortType,
-        onMorePressed: _handleMorePressed,
+        onEditInfoPressed: () => unawaited(_editFolderInfo()),
       ),
       body: _buildBody(),
     );
@@ -121,7 +122,12 @@ class _FavoriteFolderDetailPageState extends State<FavoriteFolderDetailPage> {
       children: <Widget>[
         FavoriteFolderDetailHeader(folder: _folder),
         const SizedBox(height: _kFavoriteFolderDetailHeaderBottom),
-        FavoriteFolderDetailEmptyView(searchQuery: _resolveEmptySearchQuery()),
+        FavoriteFolderDetailEmptyView(
+          searchQuery: resolveFavoriteFolderSearchQuery(
+            folder: _folder,
+            searchQuery: _searchQuery,
+          ),
+        ),
       ],
     );
   }
@@ -153,22 +159,9 @@ class _FavoriteFolderDetailPageState extends State<FavoriteFolderDetailPage> {
     );
   }
 
-  String? _resolveEmptySearchQuery() {
-    if (_folder.videos.isEmpty) {
-      return null;
-    }
-    final query = _searchQuery.trim();
-    if (query.isEmpty) {
-      return null;
-    }
-    return query;
-  }
-
   void _handleLeadingPressed() {
     if (_isSelectionMode) {
-      setState(() {
-        _selectedVideoIds = <String>{};
-      });
+      setState(() => _selectedVideoIds = <String>{});
       return;
     }
     Navigator.of(context).maybePop();
@@ -269,11 +262,7 @@ class _FavoriteFolderDetailPageState extends State<FavoriteFolderDetailPage> {
     });
   }
 
-  void _startSearching() {
-    setState(() {
-      _isSearching = true;
-    });
-  }
+  void _startSearching() => setState(() => _isSearching = true);
 
   void _stopSearching() {
     _searchController.clear();
@@ -283,17 +272,20 @@ class _FavoriteFolderDetailPageState extends State<FavoriteFolderDetailPage> {
     });
   }
 
-  void _updateSearchQuery(String value) {
-    setState(() {
-      _searchQuery = value;
-    });
-  }
+  void _updateSearchQuery(String value) => setState(() => _searchQuery = value);
 
-  void _updateSortType(FavoriteFolderVideoSortType value) {
-    setState(() {
-      _sortType = value;
-    });
-  }
+  void _updateSortType(FavoriteFolderVideoSortType value) =>
+      setState(() => _sortType = value);
 
-  void _handleMorePressed() {}
+  Future<void> _editFolderInfo() async {
+    final nextFolder = await editFavoriteFolderInfo(
+      context: context,
+      folder: _folder,
+      favoritesController: _favoritesController,
+    );
+    if (!mounted || nextFolder == null) {
+      return;
+    }
+    setState(() => _folder = nextFolder);
+  }
 }

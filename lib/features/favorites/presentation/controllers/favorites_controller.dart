@@ -28,6 +28,15 @@ class FavoritesController extends GetxController {
     return folder;
   }
 
+  FavoriteFolderEntry renameFolder({
+    required String folderId,
+    required String title,
+  }) {
+    final folder = repository.renameFolder(folderId: folderId, title: title);
+    refreshFolders();
+    return folder;
+  }
+
   void deleteFolders(Set<String> folderIds) {
     if (folderIds.isEmpty) {
       return;

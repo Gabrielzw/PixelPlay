@@ -47,6 +47,32 @@ FavoriteFolderEntry buildFavoriteFolderWithoutVideoIds({
   );
 }
 
+FavoriteFolderEntry buildRenamedFavoriteFolder({
+  required FavoriteFolderEntry folder,
+  required String title,
+}) {
+  return FavoriteFolderEntry(
+    id: folder.id,
+    title: title.trim(),
+    createdAt: folder.createdAt,
+    videos: folder.videos,
+  );
+}
+
+String? resolveFavoriteFolderSearchQuery({
+  required FavoriteFolderEntry folder,
+  required String searchQuery,
+}) {
+  if (folder.videos.isEmpty) {
+    return null;
+  }
+  final query = searchQuery.trim();
+  if (query.isEmpty) {
+    return null;
+  }
+  return query;
+}
+
 bool _matchesFavoriteVideoQuery({
   required FavoriteVideoEntry video,
   required String normalizedQuery,

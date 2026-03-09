@@ -2,8 +2,20 @@ import 'package:flutter/material.dart';
 
 class FavoriteFolderFormPage extends StatefulWidget {
   final Set<String> existingTitles;
+  final String? initialTitle;
+  final String pageTitle;
+  final String submitLabel;
+  final String description;
 
-  const FavoriteFolderFormPage({super.key, required this.existingTitles});
+  const FavoriteFolderFormPage({
+    super.key,
+    required this.existingTitles,
+    this.initialTitle,
+    this.pageTitle = '\u65b0\u5efa\u6536\u85cf\u5939',
+    this.submitLabel = '\u521b\u5efa',
+    this.description =
+        '\u521b\u5efa\u540e\u4f1a\u51fa\u73b0\u5728\u6536\u85cf\u5939\u5217\u8868\u4e2d\u3002',
+  });
 
   @override
   State<FavoriteFolderFormPage> createState() => _FavoriteFolderFormPageState();
@@ -16,7 +28,7 @@ class _FavoriteFolderFormPageState extends State<FavoriteFolderFormPage> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
+    _nameController = TextEditingController(text: widget.initialTitle ?? '');
   }
 
   @override
@@ -29,9 +41,9 @@ class _FavoriteFolderFormPageState extends State<FavoriteFolderFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('新建收藏夹'),
+        title: Text(widget.pageTitle),
         actions: <Widget>[
-          TextButton(onPressed: _submit, child: const Text('创建')),
+          TextButton(onPressed: _submit, child: Text(widget.submitLabel)),
         ],
       ),
       body: Form(
@@ -43,8 +55,9 @@ class _FavoriteFolderFormPageState extends State<FavoriteFolderFormPage> {
               controller: _nameController,
               autofocus: true,
               decoration: const InputDecoration(
-                labelText: '收藏夹名称',
-                hintText: '例如：电影、追番、稍后再看',
+                labelText: '\u6536\u85cf\u5939\u540d\u79f0',
+                hintText:
+                    '\u4f8b\u5982\uff1a\u7535\u5f71\u3001\u8ffd\u756a\u3001\u7a0d\u540e\u518d\u770b',
               ),
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(),
@@ -52,7 +65,7 @@ class _FavoriteFolderFormPageState extends State<FavoriteFolderFormPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              '创建后会出现在收藏夹列表中，当前阶段仅在本次运行中生效。',
+              widget.description,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -64,10 +77,10 @@ class _FavoriteFolderFormPageState extends State<FavoriteFolderFormPage> {
   String? _validateName(String? value) {
     final normalizedTitle = _normalizeTitle(value ?? '');
     if (normalizedTitle.isEmpty) {
-      return '收藏夹名称不能为空';
+      return '\u6536\u85cf\u5939\u540d\u79f0\u4e0d\u80fd\u4e3a\u7a7a';
     }
     if (widget.existingTitles.contains(normalizedTitle)) {
-      return '收藏夹名称已存在';
+      return '\u6536\u85cf\u5939\u540d\u79f0\u5df2\u5b58\u5728';
     }
     return null;
   }
