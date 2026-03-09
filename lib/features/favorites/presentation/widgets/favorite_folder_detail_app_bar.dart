@@ -6,10 +6,13 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final bool isSearching;
   final bool isSelectionMode;
+  final bool canSelectAll;
   final int selectedCount;
   final TextEditingController searchController;
   final FavoriteFolderVideoSortType currentSort;
   final VoidCallback onLeadingPressed;
+  final VoidCallback onSelectAllPressed;
+  final VoidCallback onDeletePressed;
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onStartSearching;
   final VoidCallback onStopSearching;
@@ -20,10 +23,13 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
     super.key,
     required this.isSearching,
     required this.isSelectionMode,
+    required this.canSelectAll,
     required this.selectedCount,
     required this.searchController,
     required this.currentSort,
     required this.onLeadingPressed,
+    required this.onSelectAllPressed,
+    required this.onDeletePressed,
     required this.onSearchChanged,
     required this.onStartSearching,
     required this.onStopSearching,
@@ -46,7 +52,9 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
         ),
       ),
       title: _buildTitle(colorScheme),
-      actions: _buildActions(context, colorScheme),
+      actions: isSelectionMode
+          ? _buildSelectionActions()
+          : _buildDefaultActions(colorScheme),
     );
   }
 
@@ -70,10 +78,22 @@ class FavoriteFolderDetailAppBar extends StatelessWidget
     );
   }
 
-  List<Widget> _buildActions(BuildContext context, ColorScheme colorScheme) {
-    if (isSelectionMode) {
-      return const <Widget>[];
-    }
+  List<Widget> _buildSelectionActions() {
+    return <Widget>[
+      IconButton(
+        tooltip: '\u5168\u9009',
+        onPressed: canSelectAll ? onSelectAllPressed : null,
+        icon: const Icon(Icons.select_all),
+      ),
+      IconButton(
+        tooltip: '\u5220\u9664',
+        onPressed: onDeletePressed,
+        icon: const Icon(Icons.delete_outline_rounded),
+      ),
+    ];
+  }
+
+  List<Widget> _buildDefaultActions(ColorScheme colorScheme) {
     return <Widget>[
       IconButton(
         tooltip: isSearching ? '\u5173\u95ed\u641c\u7d22' : '\u641c\u7d22',

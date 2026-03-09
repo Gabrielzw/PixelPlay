@@ -108,6 +108,48 @@ void main() {
       'Travel Vlog.mp4',
     ]);
   });
+
+  testWidgets('detail page confirms before deleting selected videos', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FavoriteFolderDetailPage(folder: _buildDetailFolders()[1]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.text('Travel Vlog.mp4'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('\u5168\u9009'), findsOneWidget);
+    expect(find.byTooltip('\u5220\u9664'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('\u5168\u9009'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('\u5df2\u9009\u62e9 3 \u9879'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('\u5220\u9664'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('\u5220\u9664\u89c6\u9891'), findsOneWidget);
+    expect(
+      find.text(
+        '\u786e\u5b9a\u5220\u9664\u9009\u4e2d\u7684 3 \u4e2a\u89c6\u9891\u5417\uff1f',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('\u5220\u9664'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FavoriteFolderVideoTile), findsNothing);
+    expect(
+      find.text('\u5f53\u524d\u6536\u85cf\u5939\u8fd8\u6ca1\u6709\u89c6\u9891'),
+      findsOneWidget,
+    );
+  });
 }
 
 List<FavoriteFolderEntry> _buildDetailFolders() {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'favorite_models.dart';
+
 enum FavoriteFolderSortType {
   updatedDesc,
   updatedAsc,
@@ -12,12 +14,12 @@ enum FavoriteFolderSortType {
 extension FavoriteFolderSortTypeX on FavoriteFolderSortType {
   String get label {
     return switch (this) {
-      FavoriteFolderSortType.updatedDesc => '最近更新',
-      FavoriteFolderSortType.updatedAsc => '最早更新',
-      FavoriteFolderSortType.countDesc => '视频最多',
-      FavoriteFolderSortType.countAsc => '视频最少',
-      FavoriteFolderSortType.nameAsc => '名称 A-Z',
-      FavoriteFolderSortType.nameDesc => '名称 Z-A',
+      FavoriteFolderSortType.updatedDesc => '\u6700\u8fd1\u66f4\u65b0',
+      FavoriteFolderSortType.updatedAsc => '\u6700\u65e9\u66f4\u65b0',
+      FavoriteFolderSortType.countDesc => '\u89c6\u9891\u6700\u591a',
+      FavoriteFolderSortType.countAsc => '\u89c6\u9891\u6700\u5c11',
+      FavoriteFolderSortType.nameAsc => '\u540d\u79f0 A-Z',
+      FavoriteFolderSortType.nameDesc => '\u540d\u79f0 Z-A',
     };
   }
 
@@ -31,4 +33,48 @@ extension FavoriteFolderSortTypeX on FavoriteFolderSortType {
       FavoriteFolderSortType.nameDesc => Icons.sort_by_alpha_outlined,
     };
   }
+}
+
+List<FavoriteFolderEntry> sortFavoriteFolders(
+  Iterable<FavoriteFolderEntry> folders,
+  FavoriteFolderSortType sortType, {
+  bool pinDefaultFolder = true,
+}) {
+  final sortedFolders = folders.toList(growable: false);
+  sortedFolders.sort((FavoriteFolderEntry left, FavoriteFolderEntry right) {
+    if (!pinDefaultFolder) {
+      return _compareFavoriteFoldersBySort(left, right, sortType);
+    }
+    return compareFavoriteFoldersPinned(
+      left: left,
+      right: right,
+      fallbackCompare: (left, right) {
+        return _compareFavoriteFoldersBySort(left, right, sortType);
+      },
+    );
+  });
+  return List<FavoriteFolderEntry>.unmodifiable(sortedFolders);
+}
+
+int _compareFavoriteFoldersBySort(
+  FavoriteFolderEntry left,
+  FavoriteFolderEntry right,
+  FavoriteFolderSortType sortType,
+) {
+  return switch (sortType) {
+    FavoriteFolderSortType.updatedDesc => right.updatedAt.compareTo(
+      left.updatedAt,
+    ),
+    FavoriteFolderSortType.updatedAsc => left.updatedAt.compareTo(
+      right.updatedAt,
+    ),
+    FavoriteFolderSortType.countDesc => right.videoCount.compareTo(
+      left.videoCount,
+    ),
+    FavoriteFolderSortType.countAsc => left.videoCount.compareTo(
+      right.videoCount,
+    ),
+    FavoriteFolderSortType.nameAsc => left.title.compareTo(right.title),
+    FavoriteFolderSortType.nameDesc => right.title.compareTo(left.title),
+  };
 }

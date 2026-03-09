@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'controllers/favorites_controller.dart';
 import 'favorite_folder_detail_page.dart';
 import 'favorite_folder_form_page.dart';
-import 'favorite_search_video_launcher.dart';
 import 'favorite_folder_sort_type.dart';
 import 'favorite_models.dart';
-import 'controllers/favorites_controller.dart';
+import 'favorite_search_video_launcher.dart';
 import 'widgets/favorite_search_results.dart';
+import 'widgets/favorites_confirm_dialog.dart';
 import 'widgets/favorites_folder_list.dart';
 import 'widgets/favorites_page_app_bar.dart';
 
@@ -29,7 +30,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
   late final TextEditingController _searchController;
   List<FavoriteFolderEntry> _localFolders = const <FavoriteFolderEntry>[];
   FavoritesController? _favoritesController;
-
   Set<String> _selectedFolderIds = <String>{};
   String _searchQuery = '';
   bool _isSearching = false;
@@ -39,6 +39,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
   bool get _isSelectionMode => _selectedFolderIds.isNotEmpty;
   bool get _showsSearchResults => _searchQuery.trim().isNotEmpty;
   bool get _usesSharedFavorites => widget.initialFolders == null;
+
   List<FavoriteFolderEntry> get _folders {
     if (_usesSharedFavorites) {
       return _favoritesController!.folders.toList(growable: false);
@@ -67,7 +68,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
   @override
   Widget build(BuildContext context) {
     if (_usesSharedFavorites) {
-      return Obx(() => _buildScaffold());
+      return Obx(_buildScaffold);
     }
     return _buildScaffold();
   }
@@ -116,43 +117,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
   }
 
   List<FavoriteFolderEntry> _buildSortedFolders() {
-    final folders = List<FavoriteFolderEntry>.of(_folders);
-    folders.sort(_compareFolders);
-    return folders;
-  }
-
-  int _compareFolders(FavoriteFolderEntry left, FavoriteFolderEntry right) {
-    if (_isCustomSort) {
-      return _compareFoldersBySort(left, right);
-    }
-
-    return compareFavoriteFoldersPinned(
-      left: left,
-      right: right,
-      fallbackCompare: _compareFoldersBySort,
+    return sortFavoriteFolders(
+      _folders,
+      _currentSort,
+      pinDefaultFolder: !_isCustomSort,
     );
-  }
-
-  int _compareFoldersBySort(
-    FavoriteFolderEntry left,
-    FavoriteFolderEntry right,
-  ) {
-    return switch (_currentSort) {
-      FavoriteFolderSortType.updatedDesc => right.updatedAt.compareTo(
-        left.updatedAt,
-      ),
-      FavoriteFolderSortType.updatedAsc => left.updatedAt.compareTo(
-        right.updatedAt,
-      ),
-      FavoriteFolderSortType.countDesc => right.videoCount.compareTo(
-        left.videoCount,
-      ),
-      FavoriteFolderSortType.countAsc => left.videoCount.compareTo(
-        right.videoCount,
-      ),
-      FavoriteFolderSortType.nameAsc => left.title.compareTo(right.title),
-      FavoriteFolderSortType.nameDesc => right.title.compareTo(left.title),
-    };
   }
 
   Future<void> _openCreateFolderPage() async {
@@ -164,7 +133,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
     if (!mounted || createdTitle == null) {
       return;
     }
-
     _addFolder(createdTitle);
   }
 
@@ -190,7 +158,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
       createdAt: now,
       videos: const <FavoriteVideoEntry>[],
     );
-
     setState(() {
       _localFolders = <FavoriteFolderEntry>[..._folders, nextFolder];
     });
@@ -236,7 +203,10 @@ class _FavoritesPageState extends State<FavoritesPage> {
 
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => FavoriteFolderDetailPage(folder: folder),
+        builder: (_) => FavoriteFolderDetailPage(
+          folder: folder,
+          favoritesController: _favoritesController,
+        ),
       ),
     );
   }
@@ -247,7 +217,6 @@ class _FavoritesPageState extends State<FavoritesPage> {
     if (!isAdded) {
       nextSelectedFolderIds.remove(folderId);
     }
-
     setState(() {
       _selectedFolderIds = nextSelectedFolderIds;
     });
@@ -265,21 +234,32 @@ class _FavoritesPageState extends State<FavoritesPage> {
     }
 
     final selectedIds = Set<String>.of(_selectedFolderIds);
-    if (_usesSharedFavorites) {
-      _favoritesController!.deleteFolders(selectedIds);
+    showFavoritesConfirmationDialog(
+      context,
+      title: '\u5220\u9664\u6536\u85cf\u5939',
+      content:
+          '\u786e\u5b9a\u5220\u9664\u9009\u4e2d\u7684 ${selectedIds.length} \u4e2a\u6536\u85cf\u5939\u5417\uff1f',
+      confirmLabel: '\u5220\u9664',
+    ).then((bool confirmed) {
+      if (!mounted || !confirmed) {
+        return;
+      }
+      if (_usesSharedFavorites) {
+        _favoritesController!.deleteFolders(selectedIds);
+        setState(() {
+          _selectedFolderIds = <String>{};
+        });
+        return;
+      }
+
       setState(() {
+        _localFolders = _folders
+            .where(
+              (FavoriteFolderEntry folder) => !selectedIds.contains(folder.id),
+            )
+            .toList(growable: false);
         _selectedFolderIds = <String>{};
       });
-      return;
-    }
-
-    setState(() {
-      _localFolders = _folders
-          .where(
-            (FavoriteFolderEntry folder) => !selectedIds.contains(folder.id),
-          )
-          .toList(growable: false);
-      _selectedFolderIds = <String>{};
     });
   }
 

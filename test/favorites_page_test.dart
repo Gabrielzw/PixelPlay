@@ -136,6 +136,33 @@ void main() {
 
     expect(find.text('\u5df2\u9009\u62e9 2 \u9879'), findsOneWidget);
   });
+
+  testWidgets('favorites page confirms before deleting selected folders', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(home: FavoritesPage(initialFolders: _buildSortFolders())),
+    );
+
+    await tester.longPress(find.text('Gamma'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('\u5220\u9664'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('\u5220\u9664\u6536\u85cf\u5939'), findsOneWidget);
+    expect(
+      find.text(
+        '\u786e\u5b9a\u5220\u9664\u9009\u4e2d\u7684 1 \u4e2a\u6536\u85cf\u5939\u5417\uff1f',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('\u5220\u9664'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gamma'), findsNothing);
+  });
 }
 
 List<String> _folderTitles(WidgetTester tester) {

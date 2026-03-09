@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
-import '../../../player_core/domain/player_queue_item.dart';
 import '../../../../shared/domain/media_source_kind.dart';
+import '../../../player_core/domain/player_queue_item.dart';
 import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../../domain/favorites_repository.dart';
 import '../favorite_models.dart';
@@ -52,6 +52,22 @@ class FavoritesController extends GetxController {
     refreshFolders();
   }
 
+  void removeVideosFromFolder({
+    required String folderId,
+    required Iterable<FavoriteVideoEntry> videos,
+  }) {
+    final videosToRemove = videos.toList(growable: false);
+    if (videosToRemove.isEmpty) {
+      return;
+    }
+
+    final folderIds = <String>{folderId};
+    for (final video in videosToRemove) {
+      repository.removeVideoFromFolders(video: video, folderIds: folderIds);
+    }
+    refreshFolders();
+  }
+
   void updateQueueItemFolderMembership({
     required PlayerQueueItem item,
     required Set<String> folderIds,
@@ -85,6 +101,15 @@ class FavoritesController extends GetxController {
               normalizeFavoriteFolderTitle(folder.title),
         )
         .toSet();
+  }
+
+  FavoriteFolderEntry? folderById(String folderId) {
+    for (final folder in folders) {
+      if (folder.id == folderId) {
+        return folder;
+      }
+    }
+    return null;
   }
 
   bool containsPlayerItem(PlayerQueueItem item) {
