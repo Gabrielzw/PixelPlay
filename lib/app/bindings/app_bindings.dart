@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 
 import '../../features/favorites/data/in_memory_favorites_repository.dart';
@@ -19,6 +20,8 @@ import '../../features/thumbnail_engine/domain/thumbnail_queue.dart';
 import '../../features/watch_history/domain/watch_history_repository.dart';
 import '../../features/webdav_client/domain/contracts/webdav_account_repository.dart';
 import '../../features/webdav_client/domain/contracts/webdav_browser_repository.dart';
+import '../../features/webdav_client/domain/contracts/webdav_sort_preference_store.dart';
+import '../../features/webdav_client/data/secure_storage_webdav_sort_preference_store.dart';
 import '../../features/webdav_client/presentation/controllers/webdav_accounts_controller.dart';
 
 class AppBindings extends Bindings {
@@ -55,6 +58,12 @@ class AppBindings extends Bindings {
     Get.put<WatchHistoryRepository>(watchHistoryRepository, permanent: true);
     Get.put<WebDavAccountRepository>(webDavAccountRepository, permanent: true);
     Get.put<WebDavBrowserRepository>(webDavBrowserRepository, permanent: true);
+    Get.put<WebDavSortPreferenceStore>(
+      const SecureStorageWebDavSortPreferenceStore(
+        storage: FlutterSecureStorage(),
+      ),
+      permanent: true,
+    );
     Get.put<FavoritesRepository>(
       favoritesRepository ?? InMemoryFavoritesRepository(),
       permanent: true,

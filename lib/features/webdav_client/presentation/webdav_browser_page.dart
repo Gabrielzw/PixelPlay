@@ -8,10 +8,13 @@ import '../../player_core/domain/player_queue_item.dart';
 import '../../player_core/presentation/player_page.dart';
 import '../domain/contracts/webdav_account_repository.dart';
 import '../domain/contracts/webdav_browser_repository.dart';
+import '../domain/contracts/webdav_sort_preference_store.dart';
 import '../domain/entities/webdav_entry.dart';
 import '../domain/webdav_paths.dart';
 import '../domain/webdav_server_config.dart';
+import '../domain/webdav_sort_option.dart';
 import 'controllers/webdav_browser_controller.dart';
+import 'webdav_browser_messages.dart';
 import 'widgets/webdav_browser_entry_widgets.dart';
 import 'widgets/webdav_browser_header.dart';
 import 'widgets/webdav_file_list.dart';
@@ -48,6 +51,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       WebDavBrowserController(
         browserRepository: Get.find<WebDavBrowserRepository>(),
         accountRepository: Get.find<WebDavAccountRepository>(),
+        sortPreferenceStore: Get.find<WebDavSortPreferenceStore>(),
         account: widget.account,
         initialPath: widget.path,
         rootPath: widget.rootPath,
@@ -56,7 +60,6 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     );
     _searchController = TextEditingController()
       ..addListener(_handleSearchChanged);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _browserController.initialize();
@@ -97,7 +100,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
             actions: <Widget>[
               WebDavSortButton(
                 selectedSortOption: state.sortOption,
-                onSelected: _browserController.updateSortOption,
+                onSelected: _handleSortSelected,
               ),
               IconButton(
                 tooltip: '刷新',
@@ -135,7 +138,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     if (state.error != null) {
       return WebDavBrowserFailureView(
         key: const ValueKey<String>('error'),
-        message: _formatError(state.error!),
+        message: formatWebDavBrowserError(state.error!),
         onRetry: _browserController.reloadDirectory,
       );
     }
@@ -144,7 +147,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
         key: ValueKey<String>(
           'empty_${state.currentPath}_${state.searchQuery}_${state.sortOption.name}',
         ),
-        message: _buildEmptyMessage(state.searchQuery),
+        message: buildWebDavBrowserEmptyMessage(state.searchQuery),
         onRefresh: _browserController.reloadDirectory,
       );
     }
@@ -172,21 +175,25 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
   }
 
   void _handlePop(bool didPop, Object? result) {
-    if (!didPop) {
-      _navigateBack();
-    }
+    if (!didPop) _navigateBack();
   }
 
   Future<void> _handleBackPressed() => _navigateBack();
 
   void _handleBackLongPress() {
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    if (mounted) Navigator.of(context).pop();
   }
 
   void _handleSearchChanged() {
     _browserController.updateSearchQuery(_searchController.text);
+  }
+
+  Future<void> _handleSortSelected(WebDavSortOption sortOption) async {
+    try {
+      await _browserController.updateSortOption(sortOption);
+    } catch (error) {
+      PPToast.error(formatWebDavBrowserError(error));
+    }
   }
 
   Future<void> _openPath(String path) async {
@@ -197,15 +204,11 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
   Future<void> _navigateBack() async {
     _clearSearchField();
     final didNavigate = await _browserController.goBack();
-    if (!didNavigate && mounted) {
-      Navigator.of(context).maybePop();
-    }
+    if (!didNavigate && mounted) Navigator.of(context).maybePop();
   }
 
   void _clearSearchField() {
-    if (_searchController.text.isNotEmpty) {
-      _searchController.clear();
-    }
+    if (_searchController.text.isNotEmpty) _searchController.clear();
   }
 
   Future<void> _handleEntryTap(
@@ -224,16 +227,12 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
 
     try {
       final password = await _browserController.requirePassword();
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       final videoEntries = state.visibleEntries
           .where((WebDavEntry item) => item.type == WebDavEntryType.video)
           .toList(growable: false);
-      if (videoEntries.isEmpty) {
-        return;
-      }
+      if (videoEntries.isEmpty) return;
 
       final playlist = videoEntries
           .map(
@@ -256,7 +255,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
         ),
       );
     } catch (error) {
-      PPToast.error(_formatError(error));
+      PPToast.error(formatWebDavBrowserError(error));
     }
   }
 
@@ -282,18 +281,4 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
     );
   }
-
-  String _buildEmptyMessage(String searchQuery) {
-    return searchQuery.isEmpty
-        ? '当前目录下没有可显示的视频或子目录。'
-        : '没有匹配“$searchQuery”的文件或文件夹。';
-  }
-}
-
-String _formatError(Object error) {
-  final text = error.toString();
-  return text
-      .replaceFirst('Exception: ', '')
-      .replaceFirst('Bad state: ', '')
-      .trim();
 }

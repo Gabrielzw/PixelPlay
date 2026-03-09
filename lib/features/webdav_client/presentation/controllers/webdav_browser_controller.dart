@@ -3,26 +3,14 @@ import 'package:get/get.dart';
 
 import '../../domain/contracts/webdav_account_repository.dart';
 import '../../domain/contracts/webdav_browser_repository.dart';
+import '../../domain/contracts/webdav_sort_preference_store.dart';
 import '../../domain/entities/webdav_entry.dart';
+import '../../domain/webdav_entry_sorting.dart';
 import '../../domain/webdav_paths.dart';
 import '../../domain/webdav_server_config.dart';
+import '../../domain/webdav_sort_option.dart';
 
 const Object _kKeepError = Object();
-
-enum WebDavSortOption { newest, oldest, largest, smallest, nameAsc, nameDesc }
-
-extension WebDavSortOptionX on WebDavSortOption {
-  String get label {
-    return switch (this) {
-      WebDavSortOption.newest => '最新',
-      WebDavSortOption.oldest => '最旧',
-      WebDavSortOption.largest => '最大',
-      WebDavSortOption.smallest => '最小',
-      WebDavSortOption.nameAsc => '名称 A-Z',
-      WebDavSortOption.nameDesc => '名称 Z-A',
-    };
-  }
-}
 
 @immutable
 class WebDavBrowserViewState {
@@ -47,8 +35,11 @@ class WebDavBrowserViewState {
   bool get isAtRootPath => currentPath == rootPath;
 
   List<WebDavEntry> get visibleEntries {
-    final filteredEntries = _filterEntries(entries, searchQuery);
-    return _sortEntries(filteredEntries, sortOption);
+    return filterAndSortWebDavEntries(
+      entries: entries,
+      searchQuery: searchQuery,
+      sortOption: sortOption,
+    );
   }
 
   WebDavBrowserViewState copyWith({
@@ -72,73 +63,10 @@ class WebDavBrowserViewState {
   }
 }
 
-List<WebDavEntry> _filterEntries(
-  List<WebDavEntry> entries,
-  String searchQuery,
-) {
-  final query = searchQuery.toLowerCase();
-  if (query.isEmpty) {
-    return entries;
-  }
-
-  return entries
-      .where((WebDavEntry entry) => entry.name.toLowerCase().contains(query))
-      .toList(growable: false);
-}
-
-List<WebDavEntry> _sortEntries(
-  List<WebDavEntry> entries,
-  WebDavSortOption sortOption,
-) {
-  final directories = entries
-      .where((WebDavEntry entry) => entry.type == WebDavEntryType.directory)
-      .toList(growable: true);
-  final files = entries
-      .where((WebDavEntry entry) => entry.type != WebDavEntryType.directory)
-      .toList(growable: true);
-  directories.sort(
-    (WebDavEntry left, WebDavEntry right) =>
-        _compareEntries(left, right, sortOption),
-  );
-  files.sort(
-    (WebDavEntry left, WebDavEntry right) =>
-        _compareEntries(left, right, sortOption),
-  );
-  return List<WebDavEntry>.unmodifiable(<WebDavEntry>[
-    ...directories,
-    ...files,
-  ]);
-}
-
-int _compareEntries(
-  WebDavEntry left,
-  WebDavEntry right,
-  WebDavSortOption sortOption,
-) {
-  final result = switch (sortOption) {
-    WebDavSortOption.newest => _compareModifiedAt(right, left),
-    WebDavSortOption.oldest => _compareModifiedAt(left, right),
-    WebDavSortOption.largest => right.size.compareTo(left.size),
-    WebDavSortOption.smallest => left.size.compareTo(right.size),
-    WebDavSortOption.nameAsc => _compareName(left, right),
-    WebDavSortOption.nameDesc => _compareName(right, left),
-  };
-  return result == 0 ? _compareName(left, right) : result;
-}
-
-int _compareModifiedAt(WebDavEntry left, WebDavEntry right) {
-  final leftTime = left.modifiedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-  final rightTime = right.modifiedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-  return leftTime.compareTo(rightTime);
-}
-
-int _compareName(WebDavEntry left, WebDavEntry right) {
-  return left.name.toLowerCase().compareTo(right.name.toLowerCase());
-}
-
 class WebDavBrowserController extends GetxController {
   final WebDavBrowserRepository browserRepository;
   final WebDavAccountRepository accountRepository;
+  final WebDavSortPreferenceStore sortPreferenceStore;
   final WebDavServerConfig account;
   final Rx<WebDavBrowserViewState> state;
 
@@ -148,6 +76,7 @@ class WebDavBrowserController extends GetxController {
   WebDavBrowserController({
     required this.browserRepository,
     required this.accountRepository,
+    required this.sortPreferenceStore,
     required this.account,
     String? initialPath,
     String? rootPath,
@@ -159,8 +88,19 @@ class WebDavBrowserController extends GetxController {
          ),
        );
 
-  Future<void> initialize() {
-    return reloadDirectory();
+  Future<void> initialize() async {
+    try {
+      final sortOption = await sortPreferenceStore.readSortOption();
+      if (sortOption != null) {
+        state.value = state.value.copyWith(sortOption: sortOption);
+      }
+      await reloadDirectory();
+    } catch (error) {
+      if (isClosed) {
+        return;
+      }
+      state.value = state.value.copyWith(isLoading: false, error: error);
+    }
   }
 
   Future<void> reloadDirectory() {
@@ -172,16 +112,24 @@ class WebDavBrowserController extends GetxController {
     if (nextQuery == state.value.searchQuery) {
       return;
     }
-
     state.value = state.value.copyWith(searchQuery: nextQuery);
   }
 
-  void updateSortOption(WebDavSortOption sortOption) {
-    if (sortOption == state.value.sortOption) {
+  Future<void> updateSortOption(WebDavSortOption sortOption) async {
+    final previousState = state.value;
+    if (sortOption == previousState.sortOption) {
       return;
     }
 
-    state.value = state.value.copyWith(sortOption: sortOption);
+    state.value = previousState.copyWith(sortOption: sortOption);
+    try {
+      await sortPreferenceStore.saveSortOption(sortOption);
+    } catch (_) {
+      if (!isClosed) {
+        state.value = previousState;
+      }
+      rethrow;
+    }
   }
 
   Future<void> openPath(String path) async {
@@ -287,19 +235,40 @@ class WebDavBrowserController extends GetxController {
     required String? initialPath,
     required String? rootPath,
   }) {
-    final browserRootPath = resolveRelativeWebDavPath(
-      baseUrl: account.url,
-      path: rootPath ?? account.rootPath,
-    );
-    final currentPath = resolveRelativeWebDavPath(
-      baseUrl: account.url,
-      path: initialPath ?? rootPath ?? account.rootPath,
+    final resolvedRootPath = _resolveRootPath(account, rootPath);
+    final resolvedCurrentPath = _resolveCurrentPath(
+      account: account,
+      initialPath: initialPath,
+      rootPath: resolvedRootPath,
     );
 
     return WebDavBrowserViewState(
-      rootPath: browserRootPath,
-      currentPath: currentPath,
+      rootPath: resolvedRootPath,
+      currentPath: resolvedCurrentPath,
       isLoading: true,
     );
+  }
+
+  static String _resolveRootPath(WebDavServerConfig account, String? rootPath) {
+    if (rootPath != null) {
+      return normalizeWebDavPath(rootPath);
+    }
+
+    return resolveRelativeWebDavPath(
+      baseUrl: account.url,
+      path: account.rootPath,
+    );
+  }
+
+  static String _resolveCurrentPath({
+    required WebDavServerConfig account,
+    required String? initialPath,
+    required String rootPath,
+  }) {
+    if (initialPath == null || initialPath.trim().isEmpty) {
+      return rootPath;
+    }
+
+    return normalizeWebDavPath(initialPath);
   }
 }

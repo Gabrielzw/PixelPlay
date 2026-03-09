@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../controllers/webdav_browser_controller.dart';
+import '../../domain/webdav_sort_option.dart';
 
 class WebDavSortButton extends StatelessWidget {
   final WebDavSortOption selectedSortOption;

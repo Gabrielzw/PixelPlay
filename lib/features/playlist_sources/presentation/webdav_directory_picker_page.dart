@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../webdav_client/domain/contracts/webdav_account_repository.dart';
 import '../../webdav_client/domain/contracts/webdav_browser_repository.dart';
+import '../../webdav_client/domain/contracts/webdav_sort_preference_store.dart';
 import '../../webdav_client/domain/entities/webdav_entry.dart';
 import '../../webdav_client/domain/webdav_server_config.dart';
 import '../../webdav_client/presentation/controllers/webdav_browser_controller.dart';
@@ -34,6 +35,7 @@ class _WebDavDirectoryPickerPageState extends State<WebDavDirectoryPickerPage> {
       WebDavBrowserController(
         browserRepository: Get.find<WebDavBrowserRepository>(),
         accountRepository: Get.find<WebDavAccountRepository>(),
+        sortPreferenceStore: Get.find<WebDavSortPreferenceStore>(),
         account: widget.account,
       ),
       tag: _controllerTag,
