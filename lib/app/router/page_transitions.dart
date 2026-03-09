@@ -46,7 +46,7 @@ Route<T> buildPageTransitionRoute<T>({
             curve: curve,
           );
 
-          return _buildTransition(
+          return buildTransitionWidget(
             type: type,
             child: child,
             animation: curvedAnimation,
@@ -57,7 +57,7 @@ Route<T> buildPageTransitionRoute<T>({
   );
 }
 
-Widget _buildTransition({
+Widget buildTransitionWidget({
   required PageTransitionType type,
   required Widget child,
   required Animation<double> animation,

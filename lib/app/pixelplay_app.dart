@@ -13,6 +13,7 @@ import '../features/watch_history/domain/watch_history_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_account_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_browser_repository.dart';
 import 'bindings/app_bindings.dart';
+import 'router/page_navigation.dart';
 import 'theme/app_theme.dart';
 
 class PixelPlayApp extends StatefulWidget {
@@ -67,7 +68,13 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       title: 'Pixel Play',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      home: const PixelPlayShell(),
+      initialRoute: Navigator.defaultRouteName,
+      onGenerateRoute: (RouteSettings routeSettings) {
+        return buildShellPageRoute<void>(
+          builder: (_) => const PixelPlayShell(),
+          settings: routeSettings,
+        );
+      },
       navigatorObservers: <NavigatorObserver>[FlutterSmartDialog.observer],
       builder: FlutterSmartDialog.init(
         builder: (BuildContext context, Widget? child) {
