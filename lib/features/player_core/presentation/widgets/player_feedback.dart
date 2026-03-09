@@ -79,6 +79,7 @@ class _HudOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final icon = _resolveHudIcon(state.kind);
     return Align(
       alignment: _resolveHudAlignment(state),
       child: Container(
@@ -96,12 +97,10 @@ class _HudOverlay extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(
-                _resolveHudIcon(state.kind),
-                color: Colors.white,
-                size: _kHudIconSize,
-              ),
-              const SizedBox(width: _kHudIconSpacing),
+              if (icon != null) ...<Widget>[
+                Icon(icon, color: Colors.white, size: _kHudIconSize),
+                const SizedBox(width: _kHudIconSpacing),
+              ],
               Flexible(
                 child: Text(
                   state.primaryText,
@@ -138,11 +137,11 @@ class _HudOverlay extends StatelessWidget {
     };
   }
 
-  IconData _resolveHudIcon(PlayerHudKind kind) {
+  IconData? _resolveHudIcon(PlayerHudKind kind) {
     return switch (kind) {
       PlayerHudKind.brightness => Icons.brightness_6_rounded,
       PlayerHudKind.volume => Icons.volume_up_rounded,
-      PlayerHudKind.seek => Icons.fast_forward_rounded,
+      PlayerHudKind.seek => null,
       PlayerHudKind.info => Icons.info_outline_rounded,
       PlayerHudKind.speed => Icons.speed_rounded,
     };

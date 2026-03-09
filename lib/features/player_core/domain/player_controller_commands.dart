@@ -83,7 +83,6 @@ extension PlayerControllerCommands on PlayerController {
     playbackSpeed.value = speed;
     await playbackPort.setPlaybackSpeed(speed);
     await settingsController.setDefaultPlaybackSpeed(speed);
-    showSpeedHud('播放速度 ${speed}x');
     armControlsAutoHide();
   }
 

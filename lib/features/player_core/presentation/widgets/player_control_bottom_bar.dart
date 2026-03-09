@@ -162,6 +162,7 @@ class _SpeedButton extends StatelessWidget {
         ),
         constraints: const BoxConstraints(maxHeight: _kSpeedMenuMaxHeight),
         onSelected: controller.setPlaybackSpeed,
+        popUpAnimationStyle: AnimationStyle.noAnimation,
         itemBuilder: (BuildContext context) {
           return kPlaybackSpeedOptions
               .map(
