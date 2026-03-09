@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../domain/contracts/webdav_browser_repository.dart';
 import '../domain/webdav_paths.dart';
 import '../domain/webdav_server_config.dart';
 import 'controllers/webdav_accounts_controller.dart';
@@ -22,10 +21,8 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
   late final WebDavAccountsController _accountsController;
-  late final WebDavBrowserRepository _browserRepository;
 
   bool _isSaving = false;
-  bool _isTesting = false;
   bool _obscurePassword = true;
 
   bool get _isEditing => widget.initialAccount != null;
@@ -39,7 +36,6 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
     _usernameController = TextEditingController(text: account?.username ?? '');
     _passwordController = TextEditingController();
     _accountsController = Get.find<WebDavAccountsController>();
-    _browserRepository = Get.find<WebDavBrowserRepository>();
   }
 
   @override
@@ -114,29 +110,17 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
               ),
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: _isTesting ? null : _testConnection,
-              icon: _buildTestingIcon(),
-              label: Text(_isTesting ? '测试中...' : '测试连接'),
+            const SizedBox(height: 8),
+            Text(
+              '目录直接取自你填写的链接路径，例如 /dav；密码使用系统安全存储保存。',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildTestingIcon() {
-    if (_isTesting) {
-      return const SizedBox(
-        width: 16,
-        height: 16,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-
-    return const Icon(Icons.network_check_outlined);
   }
 
   void _togglePasswordVisibility() {
@@ -186,26 +170,6 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
-      }
-    }
-  }
-
-  Future<void> _testConnection() async {
-    if (!_isFormValid()) {
-      return;
-    }
-
-    setState(() => _isTesting = true);
-    try {
-      final config = _buildConfig();
-      final password = await _resolvePassword();
-      await _browserRepository.verifyConnection(config, password: password);
-      _showMessage('连接成功，可以正常访问目录。');
-    } catch (error) {
-      _showMessage(_formatError(error));
-    } finally {
-      if (mounted) {
-        setState(() => _isTesting = false);
       }
     }
   }
