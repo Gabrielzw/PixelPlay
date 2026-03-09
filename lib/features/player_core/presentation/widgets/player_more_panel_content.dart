@@ -88,9 +88,8 @@ class _PlaybackModeSection extends StatelessWidget {
       children: <Widget>[
         const PlayerPanelSectionTitle('播放方式'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: PlayerPlaybackMode.values
               .map(
                 (PlayerPlaybackMode mode) => PlayerPanelChoiceChipButton(
@@ -119,9 +118,8 @@ class _AspectRatioSection extends StatelessWidget {
       children: <Widget>[
         const PlayerPanelSectionTitle('画面比例'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: PlayerAspectRatio.values
               .map(
                 (PlayerAspectRatio ratio) => PlayerPanelChoiceChipButton(
@@ -197,9 +195,8 @@ class _LongPressSpeedSection extends StatelessWidget {
       children: <Widget>[
         const PlayerPanelSectionTitle('长按倍速'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: kLongPressSpeedOptions
               .map(
                 (double speed) => PlayerPanelChoiceChipButton(
