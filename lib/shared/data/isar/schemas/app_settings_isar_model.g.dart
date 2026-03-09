@@ -53,18 +53,23 @@ const AppSettingsIsarModelSchema = CollectionSchema(
       name: r'longPressPlaybackSpeed',
       type: IsarType.double,
     ),
-    r'rememberPlaybackPosition': PropertySchema(
+    r'pageTransitionTypeName': PropertySchema(
       id: 7,
+      name: r'pageTransitionTypeName',
+      type: IsarType.string,
+    ),
+    r'rememberPlaybackPosition': PropertySchema(
+      id: 8,
       name: r'rememberPlaybackPosition',
       type: IsarType.bool,
     ),
     r'seedColorValue': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'seedColorValue',
       type: IsarType.long,
     ),
     r'themeModeName': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'themeModeName',
       type: IsarType.string,
     ),
@@ -98,6 +103,12 @@ int _appSettingsIsarModelEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.pageTransitionTypeName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.themeModeName.length * 3;
   return bytesCount;
 }
@@ -115,9 +126,10 @@ void _appSettingsIsarModelSerialize(
   writer.writeLong(offsets[4], object.gestureSeekSecondsPerSwipe);
   writer.writeBool(offsets[5], object.gestureSeekUsesVideoDuration);
   writer.writeDouble(offsets[6], object.longPressPlaybackSpeed);
-  writer.writeBool(offsets[7], object.rememberPlaybackPosition);
-  writer.writeLong(offsets[8], object.seedColorValue);
-  writer.writeString(offsets[9], object.themeModeName);
+  writer.writeString(offsets[7], object.pageTransitionTypeName);
+  writer.writeBool(offsets[8], object.rememberPlaybackPosition);
+  writer.writeLong(offsets[9], object.seedColorValue);
+  writer.writeString(offsets[10], object.themeModeName);
 }
 
 AppSettingsIsarModel _appSettingsIsarModelDeserialize(
@@ -135,9 +147,10 @@ AppSettingsIsarModel _appSettingsIsarModelDeserialize(
   object.gestureSeekUsesVideoDuration = reader.readBoolOrNull(offsets[5]);
   object.id = id;
   object.longPressPlaybackSpeed = reader.readDoubleOrNull(offsets[6]);
-  object.rememberPlaybackPosition = reader.readBool(offsets[7]);
-  object.seedColorValue = reader.readLong(offsets[8]);
-  object.themeModeName = reader.readString(offsets[9]);
+  object.pageTransitionTypeName = reader.readStringOrNull(offsets[7]);
+  object.rememberPlaybackPosition = reader.readBool(offsets[8]);
+  object.seedColorValue = reader.readLong(offsets[9]);
+  object.themeModeName = reader.readString(offsets[10]);
   return object;
 }
 
@@ -163,10 +176,12 @@ P _appSettingsIsarModelDeserializeProp<P>(
     case 6:
       return (reader.readDoubleOrNull(offset)) as P;
     case 7:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 9:
+      return (reader.readLong(offset)) as P;
+    case 10:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1119,6 +1134,216 @@ extension AppSettingsIsarModelQueryFilter
     AppSettingsIsarModel,
     QAfterFilterCondition
   >
+  pageTransitionTypeNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'pageTransitionTypeName'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'pageTransitionTypeName'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'pageTransitionTypeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'pageTransitionTypeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'pageTransitionTypeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'pageTransitionTypeName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'pageTransitionTypeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'pageTransitionTypeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'pageTransitionTypeName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'pageTransitionTypeName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'pageTransitionTypeName', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
+  pageTransitionTypeNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          property: r'pageTransitionTypeName',
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AppSettingsIsarModel,
+    AppSettingsIsarModel,
+    QAfterFilterCondition
+  >
   rememberPlaybackPositionEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1500,6 +1725,20 @@ extension AppSettingsIsarModelQuerySortBy
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByPageTransitionTypeName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pageTransitionTypeName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  sortByPageTransitionTypeNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pageTransitionTypeName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
   sortByRememberPlaybackPosition() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'rememberPlaybackPosition', Sort.asc);
@@ -1657,6 +1896,20 @@ extension AppSettingsIsarModelQuerySortThenBy
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByPageTransitionTypeName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pageTransitionTypeName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
+  thenByPageTransitionTypeNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'pageTransitionTypeName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QAfterSortBy>
   thenByRememberPlaybackPosition() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'rememberPlaybackPosition', Sort.asc);
@@ -1757,6 +2010,16 @@ extension AppSettingsIsarModelQueryWhereDistinct
   }
 
   QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct>
+  distinctByPageTransitionTypeName({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'pageTransitionTypeName',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, AppSettingsIsarModel, QDistinct>
   distinctByRememberPlaybackPosition() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'rememberPlaybackPosition');
@@ -1840,6 +2103,13 @@ extension AppSettingsIsarModelQueryProperty
   longPressPlaybackSpeedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'longPressPlaybackSpeed');
+    });
+  }
+
+  QueryBuilder<AppSettingsIsarModel, String?, QQueryOperations>
+  pageTransitionTypeNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'pageTransitionTypeName');
     });
   }
 

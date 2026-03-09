@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/router/page_navigation.dart';
 import 'controllers/favorites_controller.dart';
 import 'favorite_folder_detail_page.dart';
 import 'favorite_folder_form_page.dart';
@@ -125,10 +126,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
   }
 
   Future<void> _openCreateFolderPage() async {
-    final createdTitle = await Navigator.of(context).push<String>(
-      MaterialPageRoute<String>(
-        builder: (_) => FavoriteFolderFormPage(existingTitles: _existingTitles),
-      ),
+    final createdTitle = await pushRootPage<String>(
+      context,
+      (_) => FavoriteFolderFormPage(existingTitles: _existingTitles),
     );
     if (!mounted || createdTitle == null) {
       return;
@@ -201,12 +201,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => FavoriteFolderDetailPage(
-          folder: folder,
-          favoritesController: _favoritesController,
-        ),
+    pushRootPage<void>(
+      context,
+      (_) => FavoriteFolderDetailPage(
+        folder: folder,
+        favoritesController: _favoritesController,
       ),
     );
   }

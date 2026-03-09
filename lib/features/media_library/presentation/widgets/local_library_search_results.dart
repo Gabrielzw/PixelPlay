@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/router/page_navigation.dart';
 import '../../domain/contracts/media_library_repository.dart';
 import '../../domain/entities/local_album.dart';
 import '../../domain/entities/local_video.dart';
@@ -54,10 +55,7 @@ class LocalLibrarySearchResults extends StatelessWidget {
           _InfoSection(title: '视频', child: Text(videoLoadingError.toString()))
         else if (matchedVideos.isNotEmpty) ...<Widget>[
           const _SectionHeader(title: '视频'),
-          _VideoResultList(
-            videos: matchedVideos,
-            albumById: albumById,
-          ),
+          _VideoResultList(videos: matchedVideos, albumById: albumById),
         ],
         if (_showEmptyState(
           matchedAlbums: matchedAlbums,
@@ -173,10 +171,9 @@ class _AlbumResultGrid extends StatelessWidget {
           final album = albums[index];
           return LibraryAlbumCard(
             album: buildLibraryAlbumPreview(album),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => AlbumPage(album: album, repository: repository),
-              ),
+            onTap: () => pushRootPage<void>(
+              context,
+              (_) => AlbumPage(album: album, repository: repository),
             ),
           );
         }, childCount: albums.length),
@@ -195,10 +192,7 @@ class _VideoResultList extends StatelessWidget {
   final List<LocalVideo> videos;
   final Map<String, LocalAlbum> albumById;
 
-  const _VideoResultList({
-    required this.videos,
-    required this.albumById,
-  });
+  const _VideoResultList({required this.videos, required this.albumById});
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +212,8 @@ class _VideoResultList extends StatelessWidget {
             onTap: () => openLocalVideoPlayer(context: context, video: video),
           );
         },
-        separatorBuilder: (_, _) => const SizedBox(height: kSearchVideoTileSpacing),
+        separatorBuilder: (_, _) =>
+            const SizedBox(height: kSearchVideoTileSpacing),
         itemCount: videos.length,
       ),
     );

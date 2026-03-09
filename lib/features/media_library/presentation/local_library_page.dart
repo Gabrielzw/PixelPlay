@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/router/page_navigation.dart';
 import '../domain/contracts/media_library_repository.dart';
 import '../domain/entities/local_album.dart';
 import '../domain/entities/local_video.dart';
@@ -172,9 +173,7 @@ class _LocalLibraryPageState extends State<LocalLibraryPage> {
   }
 
   Future<void> _openWatchHistory() {
-    return Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const WatchHistoryPage()));
+    return pushRootPage<void>(context, (_) => const WatchHistoryPage());
   }
 }
 
@@ -191,10 +190,9 @@ class _LibraryAlbumGrid extends StatelessWidget {
         final album = albums[index];
         return LibraryAlbumCard(
           album: buildLibraryAlbumPreview(album),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => AlbumPage(album: album, repository: repository),
-            ),
+          onTap: () => pushRootPage<void>(
+            context,
+            (_) => AlbumPage(album: album, repository: repository),
           ),
         );
       }, childCount: albums.length),

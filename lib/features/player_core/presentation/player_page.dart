@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../app/router/page_navigation.dart';
+import '../../../app/router/page_transitions.dart';
 import '../../favorites/presentation/controllers/favorites_controller.dart';
 import '../../favorites/presentation/favorite_folder_form_page.dart';
 import '../../favorites/presentation/favorite_models.dart';
+import '../../settings/domain/page_transition_type.dart';
 import '../../settings/domain/settings_controller.dart';
 import '../data/media_kit_playback_adapter.dart';
 import '../data/method_channel_player_screenshot_store.dart';
@@ -24,15 +27,9 @@ import 'widgets/player_layout.dart';
 import 'widgets/player_ui_constants.dart';
 
 Route<void> buildPlayerPageRoute({required Widget child}) {
-  return PageRouteBuilder<void>(
-    transitionDuration: Duration.zero,
-    reverseTransitionDuration: Duration.zero,
-    pageBuilder:
-        (
-          BuildContext context,
-          Animation<double> animation,
-          Animation<double> secondaryAnimation,
-        ) => child,
+  return buildPageTransitionRoute<void>(
+    builder: (_) => child,
+    type: PageTransitionType.none,
   );
 }
 
@@ -184,9 +181,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   Future<void> _openSettings() async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const PlayerSettingsPage()));
+    await pushRootPage<void>(context, (_) => const PlayerSettingsPage());
   }
 
   void _enterImmersiveMode() {
@@ -287,11 +282,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   Future<FavoriteFolderEntry?> _openCreateFavoriteFolderPage() async {
     final favoritesController = Get.find<FavoritesController>();
-    final title = await Navigator.of(context).push<String>(
-      MaterialPageRoute<String>(
-        builder: (_) => FavoriteFolderFormPage(
-          existingTitles: favoritesController.existingTitles(),
-        ),
+    final title = await pushRootPage<String>(
+      context,
+      (_) => FavoriteFolderFormPage(
+        existingTitles: favoritesController.existingTitles(),
       ),
     );
     if (!mounted || title == null) {
