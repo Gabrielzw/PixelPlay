@@ -1,23 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 
 import 'package:pixelplay/features/favorites/data/in_memory_favorites_repository.dart';
 import 'package:pixelplay/features/favorites/presentation/controllers/favorites_controller.dart';
 import 'package:pixelplay/features/favorites/presentation/favorite_models.dart';
 import 'package:pixelplay/features/favorites/presentation/favorites_page.dart';
 import 'package:pixelplay/features/favorites/presentation/widgets/favorite_folder_card.dart';
+import 'package:pixelplay/features/playlist_sources/presentation/playlist_source_models.dart';
+import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
+import 'package:pixelplay/features/settings/domain/settings_controller.dart';
+import 'package:pixelplay/features/webdav_client/domain/webdav_server_config.dart';
 
 void main() {
+  setUp(() {
+    Get.reset();
+    Get.put<SettingsController>(
+      SettingsController(repository: InMemorySettingsRepository()),
+    );
+  });
+
+  tearDown(Get.reset);
+
   testWidgets('favorites page shows default folder toolbar actions', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: FavoritesPage(initialFolders: buildInitialFavoriteFolders()),
+        home: FavoritesPage(
+          initialFolders: buildInitialFavoriteFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
       ),
     );
 
+    expect(find.text('\u6536\u85cf'), findsOneWidget);
     expect(find.text('\u6536\u85cf\u5939'), findsOneWidget);
+    expect(find.text('\u64ad\u653e\u5217\u8868'), findsOneWidget);
     expect(find.text('\u9ed8\u8ba4\u6536\u85cf\u5939'), findsOneWidget);
     expect(find.text('0 \u4e2a\u89c6\u9891'), findsOneWidget);
     expect(find.byTooltip('\u6dfb\u52a0\u6536\u85cf\u5939'), findsOneWidget);
@@ -30,7 +49,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: FavoritesPage(initialFolders: buildInitialFavoriteFolders()),
+        home: FavoritesPage(
+          initialFolders: buildInitialFavoriteFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
       ),
     );
 
@@ -53,7 +75,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FavoritesPage(initialFolders: _buildSearchFolders())),
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: _buildSearchFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
+      ),
     );
 
     await tester.tap(find.byTooltip('\u641c\u7d22'));
@@ -62,7 +89,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '\u65c5\u884c');
     await tester.pumpAndSettle();
 
-    expect(find.text('\u6536\u85cf\u5939'), findsOneWidget);
+    expect(find.text('\u6536\u85cf\u5939'), findsNWidgets(2));
     expect(find.text('\u89c6\u9891'), findsOneWidget);
     expect(find.text('\u65c5\u884c\u6536\u85cf'), findsOneWidget);
     expect(find.text('\u65c5\u884cVlog.mp4'), findsOneWidget);
@@ -76,7 +103,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FavoritesPage(initialFolders: _buildSearchFolders())),
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: _buildSearchFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
+      ),
     );
 
     await tester.tap(find.byTooltip('\u641c\u7d22'));
@@ -96,7 +128,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FavoritesPage(initialFolders: _buildSortFolders())),
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: _buildSortFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -124,7 +161,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FavoritesPage(initialFolders: _buildSortFolders())),
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: _buildSortFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
+      ),
     );
 
     await tester.longPress(find.text('Gamma'));
@@ -143,7 +185,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FavoritesPage(initialFolders: _buildSortFolders())),
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: _buildSortFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
+      ),
     );
 
     await tester.longPress(find.text('Gamma'));
@@ -178,7 +225,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: FavoritesPage(favoritesController: favoritesController),
+        home: FavoritesPage(
+          favoritesController: favoritesController,
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -213,7 +263,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FavoritesPage(initialFolders: _buildSortFolders())),
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: _buildSortFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
+      ),
     );
 
     await tester.longPress(find.text(kDefaultFavoriteFolderTitle));
@@ -223,6 +278,35 @@ void main() {
     expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
     expect(find.text(kDefaultFavoriteFolderTitle), findsOneWidget);
   });
+  testWidgets('favorites page shows playlist tab entries', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: buildInitialFavoriteFolders(),
+          initialPlaylistSources: <PlaylistSourceEntry>[
+            PlaylistSourceEntry.webDavDirectory(
+              account: _buildPlaylistTestAccount(),
+              path: '/电影',
+              createdAt: DateTime(2026, 3, 9, 12),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('\u64ad\u653e\u5217\u8868'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('\u7535\u5f71'), findsOneWidget);
+    expect(find.text('WebDAV \u00b7 \u5bb6\u91cc\u4e91\u76d8'), findsOneWidget);
+    expect(find.text('/\u7535\u5f71'), findsOneWidget);
+    expect(
+      find.byTooltip('\u6dfb\u52a0\u64ad\u653e\u5217\u8868'),
+      findsOneWidget,
+    );
+  });
 }
 
 List<String> _folderTitles(WidgetTester tester) {
@@ -230,6 +314,16 @@ List<String> _folderTitles(WidgetTester tester) {
       .widgetList<FavoriteFolderCard>(find.byType(FavoriteFolderCard))
       .map((FavoriteFolderCard card) => card.data.title)
       .toList(growable: false);
+}
+
+WebDavServerConfig _buildPlaylistTestAccount() {
+  return WebDavServerConfig(
+    id: 'webdav-home',
+    alias: '家里云盘',
+    url: Uri.parse('https://example.com/dav/'),
+    username: 'tester',
+    rootPath: '/',
+  );
 }
 
 List<FavoriteFolderEntry> _buildSearchFolders() {

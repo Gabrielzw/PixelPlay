@@ -1,18 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 
 import 'package:pixelplay/features/favorites/presentation/favorite_folder_detail_page.dart';
 import 'package:pixelplay/features/favorites/presentation/favorite_models.dart';
 import 'package:pixelplay/features/favorites/presentation/favorites_page.dart';
 import 'package:pixelplay/features/favorites/presentation/widgets/favorite_folder_preview.dart';
 import 'package:pixelplay/features/favorites/presentation/widgets/favorite_folder_video_tile.dart';
+import 'package:pixelplay/features/playlist_sources/presentation/playlist_source_models.dart';
+import 'package:pixelplay/features/settings/data/in_memory_settings_repository.dart';
+import 'package:pixelplay/features/settings/domain/settings_controller.dart';
 
 void main() {
+  setUp(() {
+    Get.reset();
+    Get.put<SettingsController>(
+      SettingsController(repository: InMemorySettingsRepository()),
+    );
+  });
+
+  tearDown(Get.reset);
+
   testWidgets('tapping folder opens detail page with hero header and toolbar', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: FavoritesPage(initialFolders: _buildDetailFolders())),
+      MaterialApp(
+        home: FavoritesPage(
+          initialFolders: _buildDetailFolders(),
+          initialPlaylistSources: const <PlaylistSourceEntry>[],
+        ),
+      ),
     );
 
     await tester.tap(find.text('\u65c5\u884c\u6536\u85cf'));

@@ -7,6 +7,9 @@ import '../../features/media_library/data/pigeon/media_store_albums_api.g.dart'
     as pigeon;
 import '../../features/media_library/domain/contracts/media_library_repository.dart';
 import '../../features/media_library/presentation/controllers/media_library_controller.dart';
+import '../../features/playlist_sources/data/in_memory_playlist_source_repository.dart';
+import '../../features/playlist_sources/domain/playlist_source_repository.dart';
+import '../../features/playlist_sources/presentation/controllers/playlist_sources_controller.dart';
 import '../../features/player_core/domain/playback_position_repository.dart';
 import '../../features/settings/domain/settings_controller.dart';
 import '../../features/settings/domain/settings_repository.dart';
@@ -23,6 +26,7 @@ class AppBindings extends Bindings {
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
   final FavoritesRepository? favoritesRepository;
+  final PlaylistSourceRepository? playlistSourceRepository;
   final PlaybackPositionRepository playbackPositionRepository;
   final WatchHistoryRepository watchHistoryRepository;
   final WebDavAccountRepository webDavAccountRepository;
@@ -33,6 +37,7 @@ class AppBindings extends Bindings {
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
     this.favoritesRepository,
+    this.playlistSourceRepository,
     required this.playbackPositionRepository,
     required this.watchHistoryRepository,
     required this.webDavAccountRepository,
@@ -54,6 +59,10 @@ class AppBindings extends Bindings {
       favoritesRepository ?? InMemoryFavoritesRepository(),
       permanent: true,
     );
+    Get.put<PlaylistSourceRepository>(
+      playlistSourceRepository ?? InMemoryPlaylistSourceRepository(),
+      permanent: true,
+    );
     Get.put<ThumbnailQueue>(
       thumbnailQueue ?? _buildThumbnailQueue(),
       permanent: true,
@@ -68,6 +77,12 @@ class AppBindings extends Bindings {
     );
     Get.put<FavoritesController>(
       FavoritesController(repository: Get.find<FavoritesRepository>()),
+      permanent: true,
+    );
+    Get.put<PlaylistSourcesController>(
+      PlaylistSourcesController(
+        repository: Get.find<PlaylistSourceRepository>(),
+      ),
       permanent: true,
     );
     Get.put<WebDavAccountsController>(
