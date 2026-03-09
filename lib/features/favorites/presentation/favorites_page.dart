@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'favorite_folder_detail_page.dart';
 import 'favorite_folder_form_page.dart';
 import 'favorite_folder_sort_type.dart';
 import 'favorite_models.dart';
@@ -221,10 +222,21 @@ class _FavoritesPageState extends State<FavoritesPage> {
   }
 
   void _handleFolderTap(String folderId) {
-    if (!_isSelectionMode) {
+    if (_isSelectionMode) {
+      _toggleSelection(folderId);
       return;
     }
-    _toggleSelection(folderId);
+
+    final folder = _findFolderById(folderId);
+    if (folder == null) {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => FavoriteFolderDetailPage(folder: folder),
+      ),
+    );
   }
 
   void _toggleSelection(String folderId) {
@@ -267,6 +279,15 @@ class _FavoritesPageState extends State<FavoritesPage> {
           .toList(growable: false);
       _selectedFolderIds = <String>{};
     });
+  }
+
+  FavoriteFolderEntry? _findFolderById(String folderId) {
+    for (final folder in _folders) {
+      if (folder.id == folderId) {
+        return folder;
+      }
+    }
+    return null;
   }
 }
 

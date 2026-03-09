@@ -87,6 +87,7 @@ class FavoriteFolderCard extends StatelessWidget {
                     FavoriteFolderPreview(
                       previewSeed: data.previewSeed,
                       thumbnailRequest: data.latestThumbnailRequest,
+                      heroTag: buildFavoriteFolderPreviewHeroTag(data.id),
                     ),
                     const SizedBox(width: kAlbumVideoTileGap),
                     Expanded(

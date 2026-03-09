@@ -5,19 +5,25 @@ import '../../../media_library/presentation/widgets/album_video_preview_tokens.d
 import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../../../thumbnail_engine/presentation/widgets/video_thumbnail_image.dart';
 
+String buildFavoriteFolderPreviewHeroTag(String folderId) {
+  return 'favorite-folder-preview-$folderId';
+}
+
 class FavoriteFolderPreview extends StatelessWidget {
   final int previewSeed;
   final VideoThumbnailRequest? thumbnailRequest;
+  final String? heroTag;
 
   const FavoriteFolderPreview({
     super.key,
     required this.previewSeed,
     required this.thumbnailRequest,
+    this.heroTag,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final preview = SizedBox(
       width: kVideoTilePreviewWidth,
       child: AspectRatio(
         aspectRatio: kVideoTilePreviewAspectRatio,
@@ -29,6 +35,12 @@ class FavoriteFolderPreview extends StatelessWidget {
         ),
       ),
     );
+
+    final tag = heroTag;
+    if (tag == null) {
+      return preview;
+    }
+    return Hero(tag: tag, child: preview);
   }
 
   Widget _buildPreview() {

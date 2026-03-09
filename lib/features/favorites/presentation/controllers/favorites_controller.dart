@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../player_core/domain/player_queue_item.dart';
+import '../../../../shared/domain/media_source_kind.dart';
 import '../../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../../domain/favorites_repository.dart';
 import '../favorite_models.dart';
@@ -71,8 +72,23 @@ FavoriteVideoEntry buildFavoriteVideoEntry({
     durationText: _resolveDurationText(item),
     updatedAt: now ?? DateTime.now(),
     previewSeed: item.localVideoId ?? item.id.hashCode,
+    sourceLabel: item.sourceLabel,
+    path: item.path,
+    sourceUri: item.sourceUri,
+    durationMs: item.duration.inMilliseconds,
+    sourceKind: _resolveSourceKind(item),
+    resolutionText: item.resolutionText,
+    previewAspectRatio: item.previewAspectRatio,
+    lastKnownPositionMs: item.lastKnownPositionMs,
+    localVideoId: item.localVideoId,
+    localVideoDateModified: item.localVideoDateModified,
+    webDavAccountId: item.webDavAccountId,
     thumbnailRequest: _buildThumbnailRequest(item),
   );
+}
+
+MediaSourceKind _resolveSourceKind(PlayerQueueItem item) {
+  return item.sourceKind;
 }
 
 String normalizeFavoriteFolderTitle(String value) {
