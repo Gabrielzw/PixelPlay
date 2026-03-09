@@ -212,6 +212,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
   }
 
   void _toggleSelection(String folderId) {
+    final folder = _findFolderById(folderId);
+    if (folder == null || folder.isDefaultFolder) {
+      return;
+    }
+
     final nextSelectedFolderIds = Set<String>.of(_selectedFolderIds);
     final isAdded = nextSelectedFolderIds.add(folderId);
     if (!isAdded) {
@@ -233,7 +238,15 @@ class _FavoritesPageState extends State<FavoritesPage> {
       return;
     }
 
-    final selectedIds = Set<String>.of(_selectedFolderIds);
+    final selectedIds = _selectedFolderIds.where((String folderId) {
+      final folder = _findFolderById(folderId);
+      return folder != null && !folder.isDefaultFolder;
+    }).toSet();
+    if (selectedIds.isEmpty) {
+      _clearSelection();
+      return;
+    }
+
     showFavoritesConfirmationDialog(
       context,
       title: '\u5220\u9664\u6536\u85cf\u5939',

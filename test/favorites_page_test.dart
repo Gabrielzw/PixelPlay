@@ -163,6 +163,21 @@ void main() {
 
     expect(find.text('Gamma'), findsNothing);
   });
+
+  testWidgets('default folder cannot enter selection mode', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(home: FavoritesPage(initialFolders: _buildSortFolders())),
+    );
+
+    await tester.longPress(find.text(kDefaultFavoriteFolderTitle));
+    await tester.pumpAndSettle();
+
+    expect(find.text('\u5df2\u9009\u62e9 1 \u9879'), findsNothing);
+    expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
+    expect(find.text(kDefaultFavoriteFolderTitle), findsOneWidget);
+  });
 }
 
 List<String> _folderTitles(WidgetTester tester) {
