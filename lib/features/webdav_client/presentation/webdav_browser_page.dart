@@ -16,6 +16,7 @@ import 'widgets/webdav_browser_entry_widgets.dart';
 import 'widgets/webdav_browser_header.dart';
 import 'widgets/webdav_file_list.dart';
 import 'widgets/webdav_loading_state.dart';
+import 'widgets/webdav_sort_button.dart';
 
 class WebDavBrowserPage extends StatefulWidget {
   final WebDavServerConfig account;
@@ -50,10 +51,9 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       ..addListener(_handleSearchChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        _browserController.initialize();
       }
-      _browserController.initialize();
     });
   }
 
@@ -88,6 +88,10 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
               onTapPath: _openPath,
             ),
             actions: <Widget>[
+              WebDavSortButton(
+                selectedSortOption: state.sortOption,
+                onSelected: _browserController.updateSortOption,
+              ),
               IconButton(
                 tooltip: '刷新',
                 onPressed: _browserController.reloadDirectory,
@@ -107,7 +111,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
                   reverseDuration: Duration.zero,
                   switchInCurve: Curves.easeOutCubic,
                   transitionBuilder: _buildContentTransition,
-                  child: _buildBody(context, state),
+                  child: _buildBody(state),
                 ),
               ),
             ],
@@ -117,7 +121,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     });
   }
 
-  Widget _buildBody(BuildContext context, WebDavBrowserViewState state) {
+  Widget _buildBody(WebDavBrowserViewState state) {
     if (state.isLoading) {
       return const WebDavLoadingState(key: ValueKey<String>('loading'));
     }
@@ -131,7 +135,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     if (state.visibleEntries.isEmpty) {
       return WebDavBrowserEmptyView(
         key: ValueKey<String>(
-          'empty_${state.currentPath}_${state.searchQuery}',
+          'empty_${state.currentPath}_${state.searchQuery}_${state.sortOption.name}',
         ),
         message: _buildEmptyMessage(state.searchQuery),
         onRefresh: _browserController.reloadDirectory,
@@ -139,10 +143,12 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     }
 
     return WebDavFileList(
-      key: ValueKey<String>('${state.currentPath}_${state.searchQuery}'),
+      key: ValueKey<String>(
+        '${state.currentPath}_${state.searchQuery}_${state.sortOption.name}',
+      ),
       storageKey: state.currentPath,
       entries: state.visibleEntries,
-      onEntryTap: (WebDavEntry entry) => _handleEntryTap(context, entry, state),
+      onEntryTap: (WebDavEntry entry) => _handleEntryTap(entry, state),
       onRefresh: _browserController.reloadDirectory,
     );
   }
@@ -152,7 +158,6 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(animation);
-
     return FadeTransition(
       opacity: animation,
       child: SlideTransition(position: position, child: child),
@@ -160,21 +165,17 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
   }
 
   void _handlePop(bool didPop, Object? result) {
-    if (didPop) {
-      return;
+    if (!didPop) {
+      _navigateBack();
     }
-    _navigateBack();
   }
 
-  Future<void> _handleBackPressed() {
-    return _navigateBack();
-  }
+  Future<void> _handleBackPressed() => _navigateBack();
 
   void _handleBackLongPress() {
-    if (!mounted) {
-      return;
+    if (mounted) {
+      Navigator.of(context).pop();
     }
-    Navigator.of(context).pop();
   }
 
   void _handleSearchChanged() {
@@ -195,14 +196,12 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
   }
 
   void _clearSearchField() {
-    if (_searchController.text.isEmpty) {
-      return;
+    if (_searchController.text.isNotEmpty) {
+      _searchController.clear();
     }
-    _searchController.clear();
   }
 
   Future<void> _handleEntryTap(
-    BuildContext context,
     WebDavEntry entry,
     WebDavBrowserViewState state,
   ) async {
@@ -218,7 +217,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
 
     try {
       final password = await _browserController.requirePassword();
-      if (!context.mounted) {
+      if (!mounted) {
         return;
       }
 
@@ -241,7 +240,6 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       final initialIndex = playlist.indexWhere(
         (PlayerQueueItem item) => item.id == entry.path,
       );
-
       await Navigator.of(context, rootNavigator: true).push(
         buildPlayerPageRoute(
           child: PlayerPage(
@@ -263,7 +261,6 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     final authorization = base64Encode(
       utf8.encode('${widget.account.username}:$password'),
     );
-
     return PlayerQueueItem(
       id: entry.path,
       title: entry.name,
@@ -280,10 +277,9 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
   }
 
   String _buildEmptyMessage(String searchQuery) {
-    if (searchQuery.isEmpty) {
-      return '当前目录下没有可显示的视频或子目录。';
-    }
-    return '没有匹配“$searchQuery”的文件或文件夹。';
+    return searchQuery.isEmpty
+        ? '当前目录下没有可显示的视频或子目录。'
+        : '没有匹配“$searchQuery”的文件或文件夹。';
   }
 }
 

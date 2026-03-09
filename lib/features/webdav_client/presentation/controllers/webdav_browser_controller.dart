@@ -9,6 +9,21 @@ import '../../domain/webdav_server_config.dart';
 
 const Object _kKeepError = Object();
 
+enum WebDavSortOption { newest, oldest, largest, smallest, nameAsc, nameDesc }
+
+extension WebDavSortOptionX on WebDavSortOption {
+  String get label {
+    return switch (this) {
+      WebDavSortOption.newest => '最新',
+      WebDavSortOption.oldest => '最旧',
+      WebDavSortOption.largest => '最大',
+      WebDavSortOption.smallest => '最小',
+      WebDavSortOption.nameAsc => '名称 A-Z',
+      WebDavSortOption.nameDesc => '名称 Z-A',
+    };
+  }
+}
+
 @immutable
 class WebDavBrowserViewState {
   final String rootPath;
@@ -17,6 +32,7 @@ class WebDavBrowserViewState {
   final bool isLoading;
   final Object? error;
   final String searchQuery;
+  final WebDavSortOption sortOption;
 
   const WebDavBrowserViewState({
     required this.rootPath,
@@ -25,19 +41,14 @@ class WebDavBrowserViewState {
     this.isLoading = false,
     this.error,
     this.searchQuery = '',
+    this.sortOption = WebDavSortOption.nameAsc,
   });
 
   bool get isAtRootPath => currentPath == rootPath;
 
   List<WebDavEntry> get visibleEntries {
-    final query = searchQuery.toLowerCase();
-    if (query.isEmpty) {
-      return entries;
-    }
-
-    return entries
-        .where((WebDavEntry entry) => entry.name.toLowerCase().contains(query))
-        .toList(growable: false);
+    final filteredEntries = _filterEntries(entries, searchQuery);
+    return _sortEntries(filteredEntries, sortOption);
   }
 
   WebDavBrowserViewState copyWith({
@@ -47,6 +58,7 @@ class WebDavBrowserViewState {
     bool? isLoading,
     Object? error = _kKeepError,
     String? searchQuery,
+    WebDavSortOption? sortOption,
   }) {
     return WebDavBrowserViewState(
       rootPath: rootPath ?? this.rootPath,
@@ -55,8 +67,73 @@ class WebDavBrowserViewState {
       isLoading: isLoading ?? this.isLoading,
       error: identical(error, _kKeepError) ? this.error : error,
       searchQuery: searchQuery ?? this.searchQuery,
+      sortOption: sortOption ?? this.sortOption,
     );
   }
+}
+
+List<WebDavEntry> _filterEntries(
+  List<WebDavEntry> entries,
+  String searchQuery,
+) {
+  final query = searchQuery.toLowerCase();
+  if (query.isEmpty) {
+    return entries;
+  }
+
+  return entries
+      .where((WebDavEntry entry) => entry.name.toLowerCase().contains(query))
+      .toList(growable: false);
+}
+
+List<WebDavEntry> _sortEntries(
+  List<WebDavEntry> entries,
+  WebDavSortOption sortOption,
+) {
+  final directories = entries
+      .where((WebDavEntry entry) => entry.type == WebDavEntryType.directory)
+      .toList(growable: true);
+  final files = entries
+      .where((WebDavEntry entry) => entry.type != WebDavEntryType.directory)
+      .toList(growable: true);
+  directories.sort(
+    (WebDavEntry left, WebDavEntry right) =>
+        _compareEntries(left, right, sortOption),
+  );
+  files.sort(
+    (WebDavEntry left, WebDavEntry right) =>
+        _compareEntries(left, right, sortOption),
+  );
+  return List<WebDavEntry>.unmodifiable(<WebDavEntry>[
+    ...directories,
+    ...files,
+  ]);
+}
+
+int _compareEntries(
+  WebDavEntry left,
+  WebDavEntry right,
+  WebDavSortOption sortOption,
+) {
+  final result = switch (sortOption) {
+    WebDavSortOption.newest => _compareModifiedAt(right, left),
+    WebDavSortOption.oldest => _compareModifiedAt(left, right),
+    WebDavSortOption.largest => right.size.compareTo(left.size),
+    WebDavSortOption.smallest => left.size.compareTo(right.size),
+    WebDavSortOption.nameAsc => _compareName(left, right),
+    WebDavSortOption.nameDesc => _compareName(right, left),
+  };
+  return result == 0 ? _compareName(left, right) : result;
+}
+
+int _compareModifiedAt(WebDavEntry left, WebDavEntry right) {
+  final leftTime = left.modifiedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+  final rightTime = right.modifiedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+  return leftTime.compareTo(rightTime);
+}
+
+int _compareName(WebDavEntry left, WebDavEntry right) {
+  return left.name.toLowerCase().compareTo(right.name.toLowerCase());
 }
 
 class WebDavBrowserController extends GetxController {
@@ -92,6 +169,14 @@ class WebDavBrowserController extends GetxController {
     }
 
     state.value = state.value.copyWith(searchQuery: nextQuery);
+  }
+
+  void updateSortOption(WebDavSortOption sortOption) {
+    if (sortOption == state.value.sortOption) {
+      return;
+    }
+
+    state.value = state.value.copyWith(sortOption: sortOption);
   }
 
   Future<void> openPath(String path) async {
