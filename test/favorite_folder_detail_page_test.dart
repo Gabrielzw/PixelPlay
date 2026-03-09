@@ -5,6 +5,7 @@ import 'package:pixelplay/features/favorites/presentation/favorite_folder_detail
 import 'package:pixelplay/features/favorites/presentation/favorite_models.dart';
 import 'package:pixelplay/features/favorites/presentation/favorites_page.dart';
 import 'package:pixelplay/features/favorites/presentation/widgets/favorite_folder_preview.dart';
+import 'package:pixelplay/features/favorites/presentation/widgets/favorite_folder_video_tile.dart';
 
 void main() {
   testWidgets('tapping folder opens detail page with hero header and toolbar', (
@@ -14,18 +15,18 @@ void main() {
       MaterialApp(home: FavoritesPage(initialFolders: _buildDetailFolders())),
     );
 
-    await tester.tap(find.text('旅行收藏'));
+    await tester.tap(find.text('\u65c5\u884c\u6536\u85cf'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
 
-    expect(find.byTooltip('返回'), findsOneWidget);
-    expect(find.byTooltip('搜索'), findsOneWidget);
-    expect(find.byTooltip('排序'), findsOneWidget);
-    expect(find.byTooltip('更多'), findsOneWidget);
-    expect(find.text('旅行收藏'), findsOneWidget);
-    expect(find.text('2 个视频'), findsOneWidget);
-    expect(find.text('旅行Vlog.mp4'), findsOneWidget);
+    expect(find.byTooltip('\u8fd4\u56de'), findsOneWidget);
+    expect(find.byTooltip('\u641c\u7d22'), findsOneWidget);
+    expect(find.byTooltip('\u6392\u5e8f'), findsOneWidget);
+    expect(find.byTooltip('\u66f4\u591a'), findsOneWidget);
+    expect(find.text('\u65c5\u884c\u6536\u85cf'), findsOneWidget);
+    expect(find.text('3 \u4e2a\u89c6\u9891'), findsOneWidget);
+    expect(find.text('Travel Vlog.mp4'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (Widget widget) =>
@@ -46,16 +47,66 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.longPress(find.text('旅行Vlog.mp4'));
+    await tester.longPress(find.text('Travel Vlog.mp4'));
     await tester.pumpAndSettle();
 
-    expect(find.text('已选择 1 项'), findsOneWidget);
-    expect(find.byTooltip('取消选择'), findsOneWidget);
+    expect(find.text('\u5df2\u9009\u62e9 1 \u9879'), findsOneWidget);
+    expect(find.byTooltip('\u53d6\u6d88\u9009\u62e9'), findsOneWidget);
 
-    await tester.tap(find.text('海边日落.mp4'));
+    await tester.tap(find.text('Beach Sunset.mp4'));
     await tester.pumpAndSettle();
 
-    expect(find.text('已选择 2 项'), findsOneWidget);
+    expect(find.text('\u5df2\u9009\u62e9 2 \u9879'), findsOneWidget);
+  });
+
+  testWidgets('detail page searches videos in folder', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FavoriteFolderDetailPage(folder: _buildDetailFolders()[1]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('\u641c\u7d22'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Beach');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Beach Sunset.mp4'), findsOneWidget);
+    expect(find.text('Travel Vlog.mp4'), findsNothing);
+    expect(find.text('Campfire.mp4'), findsNothing);
+  });
+
+  testWidgets('detail page sorts videos by name ascending', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FavoriteFolderDetailPage(folder: _buildDetailFolders()[1]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('\u6392\u5e8f'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('\u540d\u79f0 A-Z').last);
+    await tester.pumpAndSettle();
+
+    final titles = tester
+        .widgetList<FavoriteFolderVideoTile>(
+          find.byType(FavoriteFolderVideoTile),
+        )
+        .map((FavoriteFolderVideoTile tile) => tile.video.title)
+        .toList(growable: false);
+
+    expect(titles, <String>[
+      'Beach Sunset.mp4',
+      'Campfire.mp4',
+      'Travel Vlog.mp4',
+    ]);
   });
 }
 
@@ -69,22 +120,32 @@ List<FavoriteFolderEntry> _buildDetailFolders() {
     ),
     FavoriteFolderEntry(
       id: 'travel-folder',
-      title: '旅行收藏',
+      title: '\u65c5\u884c\u6536\u85cf',
       createdAt: DateTime(2026, 3, 9, 8),
       videos: <FavoriteVideoEntry>[
         FavoriteVideoEntry(
           id: 'travel-vlog',
-          title: '旅行Vlog.mp4',
+          title: 'Travel Vlog.mp4',
           durationText: '12:40',
+          durationMs: 760000,
           updatedAt: DateTime(2026, 3, 9, 9),
           previewSeed: 1,
         ),
         FavoriteVideoEntry(
           id: 'beach-sunset',
-          title: '海边日落.mp4',
+          title: 'Beach Sunset.mp4',
           durationText: '08:16',
+          durationMs: 496000,
           updatedAt: DateTime(2026, 3, 9, 10),
           previewSeed: 2,
+        ),
+        FavoriteVideoEntry(
+          id: 'campfire',
+          title: 'Campfire.mp4',
+          durationText: '05:03',
+          durationMs: 303000,
+          updatedAt: DateTime(2026, 3, 9, 11),
+          previewSeed: 3,
         ),
       ],
     ),

@@ -132,7 +132,7 @@ class _FavoriteFolderVideoMeta extends StatelessWidget {
             ),
           ),
           Text(
-            '收藏时间 · ${formatChineseDateTime(video.updatedAt)}',
+            formatChineseDateTime(video.updatedAt),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: textTheme.bodySmall?.copyWith(
@@ -143,7 +143,7 @@ class _FavoriteFolderVideoMeta extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: kAlbumVideoMetaSpacing),
             child: Text(
-              '视频时长 · ${video.durationText}',
+              video.durationText,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: textTheme.bodySmall?.copyWith(
