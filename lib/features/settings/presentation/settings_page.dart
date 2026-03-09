@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/router/page_navigation.dart';
-import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
 import '../domain/page_transition_type.dart';
 import '../domain/settings_controller.dart';
 import 'cache_settings_page.dart';
@@ -43,8 +42,6 @@ class _SettingsBody extends GetView<SettingsController> {
         key: const PageStorageKey<String>('settings_list'),
         padding: const EdgeInsets.only(bottom: 16),
         children: <Widget>[
-          const UiSkeletonNotice(message: '主题、动效与播放偏好会自动保存。'),
-          const SizedBox(height: 12),
           _SettingsSection(
             title: '外观',
             children: <Widget>[

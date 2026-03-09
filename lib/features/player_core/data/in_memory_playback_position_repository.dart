@@ -18,4 +18,9 @@ class InMemoryPlaybackPositionRepository implements PlaybackPositionRepository {
   Future<void> clear(String mediaId) async {
     _records.remove(mediaId);
   }
+
+  @override
+  Future<void> clearAll() async {
+    _records.clear();
+  }
 }

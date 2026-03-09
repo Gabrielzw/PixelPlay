@@ -12,6 +12,9 @@ import '../../features/playlist_sources/data/in_memory_playlist_source_repositor
 import '../../features/playlist_sources/domain/playlist_source_repository.dart';
 import '../../features/playlist_sources/presentation/controllers/playlist_sources_controller.dart';
 import '../../features/player_core/domain/playback_position_repository.dart';
+import '../../features/settings/data/app_cache_cleaner.dart';
+import '../../features/settings/domain/cache_cleaner.dart';
+import '../../features/settings/domain/cache_settings_controller.dart';
 import '../../features/settings/domain/settings_controller.dart';
 import '../../features/settings/domain/settings_repository.dart';
 import '../../features/thumbnail_engine/data/native_thumbnail_store.dart';
@@ -49,6 +52,8 @@ class AppBindings extends Bindings {
 
   @override
   void dependencies() {
+    final resolvedThumbnailQueue = thumbnailQueue ?? _buildThumbnailQueue();
+
     Get.put<SettingsRepository>(settingsRepository, permanent: true);
     Get.put<MediaLibraryRepository>(mediaLibraryRepository, permanent: true);
     Get.put<PlaybackPositionRepository>(
@@ -72,12 +77,20 @@ class AppBindings extends Bindings {
       playlistSourceRepository ?? InMemoryPlaylistSourceRepository(),
       permanent: true,
     );
-    Get.put<ThumbnailQueue>(
-      thumbnailQueue ?? _buildThumbnailQueue(),
+    Get.put<ThumbnailQueue>(resolvedThumbnailQueue, permanent: true);
+    Get.put<CacheCleaner>(
+      AppCacheCleaner(
+        thumbnailQueue: resolvedThumbnailQueue,
+        playbackPositionRepository: playbackPositionRepository,
+      ),
       permanent: true,
     );
     Get.put<SettingsController>(
       SettingsController(repository: settingsRepository),
+      permanent: true,
+    );
+    Get.put<CacheSettingsController>(
+      CacheSettingsController(cacheCleaner: Get.find<CacheCleaner>()),
       permanent: true,
     );
     Get.put<MediaLibraryController>(

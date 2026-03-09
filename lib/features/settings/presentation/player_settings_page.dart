@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../shared/widgets/skeleton/ui_skeleton_notice.dart';
 import '../domain/app_settings.dart';
 import '../domain/settings_controller.dart';
 
@@ -37,8 +36,6 @@ class _PlayerSettingsContent extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        const UiSkeletonNotice(message: '这里的配置会作为播放器页面的默认值，并影响手势和播放行为。'),
-        const SizedBox(height: 12),
         _DropdownTile<double>(
           title: '默认倍速',
           value: settings.defaultPlaybackSpeed,

@@ -39,6 +39,14 @@ class IsarPlaybackPositionRepository implements PlaybackPositionRepository {
     });
   }
 
+  @override
+  Future<void> clearAll() async {
+    await isar.writeTxn(() async {
+      await isar.playbackPositionIsarModels.clear();
+      await _clearLocalVideoProgress();
+    });
+  }
+
   Future<PlaybackPositionIsarModel?> _findRecord(String mediaId) {
     return isar.playbackPositionIsarModels
         .filter()
@@ -59,5 +67,20 @@ class IsarPlaybackPositionRepository implements PlaybackPositionRepository {
 
     localVideo.lastPlayPositionMs = positionMs;
     await isar.localVideoIsarModels.put(localVideo);
+  }
+
+  Future<void> _clearLocalVideoProgress() async {
+    final localVideos = await isar.localVideoIsarModels
+        .filter()
+        .lastPlayPositionMsIsNotNull()
+        .findAll();
+    if (localVideos.isEmpty) {
+      return;
+    }
+
+    for (final localVideo in localVideos) {
+      localVideo.lastPlayPositionMs = null;
+    }
+    await isar.localVideoIsarModels.putAll(localVideos);
   }
 }

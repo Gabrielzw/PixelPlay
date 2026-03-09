@@ -26,4 +26,6 @@ abstract interface class PlaybackPositionRepository {
   Future<void> save(PlaybackPositionRecord record);
 
   Future<void> clear(String mediaId);
+
+  Future<void> clearAll();
 }

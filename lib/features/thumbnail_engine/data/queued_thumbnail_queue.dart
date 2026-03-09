@@ -69,6 +69,8 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
 
   @override
   Future<void> clearCache() async {
+    _cancelPendingEntries();
+    _cancelRunningEntries();
     _resolvedPaths.clear();
     await store.clearCache();
   }
@@ -118,6 +120,10 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
   Future<void> _executeEntry(_ThumbnailTaskEntry entry) async {
     try {
       final path = await store.resolveThumbnail(entry.request);
+      if (entry.isCancelled) {
+        _completeCancelledEntry(entry);
+        return;
+      }
       _resolvedPaths[entry.request.cacheKey] = path;
       _completeEntry(entry, path);
     } catch (error, stackTrace) {
@@ -133,11 +139,14 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
     if (entry.completer.isCompleted) {
       return;
     }
-    if (entry.isCancelled) {
-      entry.completer.completeError(const ThumbnailCancelledException());
+    entry.completer.complete(path);
+  }
+
+  void _completeCancelledEntry(_ThumbnailTaskEntry entry) {
+    if (entry.completer.isCompleted) {
       return;
     }
-    entry.completer.complete(path);
+    entry.completer.completeError(const ThumbnailCancelledException());
   }
 
   void _failEntry(
@@ -149,6 +158,28 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
       return;
     }
     entry.completer.completeError(error, stackTrace);
+  }
+
+  void _cancelPendingEntries() {
+    if (_pendingEntries.isEmpty) {
+      return;
+    }
+
+    final pendingEntries = List<_ThumbnailTaskEntry>.from(_pendingEntries);
+    _pendingEntries.clear();
+    for (final entry in pendingEntries) {
+      _entriesByKey.remove(entry.request.cacheKey);
+      _completeCancelledEntry(entry);
+    }
+  }
+
+  void _cancelRunningEntries() {
+    for (final entry in _entriesByKey.values) {
+      if (!entry.isRunning) {
+        continue;
+      }
+      entry.isCancelled = true;
+    }
   }
 }
 
