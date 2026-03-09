@@ -11,4 +11,9 @@ abstract interface class FavoritesRepository {
     required FavoriteVideoEntry video,
     required Set<String> folderIds,
   });
+
+  void removeVideoFromFolders({
+    required FavoriteVideoEntry video,
+    required Set<String> folderIds,
+  });
 }

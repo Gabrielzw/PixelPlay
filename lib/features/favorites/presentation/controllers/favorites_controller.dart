@@ -52,6 +52,32 @@ class FavoritesController extends GetxController {
     refreshFolders();
   }
 
+  void updateQueueItemFolderMembership({
+    required PlayerQueueItem item,
+    required Set<String> folderIds,
+    DateTime? now,
+  }) {
+    final currentFolderIds = folderIdsContainingItem(item);
+    final nextFolderIds = Set<String>.of(folderIds);
+    final video = buildFavoriteVideoEntry(item: item, now: now);
+    final folderIdsToAdd = nextFolderIds.difference(currentFolderIds);
+    final folderIdsToRemove = currentFolderIds.difference(nextFolderIds);
+
+    if (folderIdsToAdd.isEmpty && folderIdsToRemove.isEmpty) {
+      return;
+    }
+    if (folderIdsToAdd.isNotEmpty) {
+      repository.addVideoToFolders(video: video, folderIds: folderIdsToAdd);
+    }
+    if (folderIdsToRemove.isNotEmpty) {
+      repository.removeVideoFromFolders(
+        video: video,
+        folderIds: folderIdsToRemove,
+      );
+    }
+    refreshFolders();
+  }
+
   Set<String> existingTitles() {
     return folders
         .map(
@@ -59,6 +85,23 @@ class FavoritesController extends GetxController {
               normalizeFavoriteFolderTitle(folder.title),
         )
         .toSet();
+  }
+
+  bool containsPlayerItem(PlayerQueueItem item) {
+    return folderIdsContainingItem(item).isNotEmpty;
+  }
+
+  Set<String> folderIdsContainingItem(PlayerQueueItem item) {
+    final matchedFolderIds = <String>{};
+    for (final folder in folders) {
+      for (final video in folder.videos) {
+        if (_favoriteVideoMatchesItem(video: video, item: item)) {
+          matchedFolderIds.add(folder.id);
+          break;
+        }
+      }
+    }
+    return matchedFolderIds;
   }
 }
 
@@ -89,6 +132,33 @@ FavoriteVideoEntry buildFavoriteVideoEntry({
 
 MediaSourceKind _resolveSourceKind(PlayerQueueItem item) {
   return item.sourceKind;
+}
+
+bool _favoriteVideoMatchesItem({
+  required FavoriteVideoEntry video,
+  required PlayerQueueItem item,
+}) {
+  if (video.id == item.id) {
+    return true;
+  }
+
+  final favoriteLocalVideoId = video.resolvedLocalVideoId;
+  if (favoriteLocalVideoId != null &&
+      favoriteLocalVideoId == item.localVideoId) {
+    return true;
+  }
+
+  final favoritePath = video.playbackPath;
+  if (favoritePath != null && favoritePath == item.path) {
+    return true;
+  }
+
+  final favoriteSourceUri = video.sourceUri;
+  if (favoriteSourceUri != null && favoriteSourceUri == item.sourceUri) {
+    return true;
+  }
+
+  return false;
 }
 
 String normalizeFavoriteFolderTitle(String value) {

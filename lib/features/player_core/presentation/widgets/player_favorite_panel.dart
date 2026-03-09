@@ -1,11 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../shared/widgets/pp_toast.dart';
 import '../../../favorites/presentation/controllers/favorites_controller.dart';
 import '../../../favorites/presentation/favorite_models.dart';
-import '../../../../shared/widgets/pp_toast.dart';
 import '../../domain/player_queue_item.dart';
 import 'player_slide_panel.dart';
 import 'player_ui_constants.dart';
@@ -40,13 +41,21 @@ class PlayerFavoritePanel extends StatefulWidget {
 
 class _PlayerFavoritePanelState extends State<PlayerFavoritePanel> {
   Set<String> _selectedFolderIds = <String>{};
+  Set<String> _initialFolderIds = <String>{};
   Timer? _hideContentTimer;
   late bool _showsPanelContent;
+
+  bool get _hasSelectionChanges {
+    return !setEquals(_selectedFolderIds, _initialFolderIds);
+  }
 
   @override
   void initState() {
     super.initState();
     _showsPanelContent = widget.visible;
+    if (widget.visible) {
+      _syncSelectionFromItem();
+    }
   }
 
   @override
@@ -55,9 +64,12 @@ class _PlayerFavoritePanelState extends State<PlayerFavoritePanel> {
     if (!oldWidget.visible && widget.visible) {
       _hideContentTimer?.cancel();
       setState(() {
-        _selectedFolderIds = <String>{};
         _showsPanelContent = true;
       });
+      _syncSelectionFromItem();
+    }
+    if (oldWidget.item != widget.item && widget.visible) {
+      _syncSelectionFromItem();
     }
     if (oldWidget.visible && !widget.visible) {
       _scheduleHidePanelContent();
@@ -118,9 +130,9 @@ class _PlayerFavoritePanelState extends State<PlayerFavoritePanel> {
                     const SizedBox(width: _kFavoritePanelVerticalSpacing),
                     Expanded(
                       child: FilledButton(
-                        onPressed: _selectedFolderIds.isEmpty
-                            ? null
-                            : _confirmSelection,
+                        onPressed: _hasSelectionChanges
+                            ? _confirmSelection
+                            : null,
                         child: const Text('确认'),
                       ),
                     ),
@@ -166,6 +178,16 @@ class _PlayerFavoritePanelState extends State<PlayerFavoritePanel> {
     });
   }
 
+  void _syncSelectionFromItem() {
+    final folderIds = widget.favoritesController.folderIdsContainingItem(
+      widget.item,
+    );
+    setState(() {
+      _initialFolderIds = folderIds;
+      _selectedFolderIds = Set<String>.of(folderIds);
+    });
+  }
+
   Future<void> _handleCreateFolder() async {
     final createdFolder = await widget.onCreateFolder();
     if (!mounted || createdFolder == null) {
@@ -178,17 +200,12 @@ class _PlayerFavoritePanelState extends State<PlayerFavoritePanel> {
   }
 
   Future<void> _confirmSelection() async {
-    if (_selectedFolderIds.isEmpty) {
-      await PPToast.warning('请先选择至少一个收藏夹');
-      return;
-    }
-
-    widget.favoritesController.addQueueItemToFolders(
+    widget.favoritesController.updateQueueItemFolderMembership(
       item: widget.item,
       folderIds: _selectedFolderIds,
     );
     widget.onClose();
-    unawaited(PPToast.success('已加入选中的收藏夹'));
+    unawaited(PPToast.success('收藏夹已更新'));
   }
 }
 

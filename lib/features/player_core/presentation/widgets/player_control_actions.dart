@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
+import '../../../favorites/presentation/controllers/favorites_controller.dart';
 import '../../domain/player_controller.dart';
 import 'player_device_status_strip.dart';
 import 'player_ui_constants.dart';
@@ -18,9 +19,11 @@ const double kPlayerSideActionHorizontalPadding = 12;
 const double _kSideActionBackgroundOpacity = 0.42;
 const double _kSideActionBorderRadius = 20;
 const double _kSideActionLoadingSize = 22;
+const Color _kPlayerFavoritedIconColor = Color(0xFFFF6B81);
 
 class PlayerControlActions extends StatelessWidget {
   final PlayerController controller;
+  final FavoritesController favoritesController;
   final VoidCallback onBack;
   final VoidCallback onShowFavorite;
   final VoidCallback onShowMore;
@@ -28,6 +31,7 @@ class PlayerControlActions extends StatelessWidget {
   const PlayerControlActions({
     super.key,
     required this.controller,
+    required this.favoritesController,
     required this.onBack,
     required this.onShowFavorite,
     required this.onShowMore,
@@ -37,6 +41,7 @@ class PlayerControlActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final item = controller.currentItem.value;
+      final isFavorited = favoritesController.containsPlayerItem(item);
       final isLandscape =
           MediaQuery.of(context).orientation == Orientation.landscape;
 
@@ -57,6 +62,7 @@ class PlayerControlActions extends StatelessWidget {
             const SizedBox(height: _kTopBarStatusSpacing),
             _PlayerTopMainRow(
               title: item.title,
+              isFavorited: isFavorited,
               onBack: onBack,
               onShowFavorite: onShowFavorite,
               onShowMore: onShowMore,
@@ -88,12 +94,14 @@ class _PlayerTopStatusRow extends StatelessWidget {
 
 class _PlayerTopMainRow extends StatelessWidget {
   final String title;
+  final bool isFavorited;
   final VoidCallback onBack;
   final VoidCallback onShowFavorite;
   final VoidCallback onShowMore;
 
   const _PlayerTopMainRow({
     required this.title,
+    required this.isFavorited,
     required this.onBack,
     required this.onShowFavorite,
     required this.onShowMore,
@@ -122,9 +130,12 @@ class _PlayerTopMainRow extends StatelessWidget {
         ),
         const SizedBox(width: _kTopBarActionSpacing),
         _PlayerTopBarButton(
-          icon: Icons.favorite_border_rounded,
-          tooltip: '收藏',
+          icon: isFavorited
+              ? Icons.favorite_rounded
+              : Icons.favorite_border_rounded,
+          tooltip: isFavorited ? '已收藏' : '收藏',
           onPressed: onShowFavorite,
+          color: isFavorited ? _kPlayerFavoritedIconColor : Colors.white,
         ),
         const SizedBox(width: _kTopBarActionSpacing),
         _PlayerTopBarButton(
@@ -141,11 +152,13 @@ class _PlayerTopBarButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final Color color;
 
   const _PlayerTopBarButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.color = Colors.white,
   });
 
   @override
@@ -161,7 +174,7 @@ class _PlayerTopBarButton extends StatelessWidget {
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
         ),
-        color: Colors.white,
+        color: color,
         icon: Icon(icon, size: _kTopBarButtonIconSize),
       ),
     );

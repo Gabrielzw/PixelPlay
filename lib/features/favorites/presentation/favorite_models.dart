@@ -126,3 +126,32 @@ List<FavoriteFolderEntry> buildInitialFavoriteFolders() {
     ),
   ];
 }
+
+bool favoriteVideosReferToSameSource(
+  FavoriteVideoEntry left,
+  FavoriteVideoEntry right,
+) {
+  if (left.id == right.id) {
+    return true;
+  }
+
+  final leftLocalVideoId = left.resolvedLocalVideoId;
+  final rightLocalVideoId = right.resolvedLocalVideoId;
+  if (leftLocalVideoId != null && leftLocalVideoId == rightLocalVideoId) {
+    return true;
+  }
+
+  final leftPath = left.playbackPath;
+  final rightPath = right.playbackPath;
+  if (leftPath != null && leftPath == rightPath) {
+    return true;
+  }
+
+  final leftSourceUri = left.sourceUri;
+  final rightSourceUri = right.sourceUri;
+  if (leftSourceUri != null && leftSourceUri == rightSourceUri) {
+    return true;
+  }
+
+  return false;
+}

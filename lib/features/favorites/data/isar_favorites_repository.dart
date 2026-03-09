@@ -71,6 +71,29 @@ class IsarFavoritesRepository implements FavoritesRepository {
     });
   }
 
+  @override
+  void removeVideoFromFolders({
+    required FavoriteVideoEntry video,
+    required Set<String> folderIds,
+  }) {
+    if (folderIds.isEmpty) {
+      return;
+    }
+
+    isar.writeTxnSync(() {
+      final folders = _findFoldersByIds(folderIds);
+      for (final folder in folders) {
+        folder.videos = folder.videos
+            .where(
+              (FavoriteVideoIsarModel item) =>
+                  !favoriteVideosReferToSameSource(item.toDomain(), video),
+            )
+            .toList(growable: false);
+        isar.favoriteFolderIsarModels.putSync(folder);
+      }
+    });
+  }
+
   List<FavoriteFolderIsarModel> _loadStoredFolders() {
     final folders = isar.favoriteFolderIsarModels.where().findAllSync();
     if (folders.isNotEmpty) {

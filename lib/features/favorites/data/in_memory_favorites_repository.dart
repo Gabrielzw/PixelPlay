@@ -63,4 +63,34 @@ class InMemoryFavoritesRepository implements FavoritesRepository {
       );
     }
   }
+
+  @override
+  void removeVideoFromFolders({
+    required FavoriteVideoEntry video,
+    required Set<String> folderIds,
+  }) {
+    if (folderIds.isEmpty) {
+      return;
+    }
+
+    for (var index = 0; index < _folders.length; index++) {
+      final folder = _folders[index];
+      if (!folderIds.contains(folder.id)) {
+        continue;
+      }
+
+      final nextVideos = folder.videos
+          .where(
+            (FavoriteVideoEntry item) =>
+                !favoriteVideosReferToSameSource(item, video),
+          )
+          .toList(growable: false);
+      _folders[index] = FavoriteFolderEntry(
+        id: folder.id,
+        title: folder.title,
+        createdAt: folder.createdAt,
+        videos: nextVideos,
+      );
+    }
+  }
 }

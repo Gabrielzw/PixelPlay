@@ -62,6 +62,7 @@ class PlayerControlsOverlay extends StatelessWidget {
       final isCapturingScreenshot = controller.isCapturingScreenshot.value;
       final currentItem = controller.currentItem.value;
       final panelsOpen = showEpisodePanel || showFavoritePanel || showMorePanel;
+      final favoritesController = Get.find<FavoritesController>();
 
       return Stack(
         children: <Widget>[
@@ -86,6 +87,7 @@ class PlayerControlsOverlay extends StatelessWidget {
                   children: <Widget>[
                     PlayerControlActions(
                       controller: controller,
+                      favoritesController: favoritesController,
                       onBack: onBack,
                       onShowFavorite: onShowFavoritePanel,
                       onShowMore: onShowMorePanel,
@@ -122,7 +124,7 @@ class PlayerControlsOverlay extends StatelessWidget {
             onClose: onClosePanels,
           ),
           PlayerFavoritePanel(
-            favoritesController: Get.find<FavoritesController>(),
+            favoritesController: favoritesController,
             item: currentItem,
             visible: showFavoritePanel,
             onClose: onClosePanels,
