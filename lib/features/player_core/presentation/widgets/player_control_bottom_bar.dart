@@ -5,7 +5,17 @@ import 'package:get/get.dart';
 import '../../../../shared/utils/media_formatters.dart';
 import '../../../settings/domain/app_settings.dart';
 import '../../domain/player_controller.dart';
-import 'player_ui_constants.dart';
+
+const double _kBottomBarMargin = 12;
+const double _kBottomBarPaddingTop = 8;
+const double _kBottomBarSpacing = 8;
+const double _kSpeedButtonHorizontalPadding = 8;
+const double _kSpeedButtonVerticalPadding = 10;
+const double _kSpeedMenuRadius = 12;
+const double _kSpeedMenuCheckWidth = 24;
+const double _kSpeedMenuItemHeight = 40;
+const double _kSpeedMenuMaxHeight = 280;
+const Color _kSpeedMenuBackgroundColor = Color(0xFF111111);
 
 class PlayerControlBottomBar extends StatelessWidget {
   final PlayerController controller;
@@ -22,105 +32,109 @@ class PlayerControlBottomBar extends StatelessWidget {
     return Obx(() {
       final hasDuration = controller.hasKnownDuration;
       final colorScheme = Theme.of(context).colorScheme;
-      final currentText = hasDuration
-          ? formatVideoDuration(controller.position.value)
-          : '--:--';
-      final totalText = hasDuration
-          ? formatVideoDuration(controller.duration.value)
-          : '--:--';
-
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        margin: const EdgeInsets.fromLTRB(
+          _kBottomBarMargin,
+          0,
+          _kBottomBarMargin,
+          _kBottomBarMargin,
+        ),
+        padding: const EdgeInsets.fromLTRB(
+          _kBottomBarMargin,
+          _kBottomBarPaddingTop,
+          _kBottomBarMargin,
+          _kBottomBarMargin,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Text(
-                  currentText,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                ),
-                const Spacer(),
-                Text(
-                  totalText,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                ),
-              ],
-            ),
-            ProgressBar(
-              progress: hasDuration ? controller.position.value : Duration.zero,
-              buffered: _resolveBufferedDuration(controller, hasDuration),
-              total: hasDuration ? controller.duration.value : Duration.zero,
-              timeLabelLocation: TimeLabelLocation.none,
-              barHeight: 3,
-              thumbRadius: 6,
-              thumbGlowRadius: 14,
-              baseBarColor: Colors.white24,
-              bufferedBarColor: Colors.white38,
-              progressBarColor: colorScheme.primary,
-              thumbColor: colorScheme.primary,
-              onDragStart: hasDuration
-                  ? (_) => controller.beginSeekPreview()
-                  : null,
-              onDragUpdate: hasDuration
-                  ? (ThumbDragDetails details) =>
-                        controller.previewSeekPosition(details.timeStamp)
-                  : null,
-              onSeek: hasDuration ? controller.seekToPosition : null,
-            ),
-            Row(
-              children: <Widget>[
-                IconButton(
-                  tooltip: controller.isPlaying.value ? '??' : '??',
-                  onPressed: controller.togglePlay,
-                  icon: Icon(
-                    controller.isPlaying.value
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    size: 28,
-                  ),
-                  color: Colors.white,
-                ),
-                IconButton(
-                  tooltip: '???',
-                  onPressed: controller.hasNext
-                      ? () => controller.playNext()
-                      : null,
-                  icon: const Icon(Icons.skip_next_rounded, size: 28),
-                  color: Colors.white,
-                ),
-                const Spacer(),
-                _SpeedButton(controller: controller),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: onShowEpisodes,
-                  icon: const Icon(
-                    Icons.playlist_play_rounded,
-                    color: Colors.white,
-                  ),
-                  label: Text(
-                    '${controller.currentIndex.value + 1}/${controller.queue.length}',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
+            _buildTimeRow(context, hasDuration),
+            _buildProgressBar(colorScheme, hasDuration),
+            _buildActionRow(context),
           ],
         ),
       );
     });
   }
 
-  Duration? _resolveBufferedDuration(
-    PlayerController controller,
-    bool hasDuration,
-  ) {
+  Widget _buildTimeRow(BuildContext context, bool hasDuration) {
+    final textTheme = Theme.of(context).textTheme;
+    final currentText = hasDuration
+        ? formatVideoDuration(controller.position.value)
+        : '--:--';
+    final totalText = hasDuration
+        ? formatVideoDuration(controller.duration.value)
+        : '--:--';
+    final textStyle = textTheme.bodySmall?.copyWith(color: Colors.white70);
+    return Row(
+      children: <Widget>[
+        Text(currentText, style: textStyle),
+        const Spacer(),
+        Text(totalText, style: textStyle),
+      ],
+    );
+  }
+
+  Widget _buildProgressBar(ColorScheme colorScheme, bool hasDuration) {
+    return ProgressBar(
+      progress: hasDuration ? controller.position.value : Duration.zero,
+      buffered: _resolveBufferedDuration(hasDuration),
+      total: hasDuration ? controller.duration.value : Duration.zero,
+      timeLabelLocation: TimeLabelLocation.none,
+      barHeight: 3,
+      thumbRadius: 6,
+      thumbGlowRadius: 14,
+      baseBarColor: Colors.white24,
+      bufferedBarColor: Colors.white38,
+      progressBarColor: colorScheme.primary,
+      thumbColor: colorScheme.primary,
+      onDragStart: hasDuration ? (_) => controller.beginSeekPreview() : null,
+      onDragUpdate: hasDuration
+          ? (ThumbDragDetails details) =>
+                controller.previewSeekPosition(details.timeStamp)
+          : null,
+      onSeek: hasDuration ? controller.seekToPosition : null,
+    );
+  }
+
+  Widget _buildActionRow(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        IconButton(
+          tooltip: controller.isPlaying.value ? '暂停' : '播放',
+          onPressed: controller.togglePlay,
+          icon: Icon(
+            controller.isPlaying.value
+                ? Icons.pause_rounded
+                : Icons.play_arrow_rounded,
+            size: 28,
+          ),
+          color: Colors.white,
+        ),
+        IconButton(
+          tooltip: '下一集',
+          onPressed: controller.hasNext ? () => controller.playNext() : null,
+          icon: const Icon(Icons.skip_next_rounded, size: 28),
+          color: Colors.white,
+        ),
+        const Spacer(),
+        _SpeedButton(controller: controller),
+        const SizedBox(width: _kBottomBarSpacing),
+        IconButton(
+          tooltip: '播放列表',
+          onPressed: onShowEpisodes,
+          icon: const Icon(
+            Icons.playlist_play_rounded,
+            size: 24,
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Duration? _resolveBufferedDuration(bool hasDuration) {
     if (!hasDuration || !controller.currentItem.value.isRemote) {
       return null;
     }
@@ -135,41 +149,85 @@ class _SpeedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => PopupMenuButton<double>(
-        tooltip: '??',
+    final colorScheme = Theme.of(context).colorScheme;
+    return Obx(() {
+      final selectedSpeed = controller.playbackSpeed.value;
+      return PopupMenuButton<double>(
+        tooltip: '倍速',
+        padding: EdgeInsets.zero,
+        color: _kSpeedMenuBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_kSpeedMenuRadius),
+        ),
+        constraints: const BoxConstraints(maxHeight: _kSpeedMenuMaxHeight),
         onSelected: controller.setPlaybackSpeed,
         itemBuilder: (BuildContext context) {
           return kPlaybackSpeedOptions
               .map(
-                (double speed) => PopupMenuItem<double>(
-                  value: speed,
-                  child: Text('${speed}x'),
+                (double speed) => _buildSpeedMenuItem(
+                  colorScheme: colorScheme,
+                  selectedSpeed: selectedSpeed,
+                  speed: speed,
                 ),
               )
               .toList(growable: false);
         },
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: applyOpacity(Colors.white, 0.12),
-            borderRadius: const BorderRadius.all(Radius.circular(18)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: _kSpeedButtonHorizontalPadding,
+            vertical: _kSpeedButtonVerticalPadding,
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(Icons.speed_rounded, size: 18, color: Colors.white),
-                const SizedBox(width: 6),
-                Text(
-                  '${controller.playbackSpeed.value}x',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ],
+          child: Text(
+            _speedButtonLabel(selectedSpeed),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
+      );
+    });
+  }
+
+  PopupMenuItem<double> _buildSpeedMenuItem({
+    required ColorScheme colorScheme,
+    required double selectedSpeed,
+    required double speed,
+  }) {
+    final isSelected = speed == selectedSpeed;
+    return PopupMenuItem<double>(
+      value: speed,
+      height: _kSpeedMenuItemHeight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          SizedBox(
+            width: _kSpeedMenuCheckWidth,
+            child: isSelected
+                ? Icon(
+                    Icons.check_rounded,
+                    size: 18,
+                    color: colorScheme.primary,
+                  )
+                : null,
+          ),
+          Text(
+            '${speed}x',
+            style: TextStyle(
+              color: isSelected ? colorScheme.primary : Colors.white,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  String _speedButtonLabel(double speed) {
+    if (speed == kDefaultPlaybackSpeed) {
+      return '倍速';
+    }
+    return '${speed}x';
   }
 }
