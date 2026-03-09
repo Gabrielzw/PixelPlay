@@ -264,8 +264,11 @@ class _PlaylistSourcesTabViewState extends State<PlaylistSourcesTabView>
 
     await pushRootPage<void>(
       context,
-      (_) =>
-          WebDavBrowserPage(account: account, path: entry.webDavDirectoryPath),
+      (_) => WebDavBrowserPage(
+        account: account,
+        path: entry.webDavDirectoryPath,
+        rootPath: entry.webDavDirectoryPath,
+      ),
     );
   }
 

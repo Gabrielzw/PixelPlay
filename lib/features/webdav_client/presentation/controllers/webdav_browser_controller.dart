@@ -150,8 +150,13 @@ class WebDavBrowserController extends GetxController {
     required this.accountRepository,
     required this.account,
     String? initialPath,
+    String? rootPath,
   }) : state = Rx<WebDavBrowserViewState>(
-         _createInitialState(account: account, initialPath: initialPath),
+         _createInitialState(
+           account: account,
+           initialPath: initialPath,
+           rootPath: rootPath,
+         ),
        );
 
   Future<void> initialize() {
@@ -280,18 +285,19 @@ class WebDavBrowserController extends GetxController {
   static WebDavBrowserViewState _createInitialState({
     required WebDavServerConfig account,
     required String? initialPath,
+    required String? rootPath,
   }) {
-    final rootPath = resolveRelativeWebDavPath(
+    final browserRootPath = resolveRelativeWebDavPath(
       baseUrl: account.url,
-      path: account.rootPath,
+      path: rootPath ?? account.rootPath,
     );
     final currentPath = resolveRelativeWebDavPath(
       baseUrl: account.url,
-      path: initialPath ?? account.rootPath,
+      path: initialPath ?? rootPath ?? account.rootPath,
     );
 
     return WebDavBrowserViewState(
-      rootPath: rootPath,
+      rootPath: browserRootPath,
       currentPath: currentPath,
       isLoading: true,
     );

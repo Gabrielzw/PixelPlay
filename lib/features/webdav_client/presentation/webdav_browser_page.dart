@@ -21,8 +21,14 @@ import 'widgets/webdav_sort_button.dart';
 class WebDavBrowserPage extends StatefulWidget {
   final WebDavServerConfig account;
   final String? path;
+  final String? rootPath;
 
-  const WebDavBrowserPage({super.key, required this.account, this.path});
+  const WebDavBrowserPage({
+    super.key,
+    required this.account,
+    this.path,
+    this.rootPath,
+  });
 
   @override
   State<WebDavBrowserPage> createState() => _WebDavBrowserPageState();
@@ -44,6 +50,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
         accountRepository: Get.find<WebDavAccountRepository>(),
         account: widget.account,
         initialPath: widget.path,
+        rootPath: widget.rootPath,
       ),
       tag: _controllerTag,
     );

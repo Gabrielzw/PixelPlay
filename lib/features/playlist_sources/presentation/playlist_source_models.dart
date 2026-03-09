@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../media_library/domain/entities/local_album.dart';
+import '../../thumbnail_engine/domain/video_thumbnail_request.dart';
 import '../../webdav_client/domain/webdav_paths.dart';
 import '../../webdav_client/domain/webdav_server_config.dart';
 
@@ -101,6 +102,27 @@ class PlaylistSourceEntry {
       PlaylistSourceKind.localAlbum => localAlbumBucketId,
       PlaylistSourceKind.webDavDirectory => webDavDirectoryPath,
     };
+  }
+
+  int get previewSeed {
+    return localAlbumLatestVideoId ?? id.hashCode;
+  }
+
+  VideoThumbnailRequest? get thumbnailRequest {
+    if (sourceKind != PlaylistSourceKind.localAlbum) {
+      return null;
+    }
+    if (localAlbumLatestVideoId == null ||
+        localAlbumLatestVideoPath == null ||
+        localAlbumLatestVideoDateModified == null) {
+      return null;
+    }
+
+    return VideoThumbnailRequest.tile(
+      videoId: localAlbumLatestVideoId!,
+      videoPath: localAlbumLatestVideoPath!,
+      dateModified: localAlbumLatestVideoDateModified!,
+    );
   }
 
   LocalAlbum toLocalAlbum() {
