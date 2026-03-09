@@ -78,6 +78,7 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
             leading: IconButton(
               tooltip: '返回',
               onPressed: _handleBackPressed,
+              onLongPress: _handleBackLongPress,
               icon: const Icon(Icons.arrow_back),
             ),
             titleSpacing: 0,
@@ -167,6 +168,13 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
 
   Future<void> _handleBackPressed() {
     return _navigateBack();
+  }
+
+  void _handleBackLongPress() {
+    if (!mounted) {
+      return;
+    }
+    Navigator.of(context).pop();
   }
 
   void _handleSearchChanged() {
