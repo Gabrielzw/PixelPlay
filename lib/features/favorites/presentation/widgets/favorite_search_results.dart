@@ -18,6 +18,8 @@ class FavoriteSearchResults extends StatelessWidget {
   final FavoriteFolderSortType sortType;
   final ValueChanged<String> onFolderTap;
   final ValueChanged<String> onFolderLongPress;
+  final void Function(FavoriteFolderEntry folder, FavoriteVideoEntry video)
+  onVideoTap;
 
   const FavoriteSearchResults({
     super.key,
@@ -28,6 +30,7 @@ class FavoriteSearchResults extends StatelessWidget {
     required this.sortType,
     required this.onFolderTap,
     required this.onFolderLongPress,
+    required this.onVideoTap,
   });
 
   @override
@@ -41,7 +44,7 @@ class FavoriteSearchResults extends StatelessWidget {
       slivers: <Widget>[
         if (matchedFolders.isNotEmpty)
           _Section(
-            title: '收藏夹',
+            title: '\u6536\u85cf\u5939',
             child: Column(
               children: matchedFolders
                   .map(
@@ -71,7 +74,7 @@ class FavoriteSearchResults extends StatelessWidget {
           ),
         if (matchedVideos.isNotEmpty)
           _Section(
-            title: '视频',
+            title: '\u89c6\u9891',
             child: Column(
               children: matchedVideos
                   .map(
@@ -81,7 +84,10 @@ class FavoriteSearchResults extends StatelessWidget {
                       ),
                       child: FavoriteSearchVideoTile(
                         video: item.video,
-                        folderTitle: item.folderTitle,
+                        folderTitle: item.folder.title,
+                        onTap: isSelectionMode
+                            ? null
+                            : () => onVideoTap(item.folder, item.video),
                       ),
                     ),
                   )
@@ -120,10 +126,8 @@ class FavoriteSearchResults extends StatelessWidget {
                 ),
               )
               .map(
-                (FavoriteVideoEntry video) => _FavoriteMatchedVideo(
-                  video: video,
-                  folderTitle: folder.title,
-                ),
+                (FavoriteVideoEntry video) =>
+                    _FavoriteMatchedVideo(video: video, folder: folder),
               ),
         )
         .toList(growable: false);
@@ -189,7 +193,7 @@ class _EmptySection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '没有找到匹配的收藏夹或视频',
+              '\u6ca1\u6709\u627e\u5230\u5339\u914d\u7684\u6536\u85cf\u5939\u6216\u89c6\u9891',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -203,9 +207,9 @@ class _EmptySection extends StatelessWidget {
 
 class _FavoriteMatchedVideo {
   final FavoriteVideoEntry video;
-  final String folderTitle;
+  final FavoriteFolderEntry folder;
 
-  const _FavoriteMatchedVideo({required this.video, required this.folderTitle});
+  const _FavoriteMatchedVideo({required this.video, required this.folder});
 }
 
 int _compareFolders(

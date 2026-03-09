@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'favorite_folder_detail_page.dart';
 import 'favorite_folder_form_page.dart';
+import 'favorite_search_video_launcher.dart';
 import 'favorite_folder_sort_type.dart';
 import 'favorite_models.dart';
 import 'controllers/favorites_controller.dart';
@@ -101,6 +102,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
         sortType: _currentSort,
         onFolderTap: _handleFolderTap,
         onFolderLongPress: _toggleSelection,
+        onVideoTap: buildFavoriteSearchVideoTapHandler(context),
       );
     }
 
