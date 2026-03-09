@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/router/page_navigation.dart';
+import '../../../shared/widgets/pp_toast.dart';
 import '../domain/webdav_server_config.dart';
 import 'controllers/webdav_accounts_controller.dart';
 import 'webdav_account_form_page.dart';
@@ -65,11 +66,8 @@ class WebDavAccountsPage extends GetView<WebDavAccountsController> {
     if (saved != true || !context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(account == null ? '已添加 WebDAV 账户。' : '已更新 WebDAV 账户。'),
-      ),
-    );
+
+    PPToast.success(account == null ? '已添加 WebDAV 账户。' : '已更新 WebDAV 账户。');
   }
 
   void _openBrowser(BuildContext context, WebDavServerConfig account) {

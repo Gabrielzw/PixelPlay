@@ -4,6 +4,7 @@ import '../../domain/webdav_paths.dart';
 
 const double _kSearchBarRadius = 22;
 const double _kCurrentCrumbRadius = 14;
+const double _kBreadcrumbFontSize = 13;
 
 class WebDavBreadcrumbBar extends StatelessWidget {
   final String rootPath;
@@ -148,6 +149,7 @@ class _PathCrumb extends StatelessWidget {
           label,
           style: TextStyle(
             color: colorScheme.onPrimaryContainer,
+            fontSize: _kBreadcrumbFontSize,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -159,7 +161,13 @@ class _PathCrumb extends StatelessWidget {
       borderRadius: BorderRadius.circular(_kCurrentCrumbRadius),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: _kBreadcrumbFontSize,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }

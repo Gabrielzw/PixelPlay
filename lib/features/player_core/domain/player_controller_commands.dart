@@ -32,7 +32,6 @@ extension PlayerControllerCommands on PlayerController {
     if (controlsLocked.value) {
       controlsLocked.value = false;
       showControls();
-      showInfoHud('已解锁屏幕');
       armControlsAutoHide();
       return;
     }
@@ -40,7 +39,6 @@ extension PlayerControllerCommands on PlayerController {
     controlsLocked.value = true;
     controlsVisible.value = false;
     cancelControlsAutoHide();
-    showInfoHud('已锁定屏幕');
   }
 
   Future<void> playPrevious() async {
