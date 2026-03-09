@@ -8,29 +8,46 @@ extension PlayerControllerPreferences on PlayerController {
     await commitSeekPreview();
   }
 
-  Future<void> setPlaybackMode(PlayerPlaybackMode mode) async {
+  Future<void> setPlaybackMode(
+    PlayerPlaybackMode mode, {
+    bool showHud = true,
+  }) async {
     await settingsController.setDefaultPlaybackMode(mode);
-    showInfoHud('播放方式：${mode.label}');
+    if (showHud) {
+      showInfoHud('播放方式：${mode.label}');
+    }
     armControlsAutoHide();
   }
 
-  Future<void> setAutoPlayOnEnter(bool enabled) async {
+  Future<void> setAutoPlayOnEnter(bool enabled, {bool showHud = true}) async {
     await settingsController.setAutoPlayOnEnter(enabled);
-    final message = enabled ? '进入播放器后自动播放' : '进入播放器后暂停等待';
-    showInfoHud(message);
+    if (showHud) {
+      final message = enabled ? '进入播放器后自动播放' : '进入播放器后暂停等待';
+      showInfoHud(message);
+    }
     armControlsAutoHide();
   }
 
-  Future<void> setLongPressPlaybackSpeed(double speed) async {
+  Future<void> setLongPressPlaybackSpeed(
+    double speed, {
+    bool showHud = true,
+  }) async {
     await settingsController.setLongPressPlaybackSpeed(speed);
-    showInfoHud('长按倍速 ${speed}x');
+    if (showHud) {
+      showInfoHud('长按倍速 ${speed}x');
+    }
     armControlsAutoHide();
   }
 
-  Future<void> setGestureSeekUsesVideoDuration(bool enabled) async {
+  Future<void> setGestureSeekUsesVideoDuration(
+    bool enabled, {
+    bool showHud = true,
+  }) async {
     await settingsController.setGestureSeekUsesVideoDuration(enabled);
-    final message = enabled ? '滑动快进按视频总时长' : '滑动快进按固定时长';
-    showInfoHud(message);
+    if (showHud) {
+      final message = enabled ? '滑动快进按视频总时长' : '滑动快进按固定时长';
+      showInfoHud(message);
+    }
     armControlsAutoHide();
   }
 

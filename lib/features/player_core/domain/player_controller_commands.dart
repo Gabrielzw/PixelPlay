@@ -94,10 +94,15 @@ extension PlayerControllerCommands on PlayerController {
     await setAspectRatio(next);
   }
 
-  Future<void> setAspectRatio(PlayerAspectRatio value) async {
+  Future<void> setAspectRatio(
+    PlayerAspectRatio value, {
+    bool showHud = true,
+  }) async {
     aspectRatio.value = value;
     await settingsController.setDefaultAspectRatio(value);
-    showInfoHud(value.label);
+    if (showHud) {
+      showInfoHud(value.label);
+    }
     armControlsAutoHide();
   }
 
