@@ -40,6 +40,8 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
   late final TextEditingController _searchController;
   late final String _controllerTag;
   late final WebDavBrowserController _browserController;
+  Animation<double>? _routeAnimation;
+  bool _hasScheduledInitialization = false;
 
   @override
   void initState() {
@@ -59,15 +61,17 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
     );
     _searchController = TextEditingController()
       ..addListener(_handleSearchChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _browserController.initialize();
-      }
-    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scheduleInitializationAfterRouteTransition();
   }
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatusChanged);
     _searchController
       ..removeListener(_handleSearchChanged)
       ..dispose();
@@ -171,6 +175,44 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       opacity: animation,
       child: SlideTransition(position: position, child: child),
     );
+  }
+
+  void _scheduleInitializationAfterRouteTransition() {
+    if (_hasScheduledInitialization) {
+      return;
+    }
+
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      final animation = route.animation;
+      if (animation != null && animation.status != AnimationStatus.completed) {
+        if (!identical(animation, _routeAnimation)) {
+          _routeAnimation?.removeStatusListener(
+            _handleRouteAnimationStatusChanged,
+          );
+          _routeAnimation = animation
+            ..addStatusListener(_handleRouteAnimationStatusChanged);
+        }
+        return;
+      }
+    }
+
+    _hasScheduledInitialization = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _browserController.initialize();
+      }
+    });
+  }
+
+  void _handleRouteAnimationStatusChanged(AnimationStatus status) {
+    if (status != AnimationStatus.completed) {
+      return;
+    }
+
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatusChanged);
+    _routeAnimation = null;
+    _scheduleInitializationAfterRouteTransition();
   }
 
   void _handlePop(bool didPop, Object? result) {

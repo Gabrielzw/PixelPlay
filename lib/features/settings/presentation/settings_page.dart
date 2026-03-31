@@ -93,6 +93,20 @@ class _SettingsBody extends GetView<SettingsController> {
               ),
             ],
           ),
+          _SettingsSection(
+            title: '关于',
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.description_outlined),
+                title: const Text('开源许可证'),
+                subtitle: const Text('查看应用使用的开源许可信息'),
+                onTap: () => pushRootPage<void>(
+                  context,
+                  (_) => const LicensePage(applicationName: 'Pixel Play'),
+                ),
+              ),
+            ],
+          ),
         ],
       );
     });

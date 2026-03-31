@@ -69,6 +69,31 @@ void main() {
     expect(find.text('播放器默认设置'), findsOneWidget);
   });
 
+  testWidgets('settings page opens open source licenses page', (
+    WidgetTester tester,
+  ) async {
+    Get.put<SettingsController>(
+      SettingsController(repository: InMemorySettingsRepository()),
+    );
+
+    await tester.pumpWidget(const GetMaterialApp(home: SettingsPage()));
+    await tester.pumpAndSettle();
+
+    final licenseFinder = find.text('开源许可证');
+
+    await tester.dragUntilVisible(
+      licenseFinder,
+      find.byType(ListView).first,
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(licenseFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LicensePage), findsOneWidget);
+    expect(find.text('Pixel Play'), findsOneWidget);
+  });
+
   testWidgets('player settings page hides top notice', (
     WidgetTester tester,
   ) async {
