@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/router/page_navigation.dart';
+import '../../data_backup/presentation/data_backup_page.dart';
 import '../domain/page_transition_type.dart';
 import '../domain/settings_controller.dart';
 import 'cache_settings_page.dart';
@@ -89,6 +90,15 @@ class _SettingsBody extends GetView<SettingsController> {
                 onTap: () => pushRootPage<void>(
                   context,
                   (_) => const CacheSettingsPage(),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.backup_table_outlined),
+                title: const Text('数据备份与恢复'),
+                subtitle: const Text('备份设置、云盘账户、收藏夹和备份列表'),
+                onTap: () => pushRootPage<void>(
+                  context,
+                  (_) => const DataBackupPage(),
                 ),
               ),
             ],
