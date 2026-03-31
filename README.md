@@ -92,12 +92,6 @@ flutter run
 
 ## 开发命令
 
-### 运行测试
-
-```bash
-flutter test
-```
-
 ### 重新生成 Isar 代码
 
 当你修改 [lib/shared/data/isar/schemas](lib/shared/data/isar/schemas) 下的模型后，执行：
@@ -139,7 +133,6 @@ flutter build apk --release
 |  |- shared/                  # 通用组件、工具、Isar 基础设施
 |- android/                    # Android 原生实现
 |- pigeons/                    # Flutter <-> Android 桥接定义
-|- test/                       # Widget / Repository / Regression 测试
 ```
 
 如果你想快速定位代码，可以优先查看：
@@ -156,11 +149,6 @@ flutter build apk --release
 
 - 仓库主页：[Gabrielzw/pixelplay](https://github.com/Gabrielzw/pixelplay)
 - 问题反馈：[GitHub Issues](https://github.com/Gabrielzw/pixelplay/issues)
-- 功能排查建议：
-  - 本地媒体扫描问题先看 [lib/features/media_library](lib/features/media_library)
-  - WebDAV 连接或目录问题先看 [lib/features/webdav_client](lib/features/webdav_client)
-  - 播放器行为问题先看 [lib/features/player_core](lib/features/player_core)
-  - 回归问题可从 [test](test) 中对应测试开始定位
 
 ## 维护与贡献
 
@@ -171,7 +159,6 @@ flutter build apk --release
 
 ```bash
 flutter analyze
-flutter test
 ```
 
 - 如果改动涉及 Isar schema 或 Pigeon 接口，请同步重新生成代码并一并提交生成产物。
