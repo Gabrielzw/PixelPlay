@@ -3,6 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:media_kit/media_kit.dart';
 
 import 'app/pixelplay_app.dart';
+import 'features/data_backup/data/flutter_file_dialog_data_backup_file_port.dart';
+import 'features/data_backup/data/local_data_backup_repository.dart';
 import 'features/favorites/data/isar_favorites_repository.dart';
 import 'features/media_library/data/android_media_library_repository.dart';
 import 'features/playlist_sources/data/isar_playlist_source_repository.dart';
@@ -26,6 +28,12 @@ Future<void> main() async {
   final favoritesRepository = IsarFavoritesRepository(isar: isar);
   final playlistSourceRepository = IsarPlaylistSourceRepository(isar: isar);
   const secureStorage = FlutterSecureStorage();
+  const backupFilePort = FlutterFileDialogDataBackupFilePort();
+  final dataBackupRepository = SystemFileDialogDataBackupRepository(
+    isar: isar,
+    secureStorage: secureStorage,
+    filePort: backupFilePort,
+  );
   final webDavAccountRepository = IsarWebDavAccountRepository(
     isar: isar,
     passwordStore: const SecureStorageWebDavPasswordStore(
@@ -40,6 +48,7 @@ Future<void> main() async {
       mediaLibraryRepository: mediaLibraryRepository,
       favoritesRepository: favoritesRepository,
       playlistSourceRepository: playlistSourceRepository,
+      dataBackupRepository: dataBackupRepository,
       playbackPositionRepository: playbackPositionRepository,
       watchHistoryRepository: watchHistoryRepository,
       webDavAccountRepository: webDavAccountRepository,

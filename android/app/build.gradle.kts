@@ -11,6 +11,31 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseApkNamePrefix = rootProject.rootDir.parentFile.name
+val releaseApkDate = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
+
+fun normalizeAbiName(abi: String): String {
+    return when (abi) {
+        "armeabi-v7a" -> "armeabiv7a"
+        "arm64-v8a" -> "arm64v8a"
+        "x86" -> "x86"
+        "x86_64" -> "x86_64"
+        else -> abi.replace("-", "")
+    }
+}
+
+fun resolveAbiNameFromFileName(fileName: String): String {
+    val knownAbis =
+        listOf(
+            "arm64-v8a",
+            "armeabi-v7a",
+            "x86_64",
+            "x86",
+        )
+
+    return knownAbis.firstOrNull(fileName::contains)?.let(::normalizeAbiName) ?: "universal"
+}
+
 android {
     namespace = "media.gabriel.pixelplay"
     compileSdk = 36

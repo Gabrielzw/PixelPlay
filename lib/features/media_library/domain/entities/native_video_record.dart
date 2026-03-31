@@ -22,4 +22,3 @@ class NativeVideoRecord {
     required this.dateAdded,
   });
 }
-

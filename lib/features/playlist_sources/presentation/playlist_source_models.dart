@@ -147,6 +147,49 @@ class PlaylistSourceEntry {
       latestVideoDateModified: localAlbumLatestVideoDateModified!,
     );
   }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'title': title,
+      'createdAtMs': createdAt.millisecondsSinceEpoch,
+      'sourceKind': sourceKind.name,
+      'localAlbumBucketId': localAlbumBucketId,
+      'localAlbumName': localAlbumName,
+      'localAlbumVideoCount': localAlbumVideoCount,
+      'localAlbumLatestDateAddedSeconds': localAlbumLatestDateAddedSeconds,
+      'localAlbumLatestVideoId': localAlbumLatestVideoId,
+      'localAlbumLatestVideoPath': localAlbumLatestVideoPath,
+      'localAlbumLatestVideoDateModified': localAlbumLatestVideoDateModified,
+      'webDavAccountId': webDavAccountId,
+      'webDavAccountAlias': webDavAccountAlias,
+      'webDavDirectoryPath': webDavDirectoryPath,
+    };
+  }
+
+  factory PlaylistSourceEntry.fromJson(Map<String, Object?> json) {
+    return PlaylistSourceEntry(
+      id: json['id']! as String,
+      title: json['title']! as String,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        (json['createdAtMs'] as num).toInt(),
+      ),
+      sourceKind: _parseSourceKind(json['sourceKind']! as String),
+      localAlbumBucketId: json['localAlbumBucketId'] as String?,
+      localAlbumName: json['localAlbumName'] as String?,
+      localAlbumVideoCount: (json['localAlbumVideoCount'] as num?)?.toInt(),
+      localAlbumLatestDateAddedSeconds:
+          (json['localAlbumLatestDateAddedSeconds'] as num?)?.toInt(),
+      localAlbumLatestVideoId: (json['localAlbumLatestVideoId'] as num?)
+          ?.toInt(),
+      localAlbumLatestVideoPath: json['localAlbumLatestVideoPath'] as String?,
+      localAlbumLatestVideoDateModified:
+          (json['localAlbumLatestVideoDateModified'] as num?)?.toInt(),
+      webDavAccountId: json['webDavAccountId'] as String?,
+      webDavAccountAlias: json['webDavAccountAlias'] as String?,
+      webDavDirectoryPath: json['webDavDirectoryPath'] as String?,
+    );
+  }
 }
 
 List<PlaylistSourceEntry> sortPlaylistSources(
@@ -189,4 +232,11 @@ String resolvePlaylistWebDavTitle(String path) {
     return kPlaylistRootDirectoryLabel;
   }
   return segments.last;
+}
+
+PlaylistSourceKind _parseSourceKind(String value) {
+  return PlaylistSourceKind.values.firstWhere(
+    (PlaylistSourceKind item) => item.name == value,
+    orElse: () => throw StateError('未知播放列表来源类型: $value'),
+  );
 }

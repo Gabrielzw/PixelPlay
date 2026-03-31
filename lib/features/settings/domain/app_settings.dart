@@ -116,6 +116,56 @@ class AppSettings {
 
   Color get seedColor => Color(seedColorValue);
 
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'themeMode': themeMode.name,
+      'seedColorValue': seedColorValue,
+      'pageTransitionType': pageTransitionType.name,
+      'defaultPlaybackSpeed': defaultPlaybackSpeed,
+      'longPressPlaybackSpeed': longPressPlaybackSpeed,
+      'defaultAspectRatio': defaultAspectRatio.name,
+      'defaultPlaybackMode': defaultPlaybackMode.name,
+      'gestureSeekSecondsPerSwipe': gestureSeekSecondsPerSwipe,
+      'gestureSeekUsesVideoDuration': gestureSeekUsesVideoDuration,
+      'rememberPlaybackPosition': rememberPlaybackPosition,
+      'autoPlayOnEnter': autoPlayOnEnter,
+    };
+  }
+
+  factory AppSettings.fromJson(Map<String, Object?> json) {
+    return AppSettings(
+      themeMode: _themeModeFromName(json['themeMode'] as String?),
+      seedColorValue:
+          (json['seedColorValue'] as num?)?.toInt() ?? kDefaultSeedColorValue,
+      pageTransitionType: _pageTransitionTypeFromName(
+        json['pageTransitionType'] as String?,
+      ),
+      defaultPlaybackSpeed:
+          (json['defaultPlaybackSpeed'] as num?)?.toDouble() ??
+          kDefaultPlaybackSpeed,
+      longPressPlaybackSpeed:
+          (json['longPressPlaybackSpeed'] as num?)?.toDouble() ??
+          kDefaultLongPressPlaybackSpeed,
+      defaultAspectRatio: _aspectRatioFromName(
+        json['defaultAspectRatio'] as String?,
+      ),
+      defaultPlaybackMode: _playbackModeFromName(
+        json['defaultPlaybackMode'] as String?,
+      ),
+      gestureSeekSecondsPerSwipe:
+          (json['gestureSeekSecondsPerSwipe'] as num?)?.toInt() ??
+          kDefaultGestureSeekSecondsPerSwipe,
+      gestureSeekUsesVideoDuration:
+          json['gestureSeekUsesVideoDuration'] as bool? ??
+          kDefaultGestureSeekUsesVideoDuration,
+      rememberPlaybackPosition:
+          json['rememberPlaybackPosition'] as bool? ??
+          kDefaultRememberPlaybackPosition,
+      autoPlayOnEnter:
+          json['autoPlayOnEnter'] as bool? ?? kDefaultAutoPlayOnEnter,
+    );
+  }
+
   AppSettings copyWith({
     ThemeMode? themeMode,
     int? seedColorValue,
@@ -147,4 +197,32 @@ class AppSettings {
       autoPlayOnEnter: autoPlayOnEnter ?? this.autoPlayOnEnter,
     );
   }
+}
+
+ThemeMode _themeModeFromName(String? value) {
+  return ThemeMode.values.firstWhere(
+    (ThemeMode mode) => mode.name == value,
+    orElse: () => ThemeMode.system,
+  );
+}
+
+PageTransitionType _pageTransitionTypeFromName(String? value) {
+  return PageTransitionType.values.firstWhere(
+    (PageTransitionType type) => type.name == value,
+    orElse: () => kDefaultPageTransitionType,
+  );
+}
+
+PlayerAspectRatio _aspectRatioFromName(String? value) {
+  return PlayerAspectRatio.values.firstWhere(
+    (PlayerAspectRatio ratio) => ratio.name == value,
+    orElse: () => kDefaultAspectRatio,
+  );
+}
+
+PlayerPlaybackMode _playbackModeFromName(String? value) {
+  return PlayerPlaybackMode.values.firstWhere(
+    (PlayerPlaybackMode mode) => mode.name == value,
+    orElse: () => kDefaultPlaybackMode,
+  );
 }

@@ -66,6 +66,10 @@ class SettingsController extends GetxController {
     await _saveSettings(settings.value.copyWith(autoPlayOnEnter: enabled));
   }
 
+  void reload() {
+    settings.value = repository.load();
+  }
+
   Future<void> _saveSettings(AppSettings nextSettings) async {
     settings.value = nextSettings;
     await repository.save(nextSettings);

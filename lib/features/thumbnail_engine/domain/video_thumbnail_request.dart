@@ -62,6 +62,36 @@ class VideoThumbnailRequest {
       dateModified: dateModified,
     );
   }
+
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'videoId': videoId,
+      'videoPath': videoPath,
+      'targetWidth': targetWidth,
+      'targetHeight': targetHeight,
+      'dateModified': dateModified,
+    };
+  }
+
+  factory VideoThumbnailRequest.fromJson(Map<String, Object?> json) {
+    final videoId = (json['videoId'] as num).toInt();
+    final dateModified = (json['dateModified'] as num).toInt();
+    final targetWidth = (json['targetWidth'] as num).toInt();
+    final targetHeight = (json['targetHeight'] as num).toInt();
+    return VideoThumbnailRequest(
+      cacheKey: _buildCacheKey(
+        videoId: videoId,
+        dateModified: dateModified,
+        targetWidth: targetWidth,
+        targetHeight: targetHeight,
+      ),
+      videoId: videoId,
+      videoPath: json['videoPath']! as String,
+      targetWidth: targetWidth,
+      targetHeight: targetHeight,
+      dateModified: dateModified,
+    );
+  }
 }
 
 String _buildCacheKey({

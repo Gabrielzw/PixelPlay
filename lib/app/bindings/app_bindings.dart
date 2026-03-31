@@ -1,6 +1,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 
+import '../../features/data_backup/data/getx_app_restore_refresher.dart';
+import '../../features/data_backup/domain/app_restore_refresher.dart';
+import '../../features/data_backup/domain/data_backup_controller.dart';
+import '../../features/data_backup/domain/data_backup_repository.dart';
 import '../../features/favorites/data/in_memory_favorites_repository.dart';
 import '../../features/favorites/domain/favorites_repository.dart';
 import '../../features/favorites/presentation/controllers/favorites_controller.dart';
@@ -33,6 +37,7 @@ class AppBindings extends Bindings {
   final ThumbnailQueue? thumbnailQueue;
   final FavoritesRepository? favoritesRepository;
   final PlaylistSourceRepository? playlistSourceRepository;
+  final DataBackupRepository dataBackupRepository;
   final PlaybackPositionRepository playbackPositionRepository;
   final WatchHistoryRepository watchHistoryRepository;
   final WebDavAccountRepository webDavAccountRepository;
@@ -44,6 +49,7 @@ class AppBindings extends Bindings {
     this.thumbnailQueue,
     this.favoritesRepository,
     this.playlistSourceRepository,
+    required this.dataBackupRepository,
     required this.playbackPositionRepository,
     required this.watchHistoryRepository,
     required this.webDavAccountRepository,
@@ -77,6 +83,7 @@ class AppBindings extends Bindings {
       playlistSourceRepository ?? InMemoryPlaylistSourceRepository(),
       permanent: true,
     );
+    Get.put<DataBackupRepository>(dataBackupRepository, permanent: true);
     Get.put<ThumbnailQueue>(resolvedThumbnailQueue, permanent: true);
     Get.put<CacheCleaner>(
       AppCacheCleaner(
@@ -109,6 +116,17 @@ class AppBindings extends Bindings {
     );
     Get.put<WebDavAccountsController>(
       WebDavAccountsController(repository: webDavAccountRepository),
+      permanent: true,
+    );
+    Get.put<AppRestoreRefresher>(
+      const GetxAppRestoreRefresher(),
+      permanent: true,
+    );
+    Get.put<DataBackupController>(
+      DataBackupController(
+        repository: Get.find<DataBackupRepository>(),
+        appRestoreRefresher: Get.find<AppRestoreRefresher>(),
+      ),
       permanent: true,
     );
   }

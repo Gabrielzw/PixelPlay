@@ -65,6 +65,54 @@ class FavoriteVideoEntry {
       webDavAccountId: webDavAccountId,
     );
   }
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'title': title,
+      'durationText': durationText,
+      'updatedAtMs': updatedAt.millisecondsSinceEpoch,
+      'previewSeed': previewSeed,
+      'sourceLabel': sourceLabel,
+      'path': path,
+      'sourceUri': sourceUri,
+      'durationMs': durationMs,
+      'sourceKindKey': sourceKind?.key,
+      'resolutionText': resolutionText,
+      'previewAspectRatio': previewAspectRatio,
+      'lastKnownPositionMs': lastKnownPositionMs,
+      'localVideoId': localVideoId,
+      'localVideoDateModified': localVideoDateModified,
+      'webDavAccountId': webDavAccountId,
+      'thumbnailRequest': thumbnailRequest?.toJson(),
+    };
+  }
+
+  factory FavoriteVideoEntry.fromJson(Map<String, Object?> json) {
+    return FavoriteVideoEntry(
+      id: json['id']! as String,
+      title: json['title']! as String,
+      durationText: json['durationText']! as String,
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(
+        (json['updatedAtMs'] as num).toInt(),
+      ),
+      previewSeed: (json['previewSeed'] as num).toInt(),
+      sourceLabel: json['sourceLabel'] as String?,
+      path: json['path'] as String?,
+      sourceUri: json['sourceUri'] as String?,
+      durationMs: (json['durationMs'] as num?)?.toInt(),
+      sourceKind: _sourceKindFromJson(json['sourceKindKey'] as String?),
+      resolutionText: json['resolutionText'] as String?,
+      previewAspectRatio: (json['previewAspectRatio'] as num?)?.toDouble(),
+      lastKnownPositionMs: (json['lastKnownPositionMs'] as num?)?.toInt(),
+      localVideoId: (json['localVideoId'] as num?)?.toInt(),
+      localVideoDateModified: (json['localVideoDateModified'] as num?)?.toInt(),
+      webDavAccountId: json['webDavAccountId'] as String?,
+      thumbnailRequest: _thumbnailRequestFromJson(
+        json['thumbnailRequest'] as Map<String, Object?>?,
+      ),
+    );
+  }
 }
 
 @immutable
@@ -100,6 +148,35 @@ class FavoriteFolderEntry {
   DateTime get updatedAt => latestVideo?.updatedAt ?? createdAt;
 
   bool get isDefaultFolder => id == kDefaultFavoriteFolderId;
+
+  Map<String, Object?> toJson() {
+    return <String, Object?>{
+      'id': id,
+      'title': title,
+      'createdAtMs': createdAt.millisecondsSinceEpoch,
+      'videos': videos
+          .map((FavoriteVideoEntry video) => video.toJson())
+          .toList(growable: false),
+    };
+  }
+
+  factory FavoriteFolderEntry.fromJson(Map<String, Object?> json) {
+    final videosJson = (json['videos'] as List<Object?>?) ?? const <Object?>[];
+    return FavoriteFolderEntry(
+      id: json['id']! as String,
+      title: json['title']! as String,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        (json['createdAtMs'] as num).toInt(),
+      ),
+      videos: videosJson
+          .map((Object? item) {
+            return FavoriteVideoEntry.fromJson(
+              Map<String, Object?>.from(item! as Map<Object?, Object?>),
+            );
+          })
+          .toList(growable: false),
+    );
+  }
 }
 
 int compareFavoriteFoldersPinned({
@@ -154,4 +231,18 @@ bool favoriteVideosReferToSameSource(
   }
 
   return false;
+}
+
+MediaSourceKind? _sourceKindFromJson(String? value) {
+  if (value == null || value.isEmpty) {
+    return null;
+  }
+  return mediaSourceKindFromKey(value);
+}
+
+VideoThumbnailRequest? _thumbnailRequestFromJson(Map<String, Object?>? json) {
+  if (json == null) {
+    return null;
+  }
+  return VideoThumbnailRequest.fromJson(json);
 }
