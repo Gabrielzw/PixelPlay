@@ -152,8 +152,6 @@ flutter build apk --release
 
 ## 维护与贡献
 
-当前仓库未提供独立的 `CONTRIBUTING.md`，默认采用常见的 GitHub Issue / Pull Request 协作方式。
-
 - 维护入口：GitHub 仓库所有者 [@Gabrielzw](https://github.com/Gabrielzw)
 - 提交变更前建议至少执行：
 
