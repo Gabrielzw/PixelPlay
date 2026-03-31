@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'page_transition_type.dart';
+
 const int kDefaultSeedColorValue = 0xFFE7A2BA;
 const double kDefaultPlaybackSpeed = 1.0;
 const double kDefaultLongPressPlaybackSpeed = 2.0;
@@ -11,13 +13,26 @@ const bool kDefaultRememberPlaybackPosition = true;
 const bool kDefaultAutoPlayOnEnter = true;
 
 const List<double> kPlaybackSpeedOptions = <double>[
+  0.25,
   0.5,
   0.75,
   1.0,
   1.25,
   1.5,
+  1.75,
   2.0,
+  2.25,
+  2.5,
+  2.75,
   3.0,
+  3.25,
+  3.5,
+  3.75,
+  4.0,
+  4.25,
+  4.5,
+  4.75,
+  5.0,
 ];
 
 const List<double> kLongPressSpeedOptions = <double>[2.0, 3.0, 4.0, 5.0];
@@ -75,6 +90,7 @@ extension PlayerPlaybackModeLabel on PlayerPlaybackMode {
 class AppSettings {
   final ThemeMode themeMode;
   final int seedColorValue;
+  final PageTransitionType pageTransitionType;
   final double defaultPlaybackSpeed;
   final double longPressPlaybackSpeed;
   final PlayerAspectRatio defaultAspectRatio;
@@ -87,6 +103,7 @@ class AppSettings {
   const AppSettings({
     this.themeMode = ThemeMode.system,
     this.seedColorValue = kDefaultSeedColorValue,
+    this.pageTransitionType = kDefaultPageTransitionType,
     this.defaultPlaybackSpeed = kDefaultPlaybackSpeed,
     this.longPressPlaybackSpeed = kDefaultLongPressPlaybackSpeed,
     this.defaultAspectRatio = kDefaultAspectRatio,
@@ -102,6 +119,7 @@ class AppSettings {
   AppSettings copyWith({
     ThemeMode? themeMode,
     int? seedColorValue,
+    PageTransitionType? pageTransitionType,
     double? defaultPlaybackSpeed,
     double? longPressPlaybackSpeed,
     PlayerAspectRatio? defaultAspectRatio,
@@ -114,6 +132,7 @@ class AppSettings {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       seedColorValue: seedColorValue ?? this.seedColorValue,
+      pageTransitionType: pageTransitionType ?? this.pageTransitionType,
       defaultPlaybackSpeed: defaultPlaybackSpeed ?? this.defaultPlaybackSpeed,
       longPressPlaybackSpeed:
           longPressPlaybackSpeed ?? this.longPressPlaybackSpeed,

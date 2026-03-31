@@ -3,7 +3,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:media_kit/media_kit.dart';
 
 import 'app/pixelplay_app.dart';
+import 'features/favorites/data/isar_favorites_repository.dart';
 import 'features/media_library/data/android_media_library_repository.dart';
+import 'features/playlist_sources/data/isar_playlist_source_repository.dart';
 import 'features/player_core/data/isar_playback_position_repository.dart';
 import 'features/settings/data/isar_settings_repository.dart';
 import 'features/watch_history/data/isar_watch_history_repository.dart';
@@ -21,6 +23,8 @@ Future<void> main() async {
   final playbackPositionRepository = IsarPlaybackPositionRepository(isar: isar);
   final watchHistoryRepository = IsarWatchHistoryRepository(isar: isar);
   final mediaLibraryRepository = AndroidMediaLibraryRepository(isar: isar);
+  final favoritesRepository = IsarFavoritesRepository(isar: isar);
+  final playlistSourceRepository = IsarPlaylistSourceRepository(isar: isar);
   const secureStorage = FlutterSecureStorage();
   final webDavAccountRepository = IsarWebDavAccountRepository(
     isar: isar,
@@ -34,6 +38,8 @@ Future<void> main() async {
     PixelPlayApp(
       settingsRepository: settingsRepository,
       mediaLibraryRepository: mediaLibraryRepository,
+      favoritesRepository: favoritesRepository,
+      playlistSourceRepository: playlistSourceRepository,
       playbackPositionRepository: playbackPositionRepository,
       watchHistoryRepository: watchHistoryRepository,
       webDavAccountRepository: webDavAccountRepository,

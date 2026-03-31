@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'app_settings.dart';
+import 'page_transition_type.dart';
 import 'settings_repository.dart';
 
 class SettingsController extends GetxController {
@@ -19,6 +20,10 @@ class SettingsController extends GetxController {
     await _saveSettings(
       settings.value.copyWith(seedColorValue: color.toARGB32()),
     );
+  }
+
+  Future<void> setPageTransitionType(PageTransitionType type) async {
+    await _saveSettings(settings.value.copyWith(pageTransitionType: type));
   }
 
   Future<void> setDefaultPlaybackSpeed(double speed) async {

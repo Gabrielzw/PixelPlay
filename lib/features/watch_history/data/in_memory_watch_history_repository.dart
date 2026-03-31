@@ -29,6 +29,13 @@ class InMemoryWatchHistoryRepository implements WatchHistoryRepository {
   }
 
   @override
+  Future<void> removeAll(Iterable<String> mediaIds) async {
+    for (final mediaId in mediaIds) {
+      _records.remove(mediaId);
+    }
+  }
+
+  @override
   Future<void> save(WatchHistoryRecord record) async {
     _records[record.mediaId] = record;
   }

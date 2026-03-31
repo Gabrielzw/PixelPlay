@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../domain/contracts/webdav_browser_repository.dart';
 import '../domain/webdav_paths.dart';
 import '../domain/webdav_server_config.dart';
 import 'controllers/webdav_accounts_controller.dart';
@@ -22,10 +21,8 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
   late final WebDavAccountsController _accountsController;
-  late final WebDavBrowserRepository _browserRepository;
 
   bool _isSaving = false;
-  bool _isTesting = false;
   bool _obscurePassword = true;
 
   bool get _isEditing => widget.initialAccount != null;
@@ -39,7 +36,6 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
     _usernameController = TextEditingController(text: account?.username ?? '');
     _passwordController = TextEditingController();
     _accountsController = Get.find<WebDavAccountsController>();
-    _browserRepository = Get.find<WebDavBrowserRepository>();
   }
 
   @override
@@ -71,8 +67,8 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
             TextFormField(
               controller: _aliasController,
               decoration: const InputDecoration(
-                labelText: '名称',
-                hintText: '例如：家庭 NAS',
+                labelText: 'WebDAV 名称',
+                hintText: '请输入 WebDAV 名称',
               ),
               textInputAction: TextInputAction.next,
               validator: _validateRequired,
@@ -82,7 +78,7 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
               controller: _urlController,
               decoration: const InputDecoration(
                 labelText: '服务器地址',
-                hintText: 'http://192.168.1.100:5244/dav/quark',
+                hintText: 'http(s)://xxxxxx/dav',
               ),
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.next,
@@ -91,16 +87,18 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: '用户名'),
+              decoration: const InputDecoration(
+                labelText: '用户名',
+                hintText: '请输入用户名（可选）',
+              ),
               textInputAction: TextInputAction.next,
-              validator: _validateRequired,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _passwordController,
               decoration: InputDecoration(
                 labelText: '密码',
-                hintText: _isEditing ? '留空则保持当前密码' : null,
+                hintText: '请输入密码（可选）',
                 suffixIcon: IconButton(
                   onPressed: _togglePasswordVisibility,
                   icon: Icon(
@@ -112,34 +110,12 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
               ),
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
-              validator: _validatePassword,
-            ),
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: _isTesting ? null : _testConnection,
-              icon: _buildTestingIcon(),
-              label: Text(_isTesting ? '测试中...' : '测试连接'),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '目录直接取自你填写的链接路径，例如 /dav/quark；密码使用系统安全存储保存。',
-              style: Theme.of(context).textTheme.bodySmall,
+              onFieldSubmitted: (_) => _submit(),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildTestingIcon() {
-    if (_isTesting) {
-      return const SizedBox(
-        width: 16,
-        height: 16,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-    return const Icon(Icons.network_check_outlined);
   }
 
   void _togglePasswordVisibility() {
@@ -150,6 +126,7 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
     if (value == null || value.trim().isEmpty) {
       return '该字段不能为空';
     }
+
     return null;
   }
 
@@ -164,14 +141,7 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
     if (uri == null || !hasValidScheme || uri.host.isEmpty) {
       return '请输入有效的 http 或 https 地址';
     }
-    return null;
-  }
 
-  String? _validatePassword(String? value) {
-    final text = value?.trim() ?? '';
-    if (!_isEditing && text.isEmpty) {
-      return '密码不能为空';
-    }
     return null;
   }
 
@@ -188,6 +158,7 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
       if (!mounted) {
         return;
       }
+
       Navigator.of(context).pop(true);
     } catch (error) {
       _showMessage(_formatError(error));
@@ -198,32 +169,13 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
     }
   }
 
-  Future<void> _testConnection() async {
-    if (!_isFormValid()) {
-      return;
-    }
-
-    setState(() => _isTesting = true);
-    try {
-      final config = _buildConfig();
-      final password = await _resolvePassword();
-      await _browserRepository.verifyConnection(config, password: password);
-      _showMessage('连接成功，可以正常访问目录。');
-    } catch (error) {
-      _showMessage(_formatError(error));
-    } finally {
-      if (mounted) {
-        setState(() => _isTesting = false);
-      }
-    }
-  }
-
   bool _isFormValid() {
-    final state = _formKey.currentState;
-    if (state == null) {
+    final formState = _formKey.currentState;
+    if (formState == null) {
       return false;
     }
-    return state.validate();
+
+    return formState.validate();
   }
 
   WebDavServerConfig _buildConfig() {
@@ -246,9 +198,13 @@ class _WebDavAccountFormPageState extends State<WebDavAccountFormPage> {
 
     final initialAccount = widget.initialAccount;
     if (initialAccount == null) {
-      throw StateError('请输入密码。');
+      return '';
     }
-    return _accountsController.requirePassword(initialAccount.id);
+
+    return await _accountsController.repository.loadPassword(
+          initialAccount.id,
+        ) ??
+        '';
   }
 
   void _showMessage(String message) {

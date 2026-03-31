@@ -32,7 +32,6 @@ extension PlayerControllerCommands on PlayerController {
     if (controlsLocked.value) {
       controlsLocked.value = false;
       showControls();
-      showInfoHud('已解锁屏幕');
       armControlsAutoHide();
       return;
     }
@@ -40,7 +39,6 @@ extension PlayerControllerCommands on PlayerController {
     controlsLocked.value = true;
     controlsVisible.value = false;
     cancelControlsAutoHide();
-    showInfoHud('已锁定屏幕');
   }
 
   Future<void> playPrevious() async {
@@ -83,7 +81,6 @@ extension PlayerControllerCommands on PlayerController {
     playbackSpeed.value = speed;
     await playbackPort.setPlaybackSpeed(speed);
     await settingsController.setDefaultPlaybackSpeed(speed);
-    showSpeedHud('播放速度 ${speed}x');
     armControlsAutoHide();
   }
 
@@ -95,10 +92,15 @@ extension PlayerControllerCommands on PlayerController {
     await setAspectRatio(next);
   }
 
-  Future<void> setAspectRatio(PlayerAspectRatio value) async {
+  Future<void> setAspectRatio(
+    PlayerAspectRatio value, {
+    bool showHud = true,
+  }) async {
     aspectRatio.value = value;
     await settingsController.setDefaultAspectRatio(value);
-    showInfoHud(value.label);
+    if (showHud) {
+      showInfoHud(value.label);
+    }
     armControlsAutoHide();
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/router/page_navigation.dart';
+import '../../../shared/widgets/pp_toast.dart';
 import '../domain/webdav_server_config.dart';
 import 'controllers/webdav_accounts_controller.dart';
 import 'webdav_account_form_page.dart';
@@ -57,27 +59,19 @@ class WebDavAccountsPage extends GetView<WebDavAccountsController> {
     BuildContext context, {
     WebDavServerConfig? account,
   }) async {
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (_) => WebDavAccountFormPage(initialAccount: account),
-      ),
+    final saved = await pushRootPage<bool>(
+      context,
+      (_) => WebDavAccountFormPage(initialAccount: account),
     );
     if (saved != true || !context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(account == null ? '已添加 WebDAV 账户。' : '已更新 WebDAV 账户。'),
-      ),
-    );
+
+    PPToast.success(account == null ? '已添加 WebDAV 账户' : '已更新 WebDAV 账户');
   }
 
   void _openBrowser(BuildContext context, WebDavServerConfig account) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => WebDavBrowserPage(account: account),
-      ),
-    );
+    pushRootPage<void>(context, (_) => WebDavBrowserPage(account: account));
   }
 
   Future<void> _deleteAccount(
@@ -112,16 +106,12 @@ class WebDavAccountsPage extends GetView<WebDavAccountsController> {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('已删除 WebDAV 账户。')));
+      PPToast.success('已删除 WebDAV 账户');
     } catch (error) {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_formatError(error))));
+      PPToast.error(error.toString());
     }
   }
 }

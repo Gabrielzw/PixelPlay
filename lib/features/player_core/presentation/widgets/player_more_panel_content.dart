@@ -51,7 +51,8 @@ class PlayerMorePanelContent extends StatelessWidget {
             title: '自动播放',
             subtitle: '进入播放器页面后自动开始播放当前视频',
             value: settings.autoPlayOnEnter,
-            onChanged: controller.setAutoPlayOnEnter,
+            onChanged: (bool enabled) =>
+                controller.setAutoPlayOnEnter(enabled, showHud: false),
           ),
           const SizedBox(height: 12),
           Align(
@@ -87,16 +88,15 @@ class _PlaybackModeSection extends StatelessWidget {
       children: <Widget>[
         const PlayerPanelSectionTitle('播放方式'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: PlayerPlaybackMode.values
               .map(
                 (PlayerPlaybackMode mode) => PlayerPanelChoiceChipButton(
                   label: mode.label,
                   icon: mode.icon,
                   selected: settings.defaultPlaybackMode == mode,
-                  onTap: () => controller.setPlaybackMode(mode),
+                  onTap: () => controller.setPlaybackMode(mode, showHud: false),
                 ),
               )
               .toList(growable: false),
@@ -118,16 +118,15 @@ class _AspectRatioSection extends StatelessWidget {
       children: <Widget>[
         const PlayerPanelSectionTitle('画面比例'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: PlayerAspectRatio.values
               .map(
                 (PlayerAspectRatio ratio) => PlayerPanelChoiceChipButton(
                   label: ratio.label,
                   icon: ratio.icon,
                   selected: controller.aspectRatio.value == ratio,
-                  onTap: () => controller.setAspectRatio(ratio),
+                  onTap: () => controller.setAspectRatio(ratio, showHud: false),
                 ),
               )
               .toList(growable: false),
@@ -196,16 +195,18 @@ class _LongPressSpeedSection extends StatelessWidget {
       children: <Widget>[
         const PlayerPanelSectionTitle('长按倍速'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: kLongPressSpeedOptions
               .map(
                 (double speed) => PlayerPanelChoiceChipButton(
                   label: '${speed}x',
                   icon: Icons.speed_rounded,
                   selected: settings.longPressPlaybackSpeed == speed,
-                  onTap: () => controller.setLongPressPlaybackSpeed(speed),
+                  onTap: () => controller.setLongPressPlaybackSpeed(
+                    speed,
+                    showHud: false,
+                  ),
                 ),
               )
               .toList(growable: false),
@@ -233,7 +234,8 @@ class _SeekSettingsSection extends StatelessWidget {
           title: '按视频总时长拖动',
           subtitle: '开启后，横向滑动将按视频总时长比例快进快退',
           value: settings.gestureSeekUsesVideoDuration,
-          onChanged: controller.setGestureSeekUsesVideoDuration,
+          onChanged: (bool enabled) => controller
+              .setGestureSeekUsesVideoDuration(enabled, showHud: false),
         ),
         const SizedBox(height: 24),
         Text(

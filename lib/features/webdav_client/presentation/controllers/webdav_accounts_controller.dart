@@ -71,11 +71,7 @@ class WebDavAccountsController extends GetxController {
   }
 
   Future<String> requirePassword(String accountId) async {
-    final password = await repository.loadPassword(accountId);
-    if (password == null || password.isEmpty) {
-      throw StateError('未找到该 WebDAV 账户的密码，请重新编辑并保存。');
-    }
-    return password;
+    return await repository.loadPassword(accountId) ?? '';
   }
 
   List<WebDavServerConfig> _sortAccounts(List<WebDavServerConfig> accounts) {

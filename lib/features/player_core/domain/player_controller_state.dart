@@ -44,7 +44,7 @@ class _PlayerGestureSession {
   final Size viewportSize;
   final Duration basePosition;
   final double baseBrightness;
-  final double baseVolume;
+  final double baseVolume; 
   final int pointerCount;
   final Matrix4 baseTransform;
   final Offset transformFocalPoint;

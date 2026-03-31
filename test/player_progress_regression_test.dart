@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:pixelplay/features/favorites/data/in_memory_favorites_repository.dart';
+import 'package:pixelplay/features/favorites/presentation/controllers/favorites_controller.dart';
 import 'package:pixelplay/features/player_core/domain/playback_position_repository.dart';
 import 'package:pixelplay/features/player_core/domain/player_playback_port.dart';
 import 'package:pixelplay/features/player_core/domain/player_queue_item.dart';
@@ -32,6 +34,11 @@ class RecordingPlaybackPositionRepository
 
   @override
   Future<void> clear(String mediaId) async {
+    savedRecord = null;
+  }
+
+  @override
+  Future<void> clearAll() async {
     savedRecord = null;
   }
 }
@@ -155,6 +162,9 @@ void main() {
   setUp(() {
     Get.testMode = true;
     Get.reset();
+    Get.put<FavoritesController>(
+      FavoritesController(repository: InMemoryFavoritesRepository()),
+    );
   });
 
   testWidgets('player page saves latest observed position before popping', (

@@ -3,6 +3,8 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 import '../features/media_library/domain/contracts/media_library_repository.dart';
+import '../features/favorites/domain/favorites_repository.dart';
+import '../features/playlist_sources/domain/playlist_source_repository.dart';
 import '../features/player_core/domain/playback_position_repository.dart';
 import '../features/settings/domain/settings_controller.dart';
 import '../features/settings/domain/settings_repository.dart';
@@ -12,12 +14,15 @@ import '../features/watch_history/domain/watch_history_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_account_repository.dart';
 import '../features/webdav_client/domain/contracts/webdav_browser_repository.dart';
 import 'bindings/app_bindings.dart';
+import 'router/page_navigation.dart';
 import 'theme/app_theme.dart';
 
 class PixelPlayApp extends StatefulWidget {
   final SettingsRepository settingsRepository;
   final MediaLibraryRepository mediaLibraryRepository;
   final ThumbnailQueue? thumbnailQueue;
+  final FavoritesRepository? favoritesRepository;
+  final PlaylistSourceRepository? playlistSourceRepository;
   final PlaybackPositionRepository playbackPositionRepository;
   final WatchHistoryRepository watchHistoryRepository;
   final WebDavAccountRepository webDavAccountRepository;
@@ -28,6 +33,8 @@ class PixelPlayApp extends StatefulWidget {
     required this.settingsRepository,
     required this.mediaLibraryRepository,
     this.thumbnailQueue,
+    this.favoritesRepository,
+    this.playlistSourceRepository,
     required this.playbackPositionRepository,
     required this.watchHistoryRepository,
     required this.webDavAccountRepository,
@@ -48,6 +55,8 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       settingsRepository: widget.settingsRepository,
       mediaLibraryRepository: widget.mediaLibraryRepository,
       thumbnailQueue: widget.thumbnailQueue,
+      favoritesRepository: widget.favoritesRepository,
+      playlistSourceRepository: widget.playlistSourceRepository,
       playbackPositionRepository: widget.playbackPositionRepository,
       watchHistoryRepository: widget.watchHistoryRepository,
       webDavAccountRepository: widget.webDavAccountRepository,
@@ -63,7 +72,13 @@ class _PixelPlayAppState extends State<PixelPlayApp> {
       title: 'Pixel Play',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      home: const PixelPlayShell(),
+      initialRoute: Navigator.defaultRouteName,
+      onGenerateRoute: (RouteSettings routeSettings) {
+        return buildShellPageRoute<void>(
+          builder: (_) => const PixelPlayShell(),
+          settings: routeSettings,
+        );
+      },
       navigatorObservers: <NavigatorObserver>[FlutterSmartDialog.observer],
       builder: FlutterSmartDialog.init(
         builder: (BuildContext context, Widget? child) {

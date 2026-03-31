@@ -1,310 +1,314 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../shared/widgets/pp_toast.dart';
 import '../../player_core/domain/player_queue_item.dart';
 import '../../player_core/presentation/player_page.dart';
+import '../domain/contracts/webdav_account_repository.dart';
 import '../domain/contracts/webdav_browser_repository.dart';
+import '../domain/contracts/webdav_sort_preference_store.dart';
 import '../domain/entities/webdav_entry.dart';
+import '../domain/webdav_auth_headers.dart';
 import '../domain/webdav_paths.dart';
 import '../domain/webdav_server_config.dart';
-import 'controllers/webdav_accounts_controller.dart';
+import '../domain/webdav_sort_option.dart';
+import 'controllers/webdav_browser_controller.dart';
+import 'webdav_browser_messages.dart';
 import 'widgets/webdav_browser_entry_widgets.dart';
 import 'widgets/webdav_browser_header.dart';
+import 'widgets/webdav_file_list.dart';
+import 'widgets/webdav_loading_state.dart';
+import 'widgets/webdav_sort_button.dart';
 
 class WebDavBrowserPage extends StatefulWidget {
   final WebDavServerConfig account;
   final String? path;
+  final String? rootPath;
 
-  const WebDavBrowserPage({super.key, required this.account, this.path});
+  const WebDavBrowserPage({
+    super.key,
+    required this.account,
+    this.path,
+    this.rootPath,
+  });
 
   @override
   State<WebDavBrowserPage> createState() => _WebDavBrowserPageState();
 }
 
 class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
-  late final WebDavBrowserRepository _browserRepository;
-  late final WebDavAccountsController _accountsController;
   late final TextEditingController _searchController;
-  late final String _rootPath;
-
-  List<WebDavEntry> _entries = const <WebDavEntry>[];
-  Object? _error;
-  bool _isLoading = true;
-  String _searchQuery = '';
-  late String _currentPath;
-
-  bool get _isAtRootPath => _currentPath == _rootPath;
-
-  List<WebDavEntry> get _visibleEntries {
-    final query = _searchQuery.toLowerCase();
-    if (query.isEmpty) {
-      return _entries;
-    }
-    return _entries
-        .where((WebDavEntry entry) => entry.name.toLowerCase().contains(query))
-        .toList(growable: false);
-  }
+  late final String _controllerTag;
+  late final WebDavBrowserController _browserController;
+  Animation<double>? _routeAnimation;
+  bool _hasScheduledInitialization = false;
 
   @override
   void initState() {
     super.initState();
-    _browserRepository = Get.find<WebDavBrowserRepository>();
-    _accountsController = Get.find<WebDavAccountsController>();
-    _rootPath = _resolveRootPath(widget.account);
-    _currentPath = _resolveCurrentPath(widget.account, widget.path);
+    _controllerTag =
+        'webdav_browser_${widget.account.id}_${identityHashCode(this)}';
+    _browserController = Get.put<WebDavBrowserController>(
+      WebDavBrowserController(
+        browserRepository: Get.find<WebDavBrowserRepository>(),
+        accountRepository: Get.find<WebDavAccountRepository>(),
+        sortPreferenceStore: Get.find<WebDavSortPreferenceStore>(),
+        account: widget.account,
+        initialPath: widget.path,
+        rootPath: widget.rootPath,
+      ),
+      tag: _controllerTag,
+    );
     _searchController = TextEditingController()
       ..addListener(_handleSearchChanged);
-    _loadEntries();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scheduleInitializationAfterRouteTransition();
   }
 
   @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatusChanged);
     _searchController
       ..removeListener(_handleSearchChanged)
       ..dispose();
+    Get.delete<WebDavBrowserController>(tag: _controllerTag, force: true);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: _isAtRootPath,
-      onPopInvokedWithResult: _handlePop,
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            tooltip: '杩斿洖',
-            onPressed: _handleBackPressed,
-            icon: const Icon(Icons.arrow_back),
-          ),
-          titleSpacing: 0,
-          title: WebDavBreadcrumbBar(
-            rootPath: _rootPath,
-            currentPath: _currentPath,
-            onTapPath: _openPath,
-          ),
-          actions: <Widget>[
-            IconButton(
-              tooltip: '鍒锋柊',
-              onPressed: _loadEntries,
-              icon: const Icon(Icons.refresh),
+    return Obx(() {
+      final state = _browserController.state.value;
+      return PopScope(
+        canPop: state.isAtRootPath,
+        onPopInvokedWithResult: _handlePop,
+        child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              tooltip: '返回',
+              onPressed: _handleBackPressed,
+              onLongPress: _handleBackLongPress,
+              icon: const Icon(Icons.arrow_back),
             ),
-          ],
-        ),
-        body: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: WebDavSearchField(controller: _searchController),
+            titleSpacing: 0,
+            title: WebDavBreadcrumbBar(
+              rootPath: state.rootPath,
+              currentPath: state.currentPath,
+              onTapPath: _openPath,
             ),
-            Expanded(child: _buildBody()),
-          ],
+            actions: <Widget>[
+              WebDavSortButton(
+                selectedSortOption: state.sortOption,
+                onSelected: _handleSortSelected,
+              ),
+              IconButton(
+                tooltip: '刷新',
+                onPressed: _browserController.reloadDirectory,
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          body: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: WebDavSearchField(controller: _searchController),
+              ),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  reverseDuration: Duration.zero,
+                  switchInCurve: Curves.easeOutCubic,
+                  transitionBuilder: _buildContentTransition,
+                  child: _buildBody(state),
+                ),
+              ),
+            ],
+          ),
         ),
+      );
+    });
+  }
+
+  Widget _buildBody(WebDavBrowserViewState state) {
+    if (state.isLoading) {
+      return const WebDavLoadingState(key: ValueKey<String>('loading'));
+    }
+    if (state.error != null) {
+      return WebDavBrowserFailureView(
+        key: const ValueKey<String>('error'),
+        message: formatWebDavBrowserError(state.error!),
+        onRetry: _browserController.reloadDirectory,
+      );
+    }
+    if (state.visibleEntries.isEmpty) {
+      return WebDavBrowserEmptyView(
+        key: ValueKey<String>(
+          'empty_${state.currentPath}_${state.searchQuery}_${state.sortOption.name}',
+        ),
+        message: buildWebDavBrowserEmptyMessage(state.searchQuery),
+        onRefresh: _browserController.reloadDirectory,
+      );
+    }
+
+    return WebDavFileList(
+      key: ValueKey<String>(
+        '${state.currentPath}_${state.searchQuery}_${state.sortOption.name}',
       ),
+      storageKey: state.currentPath,
+      entries: state.visibleEntries,
+      onEntryTap: (WebDavEntry entry) => _handleEntryTap(entry, state),
+      onRefresh: _browserController.reloadDirectory,
     );
   }
 
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null) {
-      return WebDavBrowserFailureView(
-        message: _formatError(_error!),
-        onRetry: _loadEntries,
-      );
-    }
-    if (_visibleEntries.isEmpty) {
-      return WebDavBrowserEmptyView(
-        message: _searchQuery.isEmpty
-            ? '当前目录下没有可显示的视频或子目录。'
-            : '没有匹配“$_searchQuery”的文件或文件夹。',
-        onRefresh: _loadEntries,
-      );
+  Widget _buildContentTransition(Widget child, Animation<double> animation) {
+    final position = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(animation);
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(position: position, child: child),
+    );
+  }
+
+  void _scheduleInitializationAfterRouteTransition() {
+    if (_hasScheduledInitialization) {
+      return;
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadEntries,
-      child: ListView.separated(
-        key: PageStorageKey<String>('webdav_browser_$_currentPath'),
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        itemCount: _visibleEntries.length,
-        separatorBuilder: (BuildContext context, int index) {
-          return const SizedBox(height: 12);
-        },
-        itemBuilder: (BuildContext context, int index) {
-          final entry = _visibleEntries[index];
-          return WebDavEntryCard(
-            entry: entry,
-            onTap: () => _handleEntryTap(context, entry),
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      final animation = route.animation;
+      if (animation != null && animation.status != AnimationStatus.completed) {
+        if (!identical(animation, _routeAnimation)) {
+          _routeAnimation?.removeStatusListener(
+            _handleRouteAnimationStatusChanged,
           );
-        },
-      ),
-    );
+          _routeAnimation = animation
+            ..addStatusListener(_handleRouteAnimationStatusChanged);
+        }
+        return;
+      }
+    }
+
+    _hasScheduledInitialization = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _browserController.initialize();
+      }
+    });
+  }
+
+  void _handleRouteAnimationStatusChanged(AnimationStatus status) {
+    if (status != AnimationStatus.completed) {
+      return;
+    }
+
+    _routeAnimation?.removeStatusListener(_handleRouteAnimationStatusChanged);
+    _routeAnimation = null;
+    _scheduleInitializationAfterRouteTransition();
   }
 
   void _handlePop(bool didPop, Object? result) {
-    if (didPop || _isAtRootPath) {
-      return;
-    }
-    _navigateToParentPath();
+    if (!didPop) _navigateBack();
   }
 
-  void _handleBackPressed() {
-    if (_isAtRootPath) {
-      Navigator.of(context).maybePop();
-      return;
-    }
-    _navigateToParentPath();
+  Future<void> _handleBackPressed() => _navigateBack();
+
+  void _handleBackLongPress() {
+    if (mounted) Navigator.of(context).pop();
   }
 
   void _handleSearchChanged() {
-    final nextQuery = _searchController.text.trim();
-    if (nextQuery == _searchQuery) {
-      return;
-    }
-    setState(() => _searchQuery = nextQuery);
+    _browserController.updateSearchQuery(_searchController.text);
   }
 
-  Future<void> _loadEntries() async {
-    final targetPath = _currentPath;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
+  Future<void> _handleSortSelected(WebDavSortOption sortOption) async {
     try {
-      final password = await _accountsController.requirePassword(
-        widget.account.id,
-      );
-      final entries = await _browserRepository.readDirectory(
-        widget.account,
-        password: password,
-        path: targetPath,
-      );
-      if (!mounted || targetPath != _currentPath) {
-        return;
-      }
-      setState(() {
-        _entries = entries;
-        _isLoading = false;
-      });
+      await _browserController.updateSortOption(sortOption);
     } catch (error) {
-      if (!mounted || targetPath != _currentPath) {
-        return;
-      }
-      setState(() {
-        _error = error;
-        _isLoading = false;
-      });
+      PPToast.error(formatWebDavBrowserError(error));
     }
   }
 
   Future<void> _openPath(String path) async {
-    final normalizedPath = normalizeWebDavPath(path);
-    if (normalizedPath == _currentPath) {
-      return;
-    }
-
-    _searchController.clear();
-    setState(() => _currentPath = normalizedPath);
-    await _loadEntries();
+    _clearSearchField();
+    await _browserController.openPath(path);
   }
 
-  void _navigateToParentPath() {
-    final parentPath = _findParentPath();
-    if (parentPath == null) {
-      Navigator.of(context).maybePop();
-      return;
-    }
-    _openPath(parentPath);
+  Future<void> _navigateBack() async {
+    _clearSearchField();
+    final didNavigate = await _browserController.goBack();
+    if (!didNavigate && mounted) Navigator.of(context).maybePop();
   }
 
-  String? _findParentPath() {
-    if (_isAtRootPath) {
-      return null;
-    }
-
-    final currentSegments = _pathSegments(_currentPath);
-    final rootSegments = _pathSegments(_rootPath);
-    final parentLength = currentSegments.length - 1;
-    if (parentLength <= rootSegments.length) {
-      return _rootPath;
-    }
-
-    final parentSegments = currentSegments.take(parentLength).join('/');
-    return normalizeWebDavPath('/$parentSegments');
+  void _clearSearchField() {
+    if (_searchController.text.isNotEmpty) _searchController.clear();
   }
 
-  List<String> _pathSegments(String path) {
-    return normalizeWebDavPath(path)
-        .split('/')
-        .where((String segment) => segment.isNotEmpty)
-        .toList(growable: false);
-  }
-
-  String _resolveRootPath(WebDavServerConfig account) {
-    return resolveRelativeWebDavPath(
-      baseUrl: account.url,
-      path: account.rootPath,
-    );
-  }
-
-  String _resolveCurrentPath(WebDavServerConfig account, String? path) {
-    final sourcePath = path ?? account.rootPath;
-    return resolveRelativeWebDavPath(baseUrl: account.url, path: sourcePath);
-  }
-
-  Future<void> _handleEntryTap(BuildContext context, WebDavEntry entry) async {
+  Future<void> _handleEntryTap(
+    WebDavEntry entry,
+    WebDavBrowserViewState state,
+  ) async {
     switch (entry.type) {
       case WebDavEntryType.directory:
         await _openPath(entry.path);
-        break;
-      case WebDavEntryType.video:
-        final password = await _accountsController.requirePassword(
-          widget.account.id,
-        );
-        if (!context.mounted) {
-          return;
-        }
-        final playlist = _entries
-            .where((WebDavEntry item) => item.type == WebDavEntryType.video)
-            .map(
-              (WebDavEntry item) =>
-                  _mapPlayerItem(entry: item, password: password),
-            )
-            .toList(growable: false);
-        final initialIndex = playlist.indexWhere(
-          (PlayerQueueItem item) => item.id == entry.path,
-        );
-        Navigator.of(context, rootNavigator: true).push(
-          buildPlayerPageRoute(
-            child: PlayerPage(
-              playlist: playlist,
-              initialIndex: initialIndex < 0 ? 0 : initialIndex,
-            ),
-          ),
-        );
-        break;
+        return;
       case WebDavEntryType.other:
+        return;
+      case WebDavEntryType.video:
         break;
+    }
+
+    try {
+      final password = await _browserController.requirePassword();
+      if (!mounted) return;
+
+      final videoEntries = state.visibleEntries
+          .where((WebDavEntry item) => item.type == WebDavEntryType.video)
+          .toList(growable: false);
+      if (videoEntries.isEmpty) return;
+
+      final playlist = videoEntries
+          .map(
+            (WebDavEntry item) => _mapPlayerItem(
+              entry: item,
+              password: password,
+              currentPath: state.currentPath,
+            ),
+          )
+          .toList(growable: false);
+      final initialIndex = playlist.indexWhere(
+        (PlayerQueueItem item) => item.id == entry.path,
+      );
+      await Navigator.of(context, rootNavigator: true).push(
+        buildPlayerPageRoute(
+          child: PlayerPage(
+            playlist: playlist,
+            initialIndex: initialIndex < 0 ? 0 : initialIndex,
+          ),
+        ),
+      );
+    } catch (error) {
+      PPToast.error(formatWebDavBrowserError(error));
     }
   }
 
   PlayerQueueItem _mapPlayerItem({
     required WebDavEntry entry,
     required String password,
+    required String currentPath,
   }) {
-    final authorization = base64Encode(
-      utf8.encode('${widget.account.username}:$password'),
-    );
-
     return PlayerQueueItem(
       id: entry.path,
       title: entry.name,
-      sourceLabel: '${widget.account.alias}$_currentPath',
+      sourceLabel: '${widget.account.alias}$currentPath',
       path: entry.path,
       sourceUri: buildWebDavResourceUrl(
         baseUrl: widget.account.url,
@@ -312,15 +316,10 @@ class _WebDavBrowserPageState extends State<WebDavBrowserPage> {
       ).toString(),
       isRemote: true,
       webDavAccountId: widget.account.id,
-      httpHeaders: <String, String>{'Authorization': 'Basic $authorization'},
+      httpHeaders: buildWebDavAuthHeaders(
+        account: widget.account,
+        password: password,
+      ),
     );
   }
-}
-
-String _formatError(Object error) {
-  final text = error.toString();
-  return text
-      .replaceFirst('Exception: ', '')
-      .replaceFirst('Bad state: ', '')
-      .trim();
 }

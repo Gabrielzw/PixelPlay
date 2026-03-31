@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:isar_community/isar.dart';
 
 import '../../../../features/settings/domain/app_settings.dart';
+import '../../../../features/settings/domain/page_transition_type.dart';
 
 part 'app_settings_isar_model.g.dart';
 
@@ -13,6 +14,7 @@ class AppSettingsIsarModel {
 
   late String themeModeName;
   late int seedColorValue;
+  String? pageTransitionTypeName;
   late double defaultPlaybackSpeed;
   double? longPressPlaybackSpeed;
   late String defaultAspectRatioName;
@@ -26,6 +28,7 @@ class AppSettingsIsarModel {
     return AppSettings(
       themeMode: _resolveThemeMode(themeModeName),
       seedColorValue: seedColorValue,
+      pageTransitionType: _resolvePageTransitionType(pageTransitionTypeName),
       defaultPlaybackSpeed: defaultPlaybackSpeed,
       longPressPlaybackSpeed:
           longPressPlaybackSpeed ?? kDefaultLongPressPlaybackSpeed,
@@ -44,6 +47,7 @@ class AppSettingsIsarModel {
       ..id = kAppSettingsSingletonId
       ..themeModeName = settings.themeMode.name
       ..seedColorValue = settings.seedColorValue
+      ..pageTransitionTypeName = settings.pageTransitionType.name
       ..defaultPlaybackSpeed = settings.defaultPlaybackSpeed
       ..longPressPlaybackSpeed = settings.longPressPlaybackSpeed
       ..defaultAspectRatioName = settings.defaultAspectRatio.name
@@ -59,6 +63,13 @@ ThemeMode _resolveThemeMode(String value) {
   return ThemeMode.values.firstWhere(
     (ThemeMode mode) => mode.name == value,
     orElse: () => ThemeMode.system,
+  );
+}
+
+PageTransitionType _resolvePageTransitionType(String? value) {
+  return PageTransitionType.values.firstWhere(
+    (PageTransitionType type) => type.name == value,
+    orElse: () => kDefaultPageTransitionType,
   );
 }
 

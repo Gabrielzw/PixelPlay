@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../shared/utils/media_formatters.dart';
@@ -6,7 +6,14 @@ import '../../domain/player_controller.dart';
 import 'player_slide_panel.dart';
 import 'player_ui_constants.dart';
 
-class PlayerEpisodePanel extends StatelessWidget {
+const double _kEpisodeListVerticalPadding = 8;
+const double _kEpisodeItemHeight = 56;
+const double _kEpisodeItemHorizontalMargin = 8;
+const double _kEpisodeSelectedBackgroundOpacity = 0.18;
+const double _kEpisodeSelectedBorderRadius = 12;
+const Duration _kEpisodeScrollDuration = Duration(milliseconds: 220);
+
+class PlayerEpisodePanel extends StatefulWidget {
   final PlayerController controller;
   final bool visible;
   final VoidCallback onClose;
@@ -19,9 +26,48 @@ class PlayerEpisodePanel extends StatelessWidget {
   });
 
   @override
+  State<PlayerEpisodePanel> createState() => _PlayerEpisodePanelState();
+}
+
+class _PlayerEpisodePanelState extends State<PlayerEpisodePanel> {
+  final ScrollController _scrollController = ScrollController();
+  late Worker _currentIndexWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _bindCurrentIndexWorker();
+    if (widget.visible) {
+      _scheduleScrollToCurrentItem(animated: false);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant PlayerEpisodePanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _currentIndexWorker.dispose();
+      _bindCurrentIndexWorker();
+    }
+    final needsRelocate =
+        (!oldWidget.visible && widget.visible) ||
+        oldWidget.controller != widget.controller;
+    if (needsRelocate) {
+      _scheduleScrollToCurrentItem(animated: false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _currentIndexWorker.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PlayerSlidePanel(
-      visible: visible,
+      visible: widget.visible,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: applyOpacity(Colors.black, 0.92),
@@ -32,112 +78,183 @@ class PlayerEpisodePanel extends StatelessWidget {
         ),
         child: Column(
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
-              child: Row(
-                children: <Widget>[
-                  Text(
-                    '播放列表',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '(${controller.queue.length})',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white60),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildHeader(context),
             const Divider(height: 1, color: Colors.white12),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: controller.queue.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final item = controller.queue[index];
-
-                  return Obx(() {
-                    final isSelected = controller.currentIndex.value == index;
-
-                    return InkWell(
-                      onTap: () async {
-                        onClose();
-                        if (isSelected) {
-                          return;
-                        }
-                        await controller.switchToIndex(index);
-                      },
-                      child: Container(
-                        color: isSelected
-                            ? applyOpacity(Colors.white, 0.08)
-                            : Colors.transparent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: <Widget>[
-                            SizedBox(
-                              width: 28,
-                              child: isSelected
-                                  ? const Icon(
-                                      Icons.play_arrow_rounded,
-                                      color: Colors.white,
-                                      size: 18,
-                                    )
-                                  : Text(
-                                      '${index + 1}',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.white54,
-                                      ),
-                                    ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                item.title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.white70,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w400,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              formatVideoDuration(item.duration),
-                              style: const TextStyle(color: Colors.white54),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  });
-                },
-              ),
-            ),
+            Expanded(child: _buildEpisodeList(context)),
           ],
         ),
       ),
+    );
+  }
+
+  void _bindCurrentIndexWorker() {
+    _currentIndexWorker = ever<int>(widget.controller.currentIndex, (int _) {
+      if (!widget.visible) {
+        return;
+      }
+      _scheduleScrollToCurrentItem(animated: true);
+    });
+  }
+
+  void _scheduleScrollToCurrentItem({required bool animated}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _scrollToCurrentItem(animated: animated);
+    });
+  }
+
+  void _scrollToCurrentItem({required bool animated}) {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final position = _scrollController.position;
+    final desiredOffset =
+        _kEpisodeListVerticalPadding +
+        widget.controller.currentIndex.value * _kEpisodeItemHeight -
+        (position.viewportDimension - _kEpisodeItemHeight) / 2;
+    final targetOffset = desiredOffset
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    if ((position.pixels - targetOffset).abs() < 1) {
+      return;
+    }
+    if (animated) {
+      _scrollController.animateTo(
+        targetOffset,
+        duration: _kEpisodeScrollDuration,
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+    _scrollController.jumpTo(targetOffset);
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+      child: Row(
+        children: <Widget>[
+          Text(
+            '播放列表',
+            style: textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '(${widget.controller.queue.length})',
+            style: textTheme.bodySmall?.copyWith(color: Colors.white60),
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: widget.onClose,
+            icon: const Icon(Icons.close_rounded, color: Colors.white70),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEpisodeList(BuildContext context) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(
+        vertical: _kEpisodeListVerticalPadding,
+      ),
+      itemCount: widget.controller.queue.length,
+      itemExtent: _kEpisodeItemHeight,
+      itemBuilder: (BuildContext context, int index) {
+        return _buildEpisodeItem(context, index);
+      },
+    );
+  }
+
+  Widget _buildEpisodeItem(BuildContext context, int index) {
+    final item = widget.controller.queue[index];
+    final colorScheme = Theme.of(context).colorScheme;
+    return Obx(() {
+      final isSelected = widget.controller.currentIndex.value == index;
+      final selectedColor = colorScheme.primary;
+      return InkWell(
+        onTap: () async {
+          widget.onClose();
+          if (isSelected) {
+            return;
+          }
+          await widget.controller.switchToIndex(index);
+        },
+        borderRadius: const BorderRadius.all(
+          Radius.circular(_kEpisodeSelectedBorderRadius),
+        ),
+        child: AnimatedContainer(
+          duration: _kEpisodeScrollDuration,
+          margin: const EdgeInsets.symmetric(
+            horizontal: _kEpisodeItemHorizontalMargin,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? applyOpacity(
+                    selectedColor,
+                    _kEpisodeSelectedBackgroundOpacity,
+                  )
+                : Colors.transparent,
+            borderRadius: const BorderRadius.all(
+              Radius.circular(_kEpisodeSelectedBorderRadius),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: <Widget>[
+              _buildLeading(
+                index: index,
+                isSelected: isSelected,
+                selectedColor: selectedColor,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isSelected ? selectedColor : Colors.white70,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                formatVideoDuration(item.duration),
+                style: TextStyle(
+                  color: isSelected ? selectedColor : Colors.white54,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildLeading({
+    required int index,
+    required bool isSelected,
+    required Color selectedColor,
+  }) {
+    return SizedBox(
+      width: 28,
+      child: isSelected
+          ? Icon(Icons.play_arrow_rounded, color: selectedColor, size: 18)
+          : Text(
+              '${index + 1}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white54),
+            ),
     );
   }
 

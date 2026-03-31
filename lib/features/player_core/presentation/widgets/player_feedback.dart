@@ -11,11 +11,7 @@ const double _kHudVerticalPadding = 10;
 const double _kHudIconSize = 16;
 const double _kHudIconSpacing = 8;
 const double _kHudTextMaxWidth = 240;
-const double _kBufferingOverlayOpacity = 0.58;
-const double _kBufferingOverlayRadius = 18;
-const double _kBufferingOverlayPadding = 20;
 const double _kBufferingIndicatorSize = 42;
-const double _kBufferingTextSpacing = 12;
 
 class PlayerFeedbackLayer extends StatelessWidget {
   final PlayerController controller;
@@ -79,6 +75,7 @@ class _HudOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final icon = _resolveHudIcon(state.kind);
     return Align(
       alignment: _resolveHudAlignment(state),
       child: Container(
@@ -96,12 +93,10 @@ class _HudOverlay extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(
-                _resolveHudIcon(state.kind),
-                color: Colors.white,
-                size: _kHudIconSize,
-              ),
-              const SizedBox(width: _kHudIconSpacing),
+              if (icon != null) ...<Widget>[
+                Icon(icon, color: Colors.white, size: _kHudIconSize),
+                const SizedBox(width: _kHudIconSpacing),
+              ],
               Flexible(
                 child: Text(
                   state.primaryText,
@@ -138,11 +133,11 @@ class _HudOverlay extends StatelessWidget {
     };
   }
 
-  IconData _resolveHudIcon(PlayerHudKind kind) {
+  IconData? _resolveHudIcon(PlayerHudKind kind) {
     return switch (kind) {
       PlayerHudKind.brightness => Icons.brightness_6_rounded,
       PlayerHudKind.volume => Icons.volume_up_rounded,
-      PlayerHudKind.seek => Icons.fast_forward_rounded,
+      PlayerHudKind.seek => null,
       PlayerHudKind.info => Icons.info_outline_rounded,
       PlayerHudKind.speed => Icons.speed_rounded,
     };
@@ -157,30 +152,9 @@ class _BufferingOverlay extends StatelessWidget {
     final Color primaryColor = Theme.of(context).colorScheme.primary;
 
     return Center(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: applyOpacity(Colors.black, _kBufferingOverlayOpacity),
-          borderRadius: const BorderRadius.all(
-            Radius.circular(_kBufferingOverlayRadius),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(_kBufferingOverlayPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              LoadingAnimationWidget.progressiveDots(
-                color: primaryColor,
-                size: _kBufferingIndicatorSize,
-              ),
-              const SizedBox(height: _kBufferingTextSpacing),
-              const Text(
-                '\u52a0\u8f7d\u4e2d...',
-                style: TextStyle(color: Colors.white),
-              ),
-            ],
-          ),
-        ),
+      child: LoadingAnimationWidget.progressiveDots(
+        color: primaryColor,
+        size: _kBufferingIndicatorSize,
       ),
     );
   }
