@@ -27,7 +27,7 @@ class SettingsMenuTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(kSettingsTileRadius),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
           child: Row(
             children: <Widget>[
               Container(
@@ -43,7 +43,7 @@ class SettingsMenuTile extends StatelessWidget {
                   color: colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,15 +51,15 @@ class SettingsMenuTile extends StatelessWidget {
                     Text(
                       title,
                       style: theme.textTheme.titleLarge?.copyWith(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       subtitle,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -68,7 +68,7 @@ class SettingsMenuTile extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                size: 28,
+                size: 22,
                 color: colorScheme.onSurfaceVariant,
               ),
             ],
@@ -107,7 +107,7 @@ class SettingsListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(kSettingsTileRadius),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
           child: Row(
             crossAxisAlignment: subtitle == null
                 ? CrossAxisAlignment.center
@@ -126,16 +126,16 @@ class SettingsListItem extends StatelessWidget {
                     Text(
                       title,
                       style: theme.textTheme.titleLarge?.copyWith(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (subtitle case final String value) ...<Widget>[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         value,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: colorScheme.onSurfaceVariant,
                           height: 1.45,
                         ),
@@ -162,7 +162,7 @@ class SettingsListItem extends StatelessWidget {
 
     return Icon(
       Icons.chevron_right_rounded,
-      size: 26,
+      size: 22,
       color: colorScheme.onSurfaceVariant,
     );
   }
@@ -188,7 +188,10 @@ class SettingsSwitchItem extends StatelessWidget {
       title: title,
       subtitle: subtitle,
       trailing: IgnorePointer(
-        child: Switch.adaptive(value: value, onChanged: onChanged),
+        child: Transform.scale(
+          scale: 0.86,
+          child: Switch.adaptive(value: value, onChanged: onChanged),
+        ),
       ),
       onTap: onChanged == null ? null : () => onChanged!(!value),
     );
@@ -244,12 +247,12 @@ class SettingsEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: 36, color: colorScheme.onSurfaceVariant),
+            Icon(icon, size: 28, color: colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
             Text(
               title,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -258,7 +261,7 @@ class SettingsEmptyState extends StatelessWidget {
               description,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                fontSize: 13,
+                fontSize: 12,
                 color: colorScheme.onSurfaceVariant,
                 height: 1.45,
               ),

@@ -105,20 +105,20 @@ class _SettingsSearchField extends StatelessWidget {
     return TextField(
       controller: controller,
       textInputAction: TextInputAction.search,
-      style: theme.textTheme.bodyLarge?.copyWith(fontSize: 15),
+      style: theme.textTheme.bodyLarge?.copyWith(fontSize: 14),
       decoration: InputDecoration(
         hintText: '搜索设置项...',
         hintStyle: theme.textTheme.bodyLarge?.copyWith(
-          fontSize: 15,
+          fontSize: 14,
           color: colorScheme.onSurfaceVariant,
         ),
-        prefixIcon: const Icon(Icons.search_rounded, size: 22),
+        prefixIcon: const Icon(Icons.search_rounded, size: 18),
         suffixIcon: controller.text.isEmpty
             ? null
             : IconButton(
                 tooltip: '清空搜索',
                 onPressed: onClear,
-                icon: const Icon(Icons.close_rounded, size: 20),
+                icon: const Icon(Icons.close_rounded, size: 18),
               ),
         filled: true,
         fillColor: colorScheme.surfaceContainerHighest,
@@ -134,7 +134,7 @@ class _SettingsSearchField extends StatelessWidget {
           borderRadius: BorderRadius.circular(32),
           borderSide: BorderSide(color: colorScheme.primary, width: 1.2),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 20),
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
       ),
     );
   }
@@ -220,9 +220,10 @@ class _SearchResultHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         '找到 $count 个具体设置项',
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontSize: 12,
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }

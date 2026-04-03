@@ -35,7 +35,7 @@ Future<T?> showSettingsChoiceSheet<T>({
         padding: EdgeInsets.fromLTRB(16, 0, 16, bottomInset + 16),
         child: Material(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(28),
           clipBehavior: Clip.antiAlias,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
@@ -44,14 +44,14 @@ Future<T?> showSettingsChoiceSheet<T>({
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
                         title,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontSize: 17,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -60,7 +60,7 @@ Future<T?> showSettingsChoiceSheet<T>({
                         Text(
                           value,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: theme.colorScheme.onSurfaceVariant,
                             height: 1.45,
                           ),
@@ -72,7 +72,7 @@ Future<T?> showSettingsChoiceSheet<T>({
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
                     itemCount: options.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 2),
                     itemBuilder: (BuildContext context, int index) {
@@ -86,8 +86,8 @@ Future<T?> showSettingsChoiceSheet<T>({
                           onTap: () => Navigator.of(context).pop(option.value),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 14,
+                              horizontal: 10,
+                              vertical: 12,
                             ),
                             child: Row(
                               children: <Widget>[
@@ -95,12 +95,12 @@ Future<T?> showSettingsChoiceSheet<T>({
                                     case final IconData icon) ...<Widget>[
                                   Icon(
                                     icon,
-                                    size: 20,
+                                    size: 18,
                                     color: selected
                                         ? theme.colorScheme.primary
                                         : theme.colorScheme.onSurfaceVariant,
                                   ),
-                                  const SizedBox(width: 14),
+                                  const SizedBox(width: 12),
                                 ],
                                 Expanded(
                                   child: Column(
@@ -111,7 +111,7 @@ Future<T?> showSettingsChoiceSheet<T>({
                                         option.title,
                                         style: theme.textTheme.bodyLarge
                                             ?.copyWith(
-                                              fontSize: 15,
+                                              fontSize: 14,
                                               fontWeight: selected
                                                   ? FontWeight.w700
                                                   : FontWeight.w500,
@@ -124,7 +124,7 @@ Future<T?> showSettingsChoiceSheet<T>({
                                           value,
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                                fontSize: 13,
+                                                fontSize: 12,
                                                 color: theme
                                                     .colorScheme
                                                     .onSurfaceVariant,
@@ -139,7 +139,7 @@ Future<T?> showSettingsChoiceSheet<T>({
                                   selected
                                       ? Icons.check_circle_rounded
                                       : Icons.radio_button_unchecked_rounded,
-                                  size: 22,
+                                  size: 18,
                                   color: selected
                                       ? theme.colorScheme.primary
                                       : theme.colorScheme.outline,

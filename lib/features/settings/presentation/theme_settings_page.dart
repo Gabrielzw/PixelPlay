@@ -144,7 +144,7 @@ class _ThemeColorTrailing extends StatelessWidget {
         const SizedBox(width: 8),
         Icon(
           Icons.chevron_right_rounded,
-          size: 24,
+          size: 20,
           color: colorScheme.onSurfaceVariant,
         ),
       ],

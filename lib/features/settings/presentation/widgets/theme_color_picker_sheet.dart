@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const double kColorPreviewHeight = 108;
+const double kColorPreviewHeight = 96;
 const double kColorSliderMax = 255;
 
 class ThemeColorPickerSheet extends StatefulWidget {
@@ -56,7 +56,7 @@ class _ThemeColorPickerSheetState extends State<ThemeColorPickerSheet> {
                 '自定义主色',
                 style: Theme.of(
                   context,
-                ).textTheme.titleMedium?.copyWith(fontSize: 17),
+                ).textTheme.titleMedium?.copyWith(fontSize: 15),
               ),
               if (widget.presetColors.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 16),
@@ -72,8 +72,8 @@ class _ThemeColorPickerSheetState extends State<ThemeColorPickerSheet> {
                           onTap: () => _applyColor(presetColor),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 160),
-                            width: 44,
-                            height: 44,
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
                               color: presetColor,
                               borderRadius: BorderRadius.circular(18),
@@ -101,7 +101,7 @@ class _ThemeColorPickerSheetState extends State<ThemeColorPickerSheet> {
                   child: Text(
                     _toHex(color),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontSize: 22,
+                      fontSize: 18,
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                     ),
