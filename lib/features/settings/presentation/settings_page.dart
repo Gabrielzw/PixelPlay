@@ -15,6 +15,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _queryController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final List<SettingsMenuEntry> _menuEntries = buildSettingsMenuEntries();
   final List<SettingsSearchEntry> _searchEntries = buildSettingsSearchEntries();
   late final SettingsController _controller;
@@ -30,6 +31,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   void dispose() {
+    _searchFocusNode.dispose();
     _queryController
       ..removeListener(_handleQueryChanged)
       ..dispose();
@@ -53,6 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
         title: '设置',
         searchBar: _SettingsSearchField(
           controller: _queryController,
+          focusNode: _searchFocusNode,
           onClear: _clearQuery,
         ),
         child: AnimatedSwitcher(
@@ -61,11 +64,13 @@ class _SettingsPageState extends State<SettingsPage> {
               ? _SettingsMenuList(
                   key: const ValueKey<String>('settings_menu'),
                   entries: _menuEntries,
+                  onOpenPage: _openPage,
                 )
               : _SettingsSearchResults(
                   key: ValueKey<String>('settings_results_$_query'),
                   query: _query,
                   results: results,
+                  onOpenPage: _openPage,
                   subtitleBuilder: (SettingsSearchEntry entry) {
                     return entry.buildSubtitle(settings);
                   },
@@ -89,13 +94,24 @@ class _SettingsPageState extends State<SettingsPage> {
   void _clearQuery() {
     _queryController.clear();
   }
+
+  Future<void> _openPage(SettingsPageFactory pageFactory) async {
+    _searchFocusNode.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await pushRootPage<void>(context, (_) => pageFactory());
+  }
 }
 
 class _SettingsSearchField extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode focusNode;
   final VoidCallback onClear;
 
-  const _SettingsSearchField({required this.controller, required this.onClear});
+  const _SettingsSearchField({
+    required this.controller,
+    required this.focusNode,
+    required this.onClear,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +120,7 @@ class _SettingsSearchField extends StatelessWidget {
 
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       textInputAction: TextInputAction.search,
       style: theme.textTheme.bodyLarge?.copyWith(fontSize: 14),
       decoration: InputDecoration(
@@ -142,8 +159,13 @@ class _SettingsSearchField extends StatelessWidget {
 
 class _SettingsMenuList extends StatelessWidget {
   final List<SettingsMenuEntry> entries;
+  final ValueChanged<SettingsPageFactory> onOpenPage;
 
-  const _SettingsMenuList({super.key, required this.entries});
+  const _SettingsMenuList({
+    super.key,
+    required this.entries,
+    required this.onOpenPage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +180,7 @@ class _SettingsMenuList extends StatelessWidget {
           icon: entry.icon,
           title: entry.title,
           subtitle: entry.subtitle,
-          onTap: () => pushRootPage<void>(context, (_) => entry.pageFactory()),
+          onTap: () => onOpenPage(entry.pageFactory),
         );
       },
     );
@@ -168,12 +190,14 @@ class _SettingsMenuList extends StatelessWidget {
 class _SettingsSearchResults extends StatelessWidget {
   final String query;
   final List<SettingsSearchEntry> results;
+  final ValueChanged<SettingsPageFactory> onOpenPage;
   final String Function(SettingsSearchEntry entry) subtitleBuilder;
 
   const _SettingsSearchResults({
     super.key,
     required this.query,
     required this.results,
+    required this.onOpenPage,
     required this.subtitleBuilder,
   });
 
@@ -200,7 +224,7 @@ class _SettingsSearchResults extends StatelessWidget {
         return SettingsListItem(
           title: entry.title,
           subtitle: subtitleBuilder(entry),
-          onTap: () => pushRootPage<void>(context, (_) => entry.pageFactory()),
+          onTap: () => onOpenPage(entry.pageFactory),
         );
       },
     );
