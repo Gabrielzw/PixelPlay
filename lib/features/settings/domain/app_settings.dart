@@ -48,6 +48,16 @@ enum PlayerAspectRatio { fit, fill, original, crop }
 
 enum PlayerPlaybackMode { loopList, loopSingle, noLoop }
 
+extension ThemeModeLabel on ThemeMode {
+  String get label {
+    return switch (this) {
+      ThemeMode.system => '跟随系统',
+      ThemeMode.light => '浅色',
+      ThemeMode.dark => '深色',
+    };
+  }
+}
+
 extension PlayerAspectRatioLabel on PlayerAspectRatio {
   String get label {
     return switch (this) {

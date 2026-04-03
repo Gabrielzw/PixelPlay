@@ -2,48 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../shared/widgets/pp_toast.dart';
+import '../../../shared/widgets/settings/settings_shell.dart';
 import '../domain/data_backup_controller.dart';
 import '../domain/data_backup_entry.dart';
 import 'data_backup_dialogs.dart';
 import 'data_backup_list_card.dart';
+
+const double kBackupActionProgressSize = 20;
 
 class DataBackupPage extends GetView<DataBackupController> {
   const DataBackupPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('数据备份与恢复')),
-      body: Obx(() {
-        final isBusy =
-            controller.isCreating.value ||
-            controller.processingBackupId.value != null;
+    return SettingsDetailScaffold(
+      title: '数据备份与恢复',
+      child: Obx(() {
+        final isCreating = controller.isCreating.value;
+        final processingBackupId = controller.processingBackupId.value;
+        final isBusy = isCreating || processingBackupId != null;
+        final isRestoring = processingBackupId == kRestoreProcessingToken;
 
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: kSettingsPagePadding,
           children: <Widget>[
-            const _BackupScopeCard(),
-            const SizedBox(height: 12),
-            _CreateBackupCard(
-              isBusy: isBusy,
-              onPressed: () {
-                _handleCreateBackup(context);
-              },
+            const SettingsSectionTitle('备份说明'),
+            const _BackupScopePanel(),
+            const SizedBox(height: kSettingsSectionSpacing),
+            const SettingsSectionTitle('备份操作'),
+            SettingsListItem(
+              title: '创建本地备份',
+              subtitle: '通过系统文件选择器选择保存位置，并生成新的配置快照',
+              trailing: isCreating
+                  ? const SizedBox(
+                      width: kBackupActionProgressSize,
+                      height: kBackupActionProgressSize,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: isBusy ? null : () => _handleCreateBackup(context),
             ),
-            const SizedBox(height: 12),
-            _RestoreBackupCard(
-              isBusy: isBusy,
-              onPressed: () {
-                _handleRestoreBackup(context);
-              },
+            SettingsListItem(
+              title: '从备份文件恢复',
+              subtitle: '通过系统文件选择器挑选备份文件并恢复配置',
+              trailing: isRestoring
+                  ? const SizedBox(
+                      width: kBackupActionProgressSize,
+                      height: kBackupActionProgressSize,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: isBusy ? null : () => _handleRestoreBackup(context),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: kSettingsSectionSpacing),
+            const SettingsSectionTitle('备份记录'),
             DataBackupListCard(
               isBusy: isBusy,
               isLoading: controller.isLoading.value,
               errorMessage: controller.errorMessage.value,
               entries: controller.backups,
-              processingBackupId: controller.processingBackupId.value,
+              processingBackupId: processingBackupId,
               onRetry: () {
                 controller.refreshBackups();
               },
@@ -105,78 +123,15 @@ class DataBackupPage extends GetView<DataBackupController> {
   }
 }
 
-class _BackupScopeCard extends StatelessWidget {
-  const _BackupScopeCard();
+class _BackupScopePanel extends StatelessWidget {
+  const _BackupScopePanel();
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('备份范围'),
-            SizedBox(height: 8),
-            Text(
-              '包含设置项、WebDAV 账户与密码、收藏夹、播放列表来源，以及当前备份列表等本地持久化配置。备份和恢复都会通过系统文件选择器完成。',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CreateBackupCard extends StatelessWidget {
-  final bool isBusy;
-  final VoidCallback onPressed;
-
-  const _CreateBackupCard({required this.isBusy, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.backup_outlined),
-        title: const Text('创建本地备份'),
-        subtitle: const Text('通过系统文件选择器选择保存位置，并生成新的配置快照。'),
-        trailing: isBusy
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : null,
-        enabled: !isBusy,
-        onTap: isBusy ? null : onPressed,
-      ),
-    );
-  }
-}
-
-class _RestoreBackupCard extends StatelessWidget {
-  final bool isBusy;
-  final VoidCallback onPressed;
-
-  const _RestoreBackupCard({required this.isBusy, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.restore_page_outlined),
-        title: const Text('从备份文件恢复'),
-        subtitle: const Text('通过系统文件选择器挑选备份文件并恢复配置。'),
-        trailing: isBusy
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : null,
-        enabled: !isBusy,
-        onTap: isBusy ? null : onPressed,
+    return const SettingsPanel(
+      child: Text(
+        '包含设置项、WebDAV 账户与密码、收藏夹、播放列表来源，以及当前备份列表等本地持久化配置。'
+        '备份和恢复都会通过系统文件选择器完成。',
       ),
     );
   }

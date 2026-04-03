@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/router/page_navigation.dart';
+import '../../../shared/widgets/settings/settings_choice_sheet.dart';
+import '../../../shared/widgets/settings/settings_shell.dart';
+import '../domain/app_settings.dart';
+import '../domain/page_transition_type.dart';
 import '../domain/settings_controller.dart';
+import 'transition_settings_page.dart';
 import 'widgets/theme_color_picker_sheet.dart';
 
 const List<Color> kThemePresetColors = <Color>[
@@ -21,99 +27,29 @@ class ThemeSettingsPage extends GetView<SettingsController> {
     return Obx(() {
       final settings = controller.settings.value;
 
-      return Scaffold(
-        appBar: AppBar(title: const Text('主题与主色')),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
+      return SettingsDetailScaffold(
+        title: '外观设置',
+        child: ListView(
+          padding: kSettingsPagePadding,
           children: <Widget>[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      '显示模式',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 14),
-                    SegmentedButton<ThemeMode>(
-                      segments: const <ButtonSegment<ThemeMode>>[
-                        ButtonSegment<ThemeMode>(
-                          value: ThemeMode.system,
-                          icon: Icon(Icons.brightness_auto_outlined),
-                          label: Text('跟随系统'),
-                        ),
-                        ButtonSegment<ThemeMode>(
-                          value: ThemeMode.light,
-                          icon: Icon(Icons.light_mode_outlined),
-                          label: Text('浅色'),
-                        ),
-                        ButtonSegment<ThemeMode>(
-                          value: ThemeMode.dark,
-                          icon: Icon(Icons.dark_mode_outlined),
-                          label: Text('深色'),
-                        ),
-                      ],
-                      selected: <ThemeMode>{settings.themeMode},
-                      showSelectedIcon: false,
-                      onSelectionChanged: (Set<ThemeMode> selection) async {
-                        if (selection.isEmpty) return;
-                        await controller.setThemeMode(selection.first);
-                      },
-                    ),
-                  ],
-                ),
-              ),
+            const SettingsSectionTitle('界面外观'),
+            SettingsListItem(
+              title: '显示模式',
+              subtitle: settings.themeMode.label,
+              onTap: () => _selectThemeMode(context, settings.themeMode),
             ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      '应用主色',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '底部 Tab 选中态和全局强调色会跟随这里变化。',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: kThemePresetColors
-                          .map((Color color) {
-                            return _ThemeColorOption(
-                              color: color,
-                              isSelected: settings.seedColor == color,
-                              onTap: () => controller.setSeedColor(color),
-                            );
-                          })
-                          .toList(growable: false),
-                    ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: settings.seedColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      title: const Text('自定义颜色'),
-                      subtitle: Text(_toHex(settings.seedColor)),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => _pickCustomColor(context),
-                    ),
-                  ],
-                ),
+            SettingsListItem(
+              title: '应用主色',
+              subtitle: '${_toHex(settings.seedColor)} · 底部导航与全局强调色',
+              trailing: _ThemeColorTrailing(color: settings.seedColor),
+              onTap: () => _selectThemeColor(context, settings.seedColor),
+            ),
+            SettingsListItem(
+              title: '页面切换动画',
+              subtitle: settings.pageTransitionType.label,
+              onTap: () => pushRootPage<void>(
+                context,
+                (_) => const TransitionSettingsPage(),
               ),
             ),
           ],
@@ -122,16 +58,61 @@ class ThemeSettingsPage extends GetView<SettingsController> {
     });
   }
 
-  Future<void> _pickCustomColor(BuildContext context) async {
-    final currentColor = controller.settings.value.seedColor;
+  Future<void> _selectThemeMode(
+    BuildContext context,
+    ThemeMode selectedThemeMode,
+  ) async {
+    final next = await showSettingsChoiceSheet<ThemeMode>(
+      context: context,
+      title: '显示模式',
+      description: '选择应用界面的整体明暗风格。',
+      selectedValue: selectedThemeMode,
+      options: const <SettingsChoiceOption<ThemeMode>>[
+        SettingsChoiceOption<ThemeMode>(
+          value: ThemeMode.system,
+          title: '跟随系统',
+          icon: Icons.brightness_auto_outlined,
+        ),
+        SettingsChoiceOption<ThemeMode>(
+          value: ThemeMode.light,
+          title: '浅色',
+          icon: Icons.light_mode_outlined,
+        ),
+        SettingsChoiceOption<ThemeMode>(
+          value: ThemeMode.dark,
+          title: '深色',
+          icon: Icons.dark_mode_outlined,
+        ),
+      ],
+    );
+
+    if (next == null) {
+      return;
+    }
+
+    await controller.setThemeMode(next);
+  }
+
+  Future<void> _selectThemeColor(
+    BuildContext context,
+    Color currentColor,
+  ) async {
     final selectedColor = await showModalBottomSheet<Color>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ThemeColorPickerSheet(initialColor: currentColor),
+      builder: (_) {
+        return ThemeColorPickerSheet(
+          initialColor: currentColor,
+          presetColors: kThemePresetColors,
+        );
+      },
     );
 
-    if (selectedColor == null) return;
+    if (selectedColor == null) {
+      return;
+    }
+
     await controller.setSeedColor(selectedColor);
   }
 
@@ -143,40 +124,30 @@ class ThemeSettingsPage extends GetView<SettingsController> {
   }
 }
 
-class _ThemeColorOption extends StatelessWidget {
+class _ThemeColorTrailing extends StatelessWidget {
   final Color color;
-  final bool isSelected;
-  final VoidCallback onTap;
 
-  const _ThemeColorOption({
-    required this.color,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _ThemeColorTrailing({required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.onSurface
-                : Colors.transparent,
-            width: 2,
-          ),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        child: isSelected
-            ? const Icon(Icons.check_rounded, color: Colors.white)
-            : null,
-      ),
+        const SizedBox(width: 8),
+        Icon(
+          Icons.chevron_right_rounded,
+          size: 24,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ],
     );
   }
 }

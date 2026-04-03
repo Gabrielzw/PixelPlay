@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../shared/widgets/settings/settings_choice_sheet.dart';
+import '../../../shared/widgets/settings/settings_shell.dart';
 import '../domain/page_transition_type.dart';
 import '../domain/settings_controller.dart';
 
@@ -12,56 +14,47 @@ class TransitionSettingsPage extends GetView<SettingsController> {
     return Obx(() {
       final selectedType = controller.settings.value.pageTransitionType;
 
-      return Scaffold(
-        appBar: AppBar(title: const Text('页面切换动画')),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
+      return SettingsDetailScaffold(
+        title: '页面切换动画',
+        child: ListView(
+          padding: kSettingsPagePadding,
           children: <Widget>[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      '选择页面过渡动画',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '新的页面切换会按这里选中的动画执行。',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    RadioGroup<PageTransitionType>(
-                      groupValue: selectedType,
-                      onChanged: (PageTransitionType? nextType) async {
-                        if (nextType == null) {
-                          return;
-                        }
-
-                        await controller.setPageTransitionType(nextType);
-                      },
-                      child: Column(
-                        children: PageTransitionType.values
-                            .map(
-                              (PageTransitionType type) =>
-                                  RadioListTile<PageTransitionType>(
-                                    value: type,
-                                    title: Text(type.label),
-                                    subtitle: Text(type.description),
-                                  ),
-                            )
-                            .toList(growable: false),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            const SettingsSectionTitle('切换效果'),
+            SettingsListItem(
+              title: '页面切换动画',
+              subtitle: selectedType.label,
+              onTap: () => _selectTransitionType(context, selectedType),
             ),
           ],
         ),
       );
     });
+  }
+
+  Future<void> _selectTransitionType(
+    BuildContext context,
+    PageTransitionType selectedType,
+  ) async {
+    final next = await showSettingsChoiceSheet<PageTransitionType>(
+      context: context,
+      title: '页面切换动画',
+      description: '新的页面跳转会按这里选中的动画执行。',
+      selectedValue: selectedType,
+      options: PageTransitionType.values
+          .map((PageTransitionType type) {
+            return SettingsChoiceOption<PageTransitionType>(
+              value: type,
+              title: type.label,
+              subtitle: type.description,
+            );
+          })
+          .toList(growable: false),
+    );
+
+    if (next == null) {
+      return;
+    }
+
+    await controller.setPageTransitionType(next);
   }
 }

@@ -2,154 +2,227 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/router/page_navigation.dart';
-import '../../data_backup/presentation/data_backup_page.dart';
-import '../domain/page_transition_type.dart';
+import '../../../shared/widgets/settings/settings_shell.dart';
 import '../domain/settings_controller.dart';
-import 'cache_settings_page.dart';
-import 'player_settings_page.dart';
-import 'theme_settings_page.dart';
-import 'transition_settings_page.dart';
+import 'settings_catalog.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _SettingsScaffold();
-  }
+  State<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsScaffold extends StatelessWidget {
-  const _SettingsScaffold();
+class _SettingsPageState extends State<SettingsPage> {
+  final TextEditingController _queryController = TextEditingController();
+  final List<SettingsMenuEntry> _menuEntries = buildSettingsMenuEntries();
+  final List<SettingsSearchEntry> _searchEntries = buildSettingsSearchEntries();
+  late final SettingsController _controller;
+
+  String _query = '';
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
-      body: const _SettingsBody(),
-    );
+  void initState() {
+    super.initState();
+    _controller = Get.find<SettingsController>();
+    _queryController.addListener(_handleQueryChanged);
   }
-}
 
-class _SettingsBody extends GetView<SettingsController> {
-  const _SettingsBody();
+  @override
+  void dispose() {
+    _queryController
+      ..removeListener(_handleQueryChanged)
+      ..dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final settings = controller.settings.value;
+      final settings = _controller.settings.value;
+      final normalizedQuery = normalizeSettingsSearchQuery(_query);
+      final results = normalizedQuery.isEmpty
+          ? const <SettingsSearchEntry>[]
+          : _searchEntries
+                .where((SettingsSearchEntry entry) {
+                  return entry.matches(normalizedQuery, settings);
+                })
+                .toList(growable: false);
 
-      return ListView(
-        key: const PageStorageKey<String>('settings_list'),
-        padding: const EdgeInsets.only(bottom: 16),
-        children: <Widget>[
-          _SettingsSection(
-            title: '外观',
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.palette_outlined),
-                title: const Text('主题与主色'),
-                subtitle: const Text('跟随系统 / 浅色 / 深色 / 主色'),
-                onTap: () => pushRootPage<void>(
-                  context,
-                  (_) => const ThemeSettingsPage(),
+      return SettingsOverviewScaffold(
+        title: '设置',
+        searchBar: _SettingsSearchField(
+          controller: _queryController,
+          onClear: _clearQuery,
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: normalizedQuery.isEmpty
+              ? _SettingsMenuList(
+                  key: const ValueKey<String>('settings_menu'),
+                  entries: _menuEntries,
+                )
+              : _SettingsSearchResults(
+                  key: ValueKey<String>('settings_results_$_query'),
+                  query: _query,
+                  results: results,
+                  subtitleBuilder: (SettingsSearchEntry entry) {
+                    return entry.buildSubtitle(settings);
+                  },
                 ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.animation_outlined),
-                title: const Text('页面切换动画'),
-                subtitle: Text(settings.pageTransitionType.label),
-                onTap: () => pushRootPage<void>(
-                  context,
-                  (_) => const TransitionSettingsPage(),
-                ),
-              ),
-            ],
-          ),
-          _SettingsSection(
-            title: '播放',
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.play_circle_outline),
-                title: const Text('播放器默认设置'),
-                subtitle: const Text('倍速 / 画面比例 / 手势快进 / 续播'),
-                onTap: () => pushRootPage<void>(
-                  context,
-                  (_) => const PlayerSettingsPage(),
-                ),
-              ),
-            ],
-          ),
-          _SettingsSection(
-            title: '存储',
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.cached_outlined),
-                title: const Text('缓存'),
-                subtitle: const Text('缩略图与播放相关缓存'),
-                onTap: () => pushRootPage<void>(
-                  context,
-                  (_) => const CacheSettingsPage(),
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.backup_table_outlined),
-                title: const Text('数据备份与恢复'),
-                subtitle: const Text('备份设置、云盘账户、收藏夹和备份列表'),
-                onTap: () => pushRootPage<void>(
-                  context,
-                  (_) => const DataBackupPage(),
-                ),
-              ),
-            ],
-          ),
-          _SettingsSection(
-            title: '关于',
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: const Text('开源许可证'),
-                subtitle: const Text('查看应用使用的开源许可信息'),
-                onTap: () => pushRootPage<void>(
-                  context,
-                  (_) => const LicensePage(applicationName: 'Pixel Play'),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       );
     });
   }
+
+  void _handleQueryChanged() {
+    final nextQuery = _queryController.text;
+    if (nextQuery == _query) {
+      return;
+    }
+
+    setState(() {
+      _query = nextQuery;
+    });
+  }
+
+  void _clearQuery() {
+    _queryController.clear();
+  }
 }
 
-class _SettingsSection extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
+class _SettingsSearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onClear;
 
-  const _SettingsSection({required this.title, required this.children});
+  const _SettingsSearchField({required this.controller, required this.onClear});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              ...children,
-            ],
-          ),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return TextField(
+      controller: controller,
+      textInputAction: TextInputAction.search,
+      style: theme.textTheme.bodyLarge?.copyWith(fontSize: 15),
+      decoration: InputDecoration(
+        hintText: '搜索设置项...',
+        hintStyle: theme.textTheme.bodyLarge?.copyWith(
+          fontSize: 15,
+          color: colorScheme.onSurfaceVariant,
         ),
+        prefixIcon: const Icon(Icons.search_rounded, size: 22),
+        suffixIcon: controller.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: '清空搜索',
+                onPressed: onClear,
+                icon: const Icon(Icons.close_rounded, size: 20),
+              ),
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(32),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(32),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(32),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 20),
+      ),
+    );
+  }
+}
+
+class _SettingsMenuList extends StatelessWidget {
+  final List<SettingsMenuEntry> entries;
+
+  const _SettingsMenuList({super.key, required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: kSettingsPagePadding,
+      itemCount: entries.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (BuildContext context, int index) {
+        final entry = entries[index];
+
+        return SettingsMenuTile(
+          icon: entry.icon,
+          title: entry.title,
+          subtitle: entry.subtitle,
+          onTap: () => pushRootPage<void>(context, (_) => entry.pageFactory()),
+        );
+      },
+    );
+  }
+}
+
+class _SettingsSearchResults extends StatelessWidget {
+  final String query;
+  final List<SettingsSearchEntry> results;
+  final String Function(SettingsSearchEntry entry) subtitleBuilder;
+
+  const _SettingsSearchResults({
+    super.key,
+    required this.query,
+    required this.results,
+    required this.subtitleBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (results.isEmpty) {
+      return SettingsEmptyState(
+        icon: Icons.search_off_rounded,
+        title: '没有找到相关设置项',
+        description: '“$query” 没有匹配到具体设置项，请换个关键词试试。',
+      );
+    }
+
+    return ListView.separated(
+      padding: kSettingsPagePadding,
+      itemCount: results.length + 1,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (BuildContext context, int index) {
+        if (index == 0) {
+          return _SearchResultHeader(count: results.length);
+        }
+
+        final entry = results[index - 1];
+        return SettingsListItem(
+          title: entry.title,
+          subtitle: subtitleBuilder(entry),
+          onTap: () => pushRootPage<void>(context, (_) => entry.pageFactory()),
+        );
+      },
+    );
+  }
+}
+
+class _SearchResultHeader extends StatelessWidget {
+  final int count;
+
+  const _SearchResultHeader({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        '找到 $count 个具体设置项',
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(color: colorScheme.onSurfaceVariant),
       ),
     );
   }

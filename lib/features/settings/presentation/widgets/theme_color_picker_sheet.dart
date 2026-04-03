@@ -5,8 +5,13 @@ const double kColorSliderMax = 255;
 
 class ThemeColorPickerSheet extends StatefulWidget {
   final Color initialColor;
+  final List<Color> presetColors;
 
-  const ThemeColorPickerSheet({super.key, required this.initialColor});
+  const ThemeColorPickerSheet({
+    super.key,
+    required this.initialColor,
+    this.presetColors = const <Color>[],
+  });
 
   @override
   State<ThemeColorPickerSheet> createState() => _ThemeColorPickerSheetState();
@@ -47,7 +52,44 @@ class _ThemeColorPickerSheetState extends State<ThemeColorPickerSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('自定义主色', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                '自定义主色',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontSize: 17),
+              ),
+              if (widget.presetColors.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: widget.presetColors
+                      .map((Color presetColor) {
+                        final isSelected = presetColor == color;
+
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () => _applyColor(presetColor),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: presetColor,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        );
+                      })
+                      .toList(growable: false),
+                ),
+              ],
               const SizedBox(height: 18),
               Container(
                 height: kColorPreviewHeight,
@@ -59,6 +101,7 @@ class _ThemeColorPickerSheetState extends State<ThemeColorPickerSheet> {
                   child: Text(
                     _toHex(color),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: 22,
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                     ),
@@ -115,6 +158,14 @@ class _ThemeColorPickerSheetState extends State<ThemeColorPickerSheet> {
     final blue = color.b.round().toRadixString(16).padLeft(2, '0');
     return '#$red$green$blue'.toUpperCase();
   }
+
+  void _applyColor(Color color) {
+    setState(() {
+      _red = color.r.toDouble();
+      _green = color.g.toDouble();
+      _blue = color.b.toDouble();
+    });
+  }
 }
 
 class _ColorSlider extends StatelessWidget {
@@ -135,7 +186,10 @@ class _ColorSlider extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text('$label  ${value.round()}'),
+        Text(
+          '$label  ${value.round()}',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13),
+        ),
         Slider(
           value: value,
           max: kColorSliderMax,

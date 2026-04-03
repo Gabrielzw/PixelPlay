@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../app/router/page_navigation.dart';
+import '../../../shared/widgets/pp_dialog.dart';
 import '../../../shared/widgets/pp_toast.dart';
 import '../domain/webdav_server_config.dart';
 import 'controllers/webdav_accounts_controller.dart';
@@ -78,24 +79,13 @@ class WebDavAccountsPage extends GetView<WebDavAccountsController> {
     BuildContext context,
     WebDavServerConfig account,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('删除账户'),
-          content: Text('确定删除“${account.alias}”吗？该操作会同时清除保存的密码。'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('删除'),
-            ),
-          ],
-        );
-      },
+    final confirmed = await showPPConfirmDialog(
+      context,
+      title: '删除账户',
+      message: '确定删除“${account.alias}”吗？该操作会同时清除保存的密码。',
+      confirmLabel: '删除',
+      icon: Icons.cloud_off_rounded,
+      tone: PPDialogTone.destructive,
     );
     if (confirmed != true) {
       return;

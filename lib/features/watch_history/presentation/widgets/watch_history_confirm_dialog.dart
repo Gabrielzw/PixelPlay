@@ -1,29 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/widgets/pp_dialog.dart';
+
 Future<bool> showWatchHistoryConfirmationDialog(
   BuildContext context, {
   required String title,
   required String content,
   required String confirmLabel,
 }) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(confirmLabel),
-          ),
-        ],
-      );
-    },
+  return showPPConfirmDialog(
+    context,
+    title: title,
+    message: content,
+    confirmLabel: confirmLabel,
+    icon: Icons.history_toggle_off_rounded,
+    tone: PPDialogTone.destructive,
   );
-  return confirmed ?? false;
 }
