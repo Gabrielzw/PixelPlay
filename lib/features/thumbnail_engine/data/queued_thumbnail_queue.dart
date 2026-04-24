@@ -183,9 +183,7 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
   }
 
   void _cancelRunningEntries() {
-    final runningEntries = List<_ThumbnailTaskEntry>.from(
-      _entriesByKey.values,
-    );
+    final runningEntries = List<_ThumbnailTaskEntry>.from(_entriesByKey.values);
     for (final entry in runningEntries) {
       if (!entry.isRunning) {
         continue;

@@ -100,10 +100,7 @@ class _VideoThumbnailImageState extends State<VideoThumbnailImage> {
     });
   }
 
-  void _failThumbnail({
-    required Future<String> future,
-    required Object error,
-  }) {
+  void _failThumbnail({required Future<String> future, required Object error}) {
     if (!mounted || !identical(_thumbnailFuture, future)) {
       return;
     }

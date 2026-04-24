@@ -48,11 +48,11 @@ class FavoriteFolderPreview extends StatelessWidget {
   }
 
   static Widget _buildFlightShuttle(
-    BuildContext _flightContext,
-    Animation<double> _animation,
-    HeroFlightDirection _flightDirection,
+    BuildContext flightContext,
+    Animation<double> animation,
+    HeroFlightDirection flightDirection,
     BuildContext fromHeroContext,
-    BuildContext _toHeroContext,
+    BuildContext toHeroContext,
   ) {
     final fromHero = fromHeroContext.widget as Hero;
     return InheritedTheme.captureAll(fromHeroContext, fromHero.child);
