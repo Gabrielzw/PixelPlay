@@ -22,6 +22,11 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
     : maxConcurrent = _resolveMaxConcurrent(maxConcurrent);
 
   @override
+  String? cachedPath(String cacheKey) {
+    return _resolvedPaths[cacheKey];
+  }
+
+  @override
   Future<String> enqueue(VideoThumbnailRequest request, {int priority = 0}) {
     final cachedPath = _resolvedPaths[request.cacheKey];
     if (cachedPath != null) {
@@ -30,9 +35,7 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
 
     final existingEntry = _entriesByKey[request.cacheKey];
     if (existingEntry != null) {
-      if (priority > existingEntry.priority) {
-        existingEntry.priority = priority;
-      }
+      existingEntry.retain(priority);
       return existingEntry.completer.future;
     }
 
@@ -55,8 +58,12 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
     if (entry == null) {
       return;
     }
+    if (!entry.release()) {
+      return;
+    }
     if (entry.isRunning) {
       entry.isCancelled = true;
+      _entriesByKey.remove(cacheKey);
       return;
     }
 
@@ -129,7 +136,9 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
     } catch (error, stackTrace) {
       _failEntry(entry, error, stackTrace);
     } finally {
-      _entriesByKey.remove(entry.request.cacheKey);
+      if (identical(_entriesByKey[entry.request.cacheKey], entry)) {
+        _entriesByKey.remove(entry.request.cacheKey);
+      }
       _activeCount -= 1;
       _schedulePendingTasks();
     }
@@ -174,11 +183,15 @@ class QueuedThumbnailQueue implements ThumbnailQueue {
   }
 
   void _cancelRunningEntries() {
-    for (final entry in _entriesByKey.values) {
+    final runningEntries = List<_ThumbnailTaskEntry>.from(
+      _entriesByKey.values,
+    );
+    for (final entry in runningEntries) {
       if (!entry.isRunning) {
         continue;
       }
       entry.isCancelled = true;
+      _entriesByKey.remove(entry.request.cacheKey);
     }
   }
 }
@@ -207,6 +220,7 @@ class _ThumbnailTaskEntry {
   int priority;
   bool isRunning;
   bool isCancelled;
+  int _retainCount;
 
   _ThumbnailTaskEntry({
     required this.request,
@@ -214,5 +228,18 @@ class _ThumbnailTaskEntry {
     required this.priority,
     required this.order,
   }) : isRunning = false,
-       isCancelled = false;
+       isCancelled = false,
+       _retainCount = 1;
+
+  void retain(int nextPriority) {
+    _retainCount += 1;
+    if (nextPriority > priority) {
+      priority = nextPriority;
+    }
+  }
+
+  bool release() {
+    _retainCount -= 1;
+    return _retainCount <= 0;
+  }
 }

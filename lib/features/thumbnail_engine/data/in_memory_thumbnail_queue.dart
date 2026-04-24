@@ -12,6 +12,11 @@ class InMemoryThumbnailQueue implements ThumbnailQueue {
   Directory? _thumbnailDirectory;
 
   @override
+  String? cachedPath(String cacheKey) {
+    return _thumbnailPath;
+  }
+
+  @override
   Future<String> enqueue(
     VideoThumbnailRequest request, {
     int priority = 0,

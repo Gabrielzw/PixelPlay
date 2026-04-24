@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -31,7 +32,10 @@ class VideoThumbnailImage extends StatefulWidget {
 
 class _VideoThumbnailImageState extends State<VideoThumbnailImage> {
   late final ThumbnailQueue _thumbnailQueue;
-  late Future<String> _thumbnailFuture;
+  Future<String>? _thumbnailFuture;
+  String? _thumbnailPath;
+  Object? _thumbnailError;
+  bool _animateFirstFrame = true;
 
   @override
   void initState() {
@@ -57,26 +61,68 @@ class _VideoThumbnailImageState extends State<VideoThumbnailImage> {
   }
 
   void _bindThumbnailFuture() {
-    _thumbnailFuture = _thumbnailQueue.enqueue(
+    final cachedPath = _thumbnailQueue.cachedPath(widget.request.cacheKey);
+    _thumbnailFuture = null;
+    _thumbnailPath = cachedPath;
+    _thumbnailError = null;
+    _animateFirstFrame = cachedPath == null;
+    if (cachedPath != null) {
+      return;
+    }
+
+    final future = _thumbnailQueue.enqueue(
       widget.request,
       priority: widget.priority,
     );
+    _thumbnailFuture = future;
+    unawaited(
+      future.then<void>(
+        (String path) => _completeThumbnail(future: future, path: path),
+        onError: (Object error, _) {
+          _failThumbnail(future: future, error: error);
+        },
+      ),
+    );
+  }
+
+  void _completeThumbnail({
+    required Future<String> future,
+    required String path,
+  }) {
+    if (!mounted || !identical(_thumbnailFuture, future)) {
+      return;
+    }
+    setState(() {
+      _thumbnailFuture = null;
+      _thumbnailPath = path;
+      _thumbnailError = null;
+      _animateFirstFrame = true;
+    });
+  }
+
+  void _failThumbnail({
+    required Future<String> future,
+    required Object error,
+  }) {
+    if (!mounted || !identical(_thumbnailFuture, future)) {
+      return;
+    }
+    setState(() {
+      _thumbnailFuture = null;
+      _thumbnailError = error;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: _thumbnailFuture,
-      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-        if (snapshot.hasData) {
-          return _buildThumbnail(snapshot.requireData);
-        }
-        if (snapshot.hasError) {
-          return _buildErrorPlaceholder();
-        }
-        return widget.placeholder;
-      },
-    );
+    final thumbnailPath = _thumbnailPath;
+    if (thumbnailPath != null) {
+      return _buildThumbnail(thumbnailPath);
+    }
+    if (_thumbnailError != null) {
+      return _buildErrorPlaceholder();
+    }
+    return widget.placeholder;
   }
 
   Widget _buildThumbnail(String path) {
@@ -89,23 +135,28 @@ class _VideoThumbnailImageState extends State<VideoThumbnailImage> {
           fit: widget.fit,
           filterQuality: FilterQuality.low,
           gaplessPlayback: true,
-          frameBuilder: (
-            BuildContext context,
-            Widget child,
-            int? frame,
-            bool wasSynchronouslyLoaded,
-          ) {
-            final isVisible = wasSynchronouslyLoaded || frame != null;
-            return AnimatedOpacity(
-              opacity: isVisible ? 1 : 0,
-              duration: kThumbnailFadeDuration,
-              curve: kThumbnailFadeCurve,
-              child: child,
-            );
-          },
+          frameBuilder: _buildThumbnailFrame,
           errorBuilder: (_, _, _) => _buildErrorPlaceholder(),
         ),
       ],
+    );
+  }
+
+  Widget _buildThumbnailFrame(
+    BuildContext context,
+    Widget child,
+    int? frame,
+    bool wasSynchronouslyLoaded,
+  ) {
+    if (!_animateFirstFrame) {
+      return child;
+    }
+    final isVisible = wasSynchronouslyLoaded || frame != null;
+    return AnimatedOpacity(
+      opacity: isVisible ? 1 : 0,
+      duration: kThumbnailFadeDuration,
+      curve: kThumbnailFadeCurve,
+      child: child,
     );
   }
 

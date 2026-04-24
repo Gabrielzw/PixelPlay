@@ -40,7 +40,22 @@ class FavoriteFolderPreview extends StatelessWidget {
     if (tag == null) {
       return preview;
     }
-    return Hero(tag: tag, child: preview);
+    return Hero(
+      tag: tag,
+      flightShuttleBuilder: _buildFlightShuttle,
+      child: preview,
+    );
+  }
+
+  static Widget _buildFlightShuttle(
+    BuildContext _flightContext,
+    Animation<double> _animation,
+    HeroFlightDirection _flightDirection,
+    BuildContext fromHeroContext,
+    BuildContext _toHeroContext,
+  ) {
+    final fromHero = fromHeroContext.widget as Hero;
+    return InheritedTheme.captureAll(fromHeroContext, fromHero.child);
   }
 
   Widget _buildPreview() {
